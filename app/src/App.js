@@ -56,6 +56,7 @@ const GET_PLAYERS = gql`
     players {
       id
       name
+      isEmpty
     }
   }
 `;
@@ -71,6 +72,7 @@ const GET_ROLES = gql`
       id
       name
       roleName
+      isEmpty
     }
   }
 `;
@@ -177,6 +179,7 @@ function PlayerTable(props) {
 
             <TableCell align="right">玩家</TableCell>
             <TableCell align="right">角色</TableCell>
+            <TableCell align="right">上線</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -187,6 +190,18 @@ function PlayerTable(props) {
               </TableCell>
               <TableCell align="right">{row.name}</TableCell>
               <TableCell align="right">{row.roleName}</TableCell>
+              <TableCell align="right">
+                <span
+                  style={{
+                    color: row.isEmpty?"gray" :"lightgreen",
+                    transition: "all .3s ease",
+                    fontSize: "24px",
+                    marginRight: "10px",
+                  }}
+                >
+                  &#x25cf;
+                </span>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -420,8 +435,8 @@ function Login() {
             </Button>
           </Toolbar>
         </AppBar>
-        
-        <div style={{marginTop:10}}>
+
+        <div style={{ marginTop: 10 }}>
           {playerId === 0 ? (
             <God />
           ) : (
@@ -464,7 +479,22 @@ function Login() {
           id="combo-box-demo"
           className={classes.margin}
           options={data.players}
-          getOptionLabel={(option) => `player ${option.id}`}
+          getOptionLabel={(option) => `玩家 ${option.id}`}
+          renderOption={(option) => (
+            <React.Fragment>
+              <span
+                style={{
+                  color: option.isEmpty ? "gray" : "lightgreen",
+                  transition: "all .3s ease",
+                  fontSize: "24px",
+                  marginRight: "10px",
+                }}
+              >
+                &#x25cf;
+              </span>
+              {` 玩家 ${option.id}`}
+            </React.Fragment>
+          )}
           onChange={(event, newValue) => {
             setPlayerId(newValue.id);
           }}

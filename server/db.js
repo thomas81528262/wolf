@@ -91,7 +91,7 @@ class Db {
 
   static async getAllPlayer() {
     try {
-      const text = `SELECT player.id, player."name", roleId, role.name as "roleName" 
+      const text = `SELECT player.id, player."name", roleId, role.name as "roleName", player."isempty" as "isEmpty"
                     FROM public.player
                     left join public.role on roleId=role.id
                     order by player.id;

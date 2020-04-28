@@ -15,6 +15,7 @@ const typeDefs = gql`
     name: String
     id: Int
     roleName: String
+    isEmpty: Boolean
   }
 
   type Role {
@@ -113,16 +114,15 @@ app.get('/', function (req, res) {
 */
 
 const webPath = "/web";
+
+
 app.use(express.static(`${process.cwd()}${webPath}`));
-app.get("*", (request, response) => {
+
+app.get("/", (request, response) => {
   response.sendFile(`${process.cwd()}${webPath}/index.html`);
 });
 
-/*
-app.listen(port, function () {
-  console.log('Example app listening on port 3000!');
-});
-*/
+
 
 const server = new ApolloServer({ typeDefs, resolvers });
 server.applyMiddleware({ app });
