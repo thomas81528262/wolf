@@ -20,7 +20,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "sync": "rm -rf ../web/* && cp -r build/* ../web/",
+    "sync": "rm -rf ../server/web/* && cp -r build/* ../server/web/",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
