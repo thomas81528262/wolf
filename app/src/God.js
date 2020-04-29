@@ -14,6 +14,7 @@ import PlayerTable from "./PlayerTable";
 import RoleTable from "./RoleTable";
 import Fab from "@material-ui/core/Fab";
 import AddIcon from "@material-ui/icons/Add";
+import SaveIcon from "@material-ui/icons/Save";
 const GET_PLAYERS = gql`
   {
     players {
@@ -132,13 +133,12 @@ export default function God() {
   }
 
   const handleRoleChange = (event, newValue) => {
-    
     setRoleId(newValue.id);
   };
 
   if (data.players.length > 1) {
     return (
-      <div style={{ marginTop:120 }}>
+      <div style={{ marginTop: 120 }}>
         <Button
           variant="contained"
           color="primary"
@@ -162,10 +162,9 @@ export default function God() {
     );
   }
 
-  
   return (
-    <div>
-      {/*<Button
+    <div style={{ marginTop: 120 }}>
+      <Button
         variant="contained"
         color="primary"
         onClick={() => {
@@ -201,11 +200,12 @@ export default function God() {
           value={roleNumber}
           onChange={(e) => setRoleNumber(e.target.value)}
         />
-
+        <div style={{marginTop:5}}>
         <Fab
           size="medium"
           color="secondary"
           aria-label="add"
+          size="small"
           onClick={() => {
             console.log(roleId, roleNumber);
             updateRoleNumber({
@@ -213,12 +213,13 @@ export default function God() {
             });
           }}
         >
-          <AddIcon />
+          <SaveIcon />
         </Fab>
-        </div>*/}
-      
-        <RoleTable />
-      
+        </div>
+       
+      </div>
+
+      <RoleTable />
     </div>
   );
 }
