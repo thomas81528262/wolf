@@ -1,9 +1,0 @@
-install node
-
-
-in top folder 
-
-server folder is the backend code 
-app folder is the front end code
-
-npm run start
