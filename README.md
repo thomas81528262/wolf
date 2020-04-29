@@ -63,3 +63,9 @@ $ docker run -p {port# you like}:8080 -d {app_name}
 # e.g. localhost:5566
 
 ```
+
+#### mount src folder without build image
+
+```
+$ docker run  -p 4000:4000 -v {src_path_in_your_host}:{path_inside_the_docker_image}  -it node:10 /bin/sh
+```
