@@ -8,7 +8,7 @@
 
 ### clone the repo
 
-SSH: `$ git clone git clone git@github.com:thomas81528262/wolf.git`
+SSH: `$ git clone git@github.com:thomas81528262/wolf.git`
 
 HTTPS: `$ git clone https://github.com/thomas81528262/wolf.git`
 
