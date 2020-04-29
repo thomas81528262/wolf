@@ -15,6 +15,7 @@ import RoleTable from "./RoleTable";
 import Fab from "@material-ui/core/Fab";
 import AddIcon from "@material-ui/icons/Add";
 import SaveIcon from "@material-ui/icons/Save";
+import Container from "@material-ui/core/Container";
 const GET_PLAYERS = gql`
   {
     players {
@@ -107,7 +108,7 @@ const useStyles = makeStyles((theme) => ({
     margin: theme.spacing(1),
   },
   table: {
-    minWidth: 450,
+    minWidth: 250,
   },
   title: {
     flexGrow: 1,
@@ -157,7 +158,9 @@ export default function God() {
         >
           刪除玩家
         </Button>
+        <Container maxWidth="sm">
         <PlayerTable data={data.players} />
+        </Container>
       </div>
     );
   }
@@ -173,7 +176,7 @@ export default function God() {
       >
         加入玩家
       </Button>
-      <div style={{ display: "flex" }}>
+      <div style={{ display: "flex", justifyContent: "center" }}>
         <Autocomplete
           id="combo-box-demo"
           options={data.roles.filter((d) => d.id > 0)}
@@ -200,26 +203,26 @@ export default function God() {
           value={roleNumber}
           onChange={(e) => setRoleNumber(e.target.value)}
         />
-        <div style={{marginTop:5}}>
-        <Fab
-          size="medium"
-          color="secondary"
-          aria-label="add"
-          size="small"
-          onClick={() => {
-            console.log(roleId, roleNumber);
-            updateRoleNumber({
-              variables: { id: roleId, number: parseInt(roleNumber) },
-            });
-          }}
-        >
-          <SaveIcon />
-        </Fab>
+        <div style={{ marginTop: 5 }}>
+          <Fab
+            size="medium"
+            color="secondary"
+            aria-label="add"
+            size="small"
+            onClick={() => {
+              console.log(roleId, roleNumber);
+              updateRoleNumber({
+                variables: { id: roleId, number: parseInt(roleNumber) },
+              });
+            }}
+          >
+            <SaveIcon />
+          </Fab>
         </div>
-       
       </div>
-
-      <RoleTable />
+      <Container maxWidth="sm">
+        <RoleTable />
+      </Container>
     </div>
   );
 }

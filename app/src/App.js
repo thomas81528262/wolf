@@ -61,6 +61,10 @@ const useStyles = makeStyles((theme) => ({
   submit: {
     margin: theme.spacing(3, 0, 2),
   },
+  container: {
+    paddingTop: theme.spacing(4),
+    paddingBottom: theme.spacing(4),
+  },
 }));
 
 const GET_PLAYERS = gql`
@@ -201,7 +205,7 @@ function PlayerTable(props) {
             <TableCell>ID</TableCell>
 
             <TableCell align="right">玩家</TableCell>
-            <TableCell align="right">角色</TableCell>
+            
             <TableCell align="right">上線</TableCell>
           </TableRow>
         </TableHead>
@@ -212,7 +216,6 @@ function PlayerTable(props) {
                 {row.id}
               </TableCell>
               <TableCell align="right">{row.name}</TableCell>
-              <TableCell align="right">{row.roleName}</TableCell>
               <TableCell align="right">
                 <span
                   style={{
@@ -263,7 +266,7 @@ function Player(props) {
   console.log(data.player);
   const { id, name: playerName, roleName } = data.player;
   return (
-    <div style={{ marginTop: 120 }}>
+    <Container maxWidth="sm">
       <TextField
         id="standard-basic"
         label="姓名"
@@ -283,8 +286,10 @@ function Player(props) {
           </Typography>
         </CardContent>
       </Card>
+     
       <PlayerTable data={data.players} />
-    </div>
+      </Container>
+   
   );
 }
 
@@ -335,9 +340,9 @@ function Login() {
               </Button>
             </Toolbar>
           </AppBar>
-
+         
           {
-            <div style={{ marginTop: 10 }}>
+            <div style={{ marginTop: 100 }}>
               {playerId === 0 ? (
                 <God />
               ) : (
@@ -349,6 +354,7 @@ function Login() {
               )}
             </div>
           }
+          
           <Box pt={4}>
             <Copyright />
           </Box>
