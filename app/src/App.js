@@ -25,6 +25,10 @@ import Toolbar from "@material-ui/core/Toolbar";
 import IconButton from "@material-ui/core/IconButton";
 import MenuIcon from "@material-ui/icons/Menu";
 import Divider from "@material-ui/core/Divider";
+import Footer from "./Footer";
+import CssBaseline from '@material-ui/core/CssBaseline';
+import Box from '@material-ui/core/Box';
+import Container from '@material-ui/core/Container';
 import {
   fade,
   withStyles,
@@ -33,6 +37,9 @@ import {
 } from "@material-ui/core/styles";
 import { useDebounce, useDebounceCallback } from "@react-hook/debounce";
 import ApolloClient from "apollo-boost";
+
+import God from "./God";
+
 const client = new ApolloClient({
   uri: "/graphql",
 });
@@ -139,6 +146,16 @@ const REMOVE_ALL_PLAYER = gql`
   }
 `;
 
+function Copyright() {
+  return (
+    <Typography variant="body2" color="textSecondary" align="center">
+      {'Copyright © '}
+      {new Date().getFullYear()}
+      {'.'}
+    </Typography>
+  );
+}
+
 function SimpleTable(props) {
   const classes = useStyles();
 
@@ -193,7 +210,7 @@ function PlayerTable(props) {
               <TableCell align="right">
                 <span
                   style={{
-                    color: row.isEmpty?"gray" :"lightgreen",
+                    color: row.isEmpty ? "gray" : "lightgreen",
                     transition: "all .3s ease",
                     fontSize: "24px",
                     marginRight: "10px",
@@ -207,129 +224,6 @@ function PlayerTable(props) {
         </TableBody>
       </Table>
     </TableContainer>
-  );
-}
-
-function RoleTable() {
-  const { loading, error, data } = useQuery(GET_ROLES, {
-    pollInterval: 500,
-  });
-
-  if (loading) {
-    return null;
-  }
-
-  return (
-    <div>
-      <SimpleTable data={data.roles.filter((d) => d.id > 0)} />
-    </div>
-  );
-}
-
-function God() {
-  const classes = useStyles();
-  const { loading, error, data } = useQuery(GET_ROLES, {
-    pollInterval: 500,
-  });
-  const [updateRoleNumber] = useMutation(UPDATE_ROLE_NUMBER);
-  const [generateRole] = useMutation(GENERATE_ROLE);
-  const [generatePlayer] = useMutation(GENERATE_PLAYER);
-  const [removeAllPlayer] = useMutation(REMOVE_ALL_PLAYER);
-  const [roleId, setRoleId] = React.useState(-1);
-  const [roleNumber, setRoleNumber] = React.useState(0);
-  if (loading) {
-    return <div>Loading</div>;
-  }
-
-  const handleRoleChange = (event, newValue) => {
-    console.log(newValue);
-    setRoleId(newValue.id);
-  };
-
-  if (data.players.length > 1) {
-    return (
-      <div style={{ width: 450, marginLeft: "30%" }}>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => {
-            generateRole();
-          }}
-        >
-          產生角色
-        </Button>
-        <Button
-          variant="contained"
-          color="secondary"
-          onClick={() => {
-            removeAllPlayer();
-          }}
-        >
-          刪除玩家
-        </Button>
-        <PlayerTable data={data.players} />
-      </div>
-    );
-  }
-
-  console.log(data);
-  return (
-    <div>
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={() => {
-          generatePlayer();
-        }}
-      >
-        加入玩家
-      </Button>
-      <div style={{ display: "flex", marginLeft: "30%" }}>
-        <Autocomplete
-          id="combo-box-demo"
-          options={data.roles.filter((d) => d.id > 0)}
-          getOptionLabel={(option) => option.name}
-          style={{ width: 300 }}
-          onChange={handleRoleChange}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label="角色"
-              variant="outlined"
-              margin="dense"
-            />
-          )}
-        />
-
-        <TextField
-          id="standard-basic"
-          label="人數"
-          variant="outlined"
-          className={classes.margin}
-          margin="dense"
-          type="number"
-          value={roleNumber}
-          onChange={(e) => setRoleNumber(e.target.value)}
-        />
-
-        <Fab
-          size="medium"
-          color="secondary"
-          aria-label="add"
-          onClick={() => {
-            console.log(roleId, roleNumber);
-            updateRoleNumber({
-              variables: { id: roleId, number: parseInt(roleNumber) },
-            });
-          }}
-        >
-          <AddIcon />
-        </Fab>
-      </div>
-      <div style={{ width: 450, marginLeft: "30%" }}>
-        <RoleTable />
-      </div>
-    </div>
   );
 }
 
@@ -363,7 +257,7 @@ function Player(props) {
   console.log(data.player);
   const { id, name: playerName, roleName } = data.player;
   return (
-    <div style={{ width: 450, marginLeft: "30%" }}>
+    <div style={{ marginTop:120 }}>
       <TextField
         id="standard-basic"
         label="姓名"
@@ -410,66 +304,51 @@ function Login() {
     console.log(playerStatus);
 
     return (
-      <div>
-        <AppBar position="static">
-          <Toolbar>
-            <IconButton
-              edge="start"
-              className={classes.menuButton}
-              color="inherit"
-              aria-label="menu"
-            >
-              <MenuIcon />
-            </IconButton>
-            <Typography variant="h6" className={classes.title}>
-              小狼狼
-            </Typography>
-            <Button
-              variant="contained"
-              color="secondary"
-              onClick={() => {
-                setIsValidPlayerStatus(false);
-              }}
-            >
-              退出
-            </Button>
-          </Toolbar>
-        </AppBar>
+      <React.Fragment>
+        <CssBaseline />
+        <Container>
+          <AppBar position="absolute">
+            <Toolbar>
+              <IconButton
+                edge="start"
+                className={classes.menuButton}
+                color="inherit"
+                aria-label="menu"
+              >
+                <MenuIcon />
+              </IconButton>
+              <Typography variant="h6" className={classes.title}>
+                小狼狼
+              </Typography>
+              <Button
+                variant="contained"
+                color="secondary"
+                onClick={() => {
+                  setIsValidPlayerStatus(false);
+                }}
+              >
+                退出
+              </Button>
+            </Toolbar>
+          </AppBar>
 
-        <div style={{ marginTop: 10 }}>
-          {playerId === 0 ? (
-            <God />
-          ) : (
-            <Player
-              id={playerId}
-              pass={playerPass}
-              name={playerStatus.data.updatePlayerPass.name}
-            />
-          )}
-        </div>
-      </div>
+          {<div style={{ marginTop: 10 }}>
+            {playerId === 0 ? (
+              <God />
+            ) : (
+              <Player
+                id={playerId}
+                pass={playerPass}
+                name={playerStatus.data.updatePlayerPass.name}
+              />
+            )}
+            </div>}
+          <Box pt={4}>
+            <Copyright />
+          </Box>
+        </Container>
+      </React.Fragment>
     );
-
-    /*
-    return (
-      <div>
-        <Button
-          variant="contained"
-          color="secondary"
-          onClick={() => {
-            setIsValidPlayerStatus(false);
-          }}
-        >
-          退出
-        </Button>
-        <Player
-          id={playerId}
-          pass={playerPass}
-          name={playerStatus.data.updatePlayerPass.name}
-        />
-      </div>
-    );
-    */
   }
 
   return (
