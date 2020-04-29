@@ -26,9 +26,11 @@ import IconButton from "@material-ui/core/IconButton";
 import MenuIcon from "@material-ui/icons/Menu";
 import Divider from "@material-ui/core/Divider";
 import Footer from "./Footer";
-import CssBaseline from '@material-ui/core/CssBaseline';
-import Box from '@material-ui/core/Box';
-import Container from '@material-ui/core/Container';
+import CssBaseline from "@material-ui/core/CssBaseline";
+import Box from "@material-ui/core/Box";
+import Container from "@material-ui/core/Container";
+
+import Avatar from 'react-avatar';
 import {
   fade,
   withStyles,
@@ -45,7 +47,7 @@ const client = new ApolloClient({
 });
 const useStyles = makeStyles((theme) => ({
   margin: {
-    margin: theme.spacing(1),
+    //margin: theme.spacing(1),
   },
   table: {
     minWidth: 450,
@@ -55,6 +57,9 @@ const useStyles = makeStyles((theme) => ({
   },
   menuButton: {
     marginRight: theme.spacing(2),
+  },
+  submit: {
+    margin: theme.spacing(3, 0, 2),
   },
 }));
 
@@ -103,6 +108,7 @@ const GET_PLAYER_INFO = gql`
     players {
       id
       name
+      isEmpty
     }
   }
 `;
@@ -149,9 +155,9 @@ const REMOVE_ALL_PLAYER = gql`
 function Copyright() {
   return (
     <Typography variant="body2" color="textSecondary" align="center">
-      {'Copyright © '}
+      {"Copyright © "}
       {new Date().getFullYear()}
-      {'.'}
+      {"."}
     </Typography>
   );
 }
@@ -257,7 +263,7 @@ function Player(props) {
   console.log(data.player);
   const { id, name: playerName, roleName } = data.player;
   return (
-    <div style={{ marginTop:120 }}>
+    <div style={{ marginTop: 120 }}>
       <TextField
         id="standard-basic"
         label="姓名"
@@ -286,7 +292,7 @@ function Login() {
   const classes = useStyles();
 
   const [playerId, setPlayerId] = React.useState(-1);
-  const [playerPass, setPlayerPass] = React.useState(0);
+  const [playerPass, setPlayerPass] = React.useState("");
   const { loading, error, data } = useQuery(GET_PLAYERS);
   const [updatePlayerPass, playerStatus] = useMutation(UPDATE_PLAYER_PASS);
   const [isValidPlayerStatus, setIsValidPlayerStatus] = React.useState(false);
@@ -301,8 +307,6 @@ function Login() {
     playerStatus.data.updatePlayerPass.isValid &&
     isValidPlayerStatus
   ) {
-    console.log(playerStatus);
-
     return (
       <React.Fragment>
         <CssBaseline />
@@ -332,17 +336,19 @@ function Login() {
             </Toolbar>
           </AppBar>
 
-          {<div style={{ marginTop: 10 }}>
-            {playerId === 0 ? (
-              <God />
-            ) : (
-              <Player
-                id={playerId}
-                pass={playerPass}
-                name={playerStatus.data.updatePlayerPass.name}
-              />
-            )}
-            </div>}
+          {
+            <div style={{ marginTop: 10 }}>
+              {playerId === 0 ? (
+                <God />
+              ) : (
+                <Player
+                  id={playerId}
+                  pass={playerPass}
+                  name={playerStatus.data.updatePlayerPass.name}
+                />
+              )}
+            </div>
+          }
           <Box pt={4}>
             <Copyright />
           </Box>
@@ -352,9 +358,12 @@ function Login() {
   }
 
   return (
-    <div style={{ marginTop: "20%" }}>
-      <div style={{ display: "flex", justifyContent: "center" }}>
+    <Container component="main" maxWidth="xs">
+      <CssBaseline />
+      <div style={{ marginTop: "20%" }}>
+      <Avatar round={true} src="wolf-login.png"/>
         <Autocomplete
+          fullWidth
           id="combo-box-demo"
           className={classes.margin}
           options={data.players}
@@ -377,7 +386,6 @@ function Login() {
           onChange={(event, newValue) => {
             setPlayerId(newValue.id);
           }}
-          style={{ width: 200, marginLeft: 55 }}
           renderInput={(params) => (
             <TextField
               {...params}
@@ -387,11 +395,23 @@ function Login() {
             />
           )}
         />
-        <div style={{ marginTop: 10 }}>
-          <Fab
-            size="medium"
-            color="secondary"
-            aria-label="add"
+
+        <TextField
+          fullWidth
+          id="standard-basic"
+          label="密碼"
+          variant="outlined"
+          className={classes.margin}
+          margin="dense"
+          onChange={(e) => setPlayerPass(e.target.value)}
+          value={playerPass}
+        />
+        <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            color="primary"
+            className={classes.submit}
             onClick={() => {
               updatePlayerPass({
                 variables: { id: playerId, pass: playerPass },
@@ -399,20 +419,15 @@ function Login() {
               setIsValidPlayerStatus(true);
             }}
           >
-            <AddIcon />
-          </Fab>
-        </div>
+            登入
+          </Button>
       </div>
-      <TextField
-        id="standard-basic"
-        label="密碼"
-        variant="outlined"
-        className={classes.margin}
-        margin="dense"
-        onChange={(e) => setPlayerPass(e.target.value)}
-        value={playerPass}
-      />
-    </div>
+
+      
+      <Box mt={8}>
+        <Copyright />
+      </Box>
+    </Container>
   );
 }
 
@@ -420,7 +435,6 @@ function App() {
   return (
     <div className="App">
       <ApolloProvider client={client}>
-        {/*<God />*/}
         <Login />
       </ApolloProvider>
     </div>
