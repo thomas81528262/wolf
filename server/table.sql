@@ -9,12 +9,9 @@ CREATE TABLE player (
 );
 
 
-CREATE TABLE player (
-	id int4 NOT NULL,
+CREATE TABLE "role" (
 	"name" varchar NULL,
-	roleid int4 NULL,
-	pass varchar NULL,
-	isempty bool NULL,
-	CONSTRAINT player_pk PRIMARY KEY (id),
-	CONSTRAINT player_un UNIQUE (name)
+	id int4 NULL,
+	"number" int4 NULL
 );
+
