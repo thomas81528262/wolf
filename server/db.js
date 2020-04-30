@@ -11,6 +11,26 @@ const pool = new Pool({
 });
 
 class Db {
+
+  static async insertTemplateHeader({description}) {
+    try {
+      const text = "insert into public.template_header (description) values($1) RETURNING id";
+      const values = [description];
+      const result = await pool.query(text, values);
+      
+      if (result.rows.length > 0) {
+        return result.rows[0].id
+      }
+
+      return null;
+
+    } catch (err) {
+      console.log(err.stack);
+      return null;
+    }
+  }
+
+
   static async getPlayerInfo({ id, pass }) {
     try {
       const text =
