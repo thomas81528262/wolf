@@ -25,9 +25,19 @@ Go [here](https://nodejs.org/en/download/) to download the installer
 
 #### run the app
 
-in repo
+cd into folder in terminal
 
-`$ npm run start`
+Install node modules
+
+`$ npm run init`
+
+Start the server
+
+`$ npm run server`
+
+Open another tab and cd into folder
+
+`$ npm run app`
 
 ### Using docker
 

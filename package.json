@@ -2,6 +2,9 @@
   "name": "wolf-app",
   "version": "0.1.0",
   "scripts": {
+    "init": "cd server && npm install && cd ../app && npm install",
+    "server": "cd server && node index.js",
+    "app": "cd app && npm run start",
     "start": "cd server && npm install && node index.js"
   }
 }
