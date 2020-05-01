@@ -14,6 +14,7 @@ import PlayerTable from "./PlayerTable";
 import RoleTable from "./RoleTable";
 import Fab from "@material-ui/core/Fab";
 import AddIcon from "@material-ui/icons/Add";
+import DeleteIcon from "@material-ui/icons/Delete";
 import SaveIcon from "@material-ui/icons/Save";
 import CreateIcon from "@material-ui/icons/Create";
 import Container from "@material-ui/core/Container";
@@ -28,6 +29,7 @@ import IconButton from "@material-ui/core/IconButton";
 import AddRole from "./AddRole";
 import EditTemplateRole from "./EditTemplateRole";
 import Checkbox from "@material-ui/core/Checkbox";
+import Box from "@material-ui/core/Box";
 const useStyles = makeStyles((theme) => ({
   margin: {
     margin: theme.spacing(1),
@@ -63,6 +65,13 @@ const ADD_TEMPLATE = gql`
   }
 `;
 
+const DELETE_TEMPLATE = gql`
+  mutation DeleteTemplate($name: String!) {
+    deleteTemplate(name: $name)
+  }
+`;
+
+
 const ENABLE_TEMPLATE = gql`
   mutation EnableTemplate($name: String!) {
     enableTemplate(name: $name)
@@ -81,6 +90,9 @@ function TemplateTable(props) {
             <TableCell align="left">遊戲模式</TableCell>
             <TableCell align="right">
               <div style={{ marginRight: 10 }}>編輯</div>
+            </TableCell>
+            <TableCell align="right">
+              <div style={{ marginRight: 10 }}>刪除</div>
             </TableCell>
           </TableRow>
         </TableHead>
@@ -112,6 +124,19 @@ function TemplateTable(props) {
                   <CreateIcon />
                 </IconButton>
               </TableCell>
+              <TableCell align="right">
+                <IconButton
+                  aria-label="delete"
+                  onClick={() => {
+                    
+                      //props.onEdit(row.name);
+                      props.onDelete(row.name)
+                  }}
+                  disabled={row.isEnabled}
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -126,6 +151,7 @@ export default function Admin() {
   const [name, setName] = React.useState("");
   const [editName, setEditName] = React.useState("");
   const [addTemplate] = useMutation(ADD_TEMPLATE);
+  const [deleteTemplate] = useMutation(DELETE_TEMPLATE)
   const [isBusy, setIsBusy] = React.useState(false);
 
   const { loading, error, data, stopPolling, startPolling, called } = useQuery(
@@ -154,6 +180,7 @@ export default function Admin() {
   if (editName) {
     return (
       <div>
+        <Box display="flex">
         <Button
           variant="contained"
           color="secondary"
@@ -163,6 +190,7 @@ export default function Admin() {
         >
           退出
         </Button>
+        </Box>
         <EditTemplateRole name={editName} />
       </div>
     );
@@ -205,6 +233,9 @@ export default function Admin() {
           onSelect={(name) => {
             enableTemplate({ variables: { name } });
             stopPolling();
+          }}
+          onDelete={(name)=>{
+            deleteTemplate({variables:{name}})
           }}
         />
       </Container>

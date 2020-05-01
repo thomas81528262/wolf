@@ -45,29 +45,29 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-
-
 //if the number = 0 will not show
 //caculate the total number
 function processData(data) {
-    let total = 0;
+  let total = 0;
 
-    const result = [];
+  const result = [];
 
-    data.forEach(d=>{
-        const {number} = d;
-        if (number) {
-            total += number;
-            result.push(d);
-        }
-    })
-    return {total, data:result};
+  data.forEach((d) => {
+    const { number } = d;
+    if (number) {
+      total += number;
+      result.push(d);
+    }
+  });
+  return { total, data: result };
 }
 
-
-function SimpleTable(props) {
+function BaseTable(props) {
   const classes = useStyles();
-  const {total, data} = processData(props.data);
+
+
+  
+  const { total, data } = processData(props.data);
 
   return (
     <TableContainer component={Paper}>
@@ -81,15 +81,23 @@ function SimpleTable(props) {
         </TableHead>
         <TableBody>
           {data.map((row) => (
-            <TableRow key={row.name}>
-              <TableCell component="th" scope="row">
-                {row.name}
-              </TableCell>
-              <TableCell align="right">{row.number}</TableCell>
-            </TableRow>
+            <React.Fragment key={row.name}>
+              <TableRow key={row.name}>
+                <TableCell component="th" scope="row">
+                  {row.name}
+                </TableCell>
+                <TableCell align="right">{row.number}</TableCell>
+              </TableRow>
+              {row.players ? (
+                <TableRow align="left">
+                  {row.players.map((v,idx) => (
+                    <div style={{ fontSize: 22, marginLeft:45 }} key={idx}>{`${v.id} : ${v.name}`}</div>
+                  ))}
+                </TableRow>
+              ) : null}
+           </React.Fragment>
           ))}
           <TableRow>
-         
             <TableCell align="right">總人數</TableCell>
             <TableCell align="right">{total}</TableCell>
           </TableRow>
@@ -99,23 +107,22 @@ function SimpleTable(props) {
   );
 }
 
-export default function RoleTable(props) {
-  const {variables, query} = props;
-  const { loading, error, data:rawData } = useQuery(query, {variables,
-    pollInterval: 500,
+function RoleTable(props) {
+  const { variables, query, pollInterval } = props;
+  const { loading, error, data: rawData } = useQuery(query, {
+    variables,
+    pollInterval,
   });
 
-  if (loading) {
+  if (loading || !rawData) {
     return null;
   }
 
-  const data = props.parseData(rawData)
-  
-  console.log(data)
+  const data = props.parseData(rawData);
 
-  return (
-   
-      <SimpleTable data={data} />
-    
-  );
+  console.log(data);
+
+  return <BaseTable data={data} />;
 }
+
+export { RoleTable, BaseTable };

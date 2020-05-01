@@ -30,7 +30,7 @@ import CssBaseline from "@material-ui/core/CssBaseline";
 import Box from "@material-ui/core/Box";
 import Container from "@material-ui/core/Container";
 
-import Avatar from 'react-avatar';
+import Avatar from "react-avatar";
 import {
   fade,
   withStyles,
@@ -41,7 +41,8 @@ import { useDebounce, useDebounceCallback } from "@react-hook/debounce";
 import ApolloClient from "apollo-boost";
 
 import God from "./God";
-import Admin from "./Admin"
+import Admin from "./Admin";
+import Player from "./Player";
 
 const client = new ApolloClient({
   uri: "/graphql",
@@ -78,52 +79,6 @@ const GET_PLAYERS = gql`
   }
 `;
 
-const GET_ROLES = gql`
-  {
-    roles {
-      id
-      name
-      number
-    }
-    players {
-      id
-      name
-      roleName
-      isEmpty
-    }
-  }
-`;
-
-const GET_PLAYER = gql`
-  query GetPlayer($id: Int!, $pass: String!) {
-    player(id: $id, pass: $pass) {
-      id
-      name
-    }
-  }
-`;
-
-const GET_PLAYER_INFO = gql`
-  query GetPlayer($id: Int!, $pass: String!) {
-    player(id: $id, pass: $pass) {
-      id
-      name
-      roleName
-    }
-    players {
-      id
-      name
-      isEmpty
-    }
-  }
-`;
-
-const UPDATE_ROLE_NUMBER = gql`
-  mutation UpdateRoleNumber($id: Int!, $number: Int!) {
-    updateRoleNumber(id: $id, number: $number)
-  }
-`;
-
 const UPDATE_PLAYER_PASS = gql`
   mutation UpdatePlayerPass($id: Int!, $pass: String!) {
     updatePlayerPass(id: $id, pass: $pass) {
@@ -133,65 +88,12 @@ const UPDATE_PLAYER_PASS = gql`
   }
 `;
 
-const UPDATE_PLAYER_NAME = gql`
-  mutation UpdatePlayerName($id: Int!, $name: String!) {
-    updatePlayerName(id: $id, name: $name)
-  }
-`;
-
-const GENERATE_ROLE = gql`
-  mutation GenerateRole {
-    generateRole
-  }
-`;
-
-const GENERATE_PLAYER = gql`
-  mutation GeneratePlayer {
-    generatePlayer
-  }
-`;
-
-const REMOVE_ALL_PLAYER = gql`
-  mutation RemoveAllPlayer {
-    removeAllPlayer
-  }
-`;
-
 function Copyright() {
   return (
     <Typography variant="body2" color="textSecondary" align="center">
       {"Copyright © "}
       {new Date().getFullYear()}
-      {"."}
     </Typography>
-  );
-}
-
-function SimpleTable(props) {
-  const classes = useStyles();
-
-  return (
-    <TableContainer component={Paper}>
-      <Table className={classes.table} aria-label="simple table" size="small">
-        <TableHead>
-          <TableRow>
-            <TableCell>角色</TableCell>
-
-            <TableCell align="right">人數</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {props.data.map((row) => (
-            <TableRow key={row.name}>
-              <TableCell component="th" scope="row">
-                {row.name}
-              </TableCell>
-              <TableCell align="right">{row.number}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
   );
 }
 
@@ -206,7 +108,7 @@ function PlayerTable(props) {
             <TableCell>ID</TableCell>
 
             <TableCell align="right">玩家</TableCell>
-            
+
             <TableCell align="right">上線</TableCell>
           </TableRow>
         </TableHead>
@@ -237,63 +139,6 @@ function PlayerTable(props) {
   );
 }
 
-function Player(props) {
-  const classes = useStyles();
-
-  const { loading, error, data } = useQuery(GET_PLAYER_INFO, {
-    fetchPolicy: "network-only",
-    variables: { id: props.id, pass: props.pass },
-    pollInterval: 500,
-  });
-
-  console.log(props);
-
-  const [value, setValue] = useDebounce(props.name, 500);
-  const [name, setName] = React.useState(props.name);
-  const [updatePlayerName, { called }] = useMutation(UPDATE_PLAYER_NAME);
-
-  React.useEffect(() => {
-    if (value && (value !== props.name || called)) {
-      updatePlayerName({
-        variables: { id: props.id, name: value },
-      });
-    }
-  }, [value]);
-
-  if (loading) {
-    return <div>Loading</div>;
-  }
-
-  console.log(data.player);
-  const { id, name: playerName, roleName } = data.player;
-  return (
-    <Container maxWidth="sm">
-      <TextField
-        id="standard-basic"
-        label="姓名"
-        variant="outlined"
-        className={classes.margin}
-        margin="dense"
-        value={name}
-        onChange={(e) => {
-          setValue(e.target.value);
-          setName(e.target.value);
-        }}
-      />
-      <Card className={classes.root}>
-        <CardContent>
-          <Typography variant="h1" component="h1">
-            {roleName}
-          </Typography>
-        </CardContent>
-      </Card>
-     
-      <PlayerTable data={data.players} />
-      </Container>
-   
-  );
-}
-
 function Login() {
   const classes = useStyles();
 
@@ -307,7 +152,7 @@ function Login() {
   }
 
   //if (playerStatus.data)
-
+  
   if (
     playerStatus.called &&
     playerStatus.data.updatePlayerPass.isValid &&
@@ -316,7 +161,7 @@ function Login() {
     return (
       <React.Fragment>
         <CssBaseline />
-        <Container>
+        <Container maxWidth="sm">
           <AppBar position="absolute">
             <Toolbar>
               <IconButton
@@ -341,11 +186,15 @@ function Login() {
               </Button>
             </Toolbar>
           </AppBar>
-         
+
           {
             <div style={{ marginTop: 100 }}>
               {playerId === 0 ? (
-                <God />
+                <God
+                  id={playerId}
+                  pass={playerPass}
+                  name={playerStatus.data.updatePlayerPass.name}
+                />
               ) : (
                 <Player
                   id={playerId}
@@ -355,7 +204,7 @@ function Login() {
               )}
             </div>
           }
-          
+
           <Box pt={4}>
             <Copyright />
           </Box>
@@ -368,7 +217,7 @@ function Login() {
     <Container component="main" maxWidth="xs">
       <CssBaseline />
       <div style={{ marginTop: "20%" }}>
-      <Avatar round={true} src="wolf-login.png"/>
+        <Avatar round={true} src="wolf-login.png" />
         <Autocomplete
           fullWidth
           id="combo-box-demo"
@@ -414,23 +263,22 @@ function Login() {
           value={playerPass}
         />
         <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            color="primary"
-            className={classes.submit}
-            onClick={() => {
-              updatePlayerPass({
-                variables: { id: playerId, pass: playerPass },
-              });
-              setIsValidPlayerStatus(true);
-            }}
-          >
-            登入
-          </Button>
+          type="submit"
+          fullWidth
+          variant="contained"
+          color="primary"
+          className={classes.submit}
+          onClick={() => {
+            updatePlayerPass({
+              variables: { id: playerId, pass: playerPass },
+            });
+            setIsValidPlayerStatus(true);
+          }}
+        >
+          登入
+        </Button>
       </div>
 
-      
       <Box mt={8}>
         <Copyright />
       </Box>
@@ -443,7 +291,6 @@ function App() {
     <div className="App">
       <ApolloProvider client={client}>
         <Login />
-        
       </ApolloProvider>
     </div>
   );

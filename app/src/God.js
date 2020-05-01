@@ -11,7 +11,7 @@ import { gql } from "apollo-boost";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import TextField from "@material-ui/core/TextField";
 import PlayerTable from "./PlayerTable";
-import RoleTable from "./RoleTable";
+import { RoleTable } from "./RoleTable";
 import Fab from "@material-ui/core/Fab";
 import AddIcon from "@material-ui/icons/Add";
 import SaveIcon from "@material-ui/icons/Save";
@@ -20,7 +20,10 @@ import Paper from "@material-ui/core/Paper";
 import Tabs from "@material-ui/core/Tabs";
 import Tab from "@material-ui/core/Tab";
 import Box from "@material-ui/core/Box";
-import Admin from "./Admin"
+import Admin from "./Admin";
+import Typography from "@material-ui/core/Typography";
+import EnabedTemplateInfo from "./EnabledTemplateInfo";
+import { useDebounce, useDebounceCallback } from "@react-hook/debounce";
 const GET_PLAYERS = gql`
   {
     players {
@@ -33,11 +36,6 @@ const GET_PLAYERS = gql`
 
 const GET_ROLES = gql`
   {
-    roles {
-      id
-      name
-      number
-    }
     players {
       id
       name
@@ -48,17 +46,22 @@ const GET_ROLES = gql`
 `;
 
 const GET_ENABLED_TEMPLATE = gql`
-{
+  {
     enabledTemplate {
-    name
-    description
-    roles {
       name
+      description
+      roles {
+        name
+        id
+        number
+      }
+    }
+    players {
       id
-      number
+      name
+      roleName
     }
   }
-}
 `;
 
 const GET_PLAYER = gql`
@@ -111,9 +114,15 @@ const GENERATE_ROLE = gql`
   }
 `;
 
-const GENERATE_PLAYER = gql`
-  mutation GeneratePlayer {
-    generatePlayer
+const GENERATE_TEMPLATE_ROLE = gql`
+  mutation GenerateTemplateRole {
+    generateTemplateRole
+  }
+`;
+
+const GENERATE_TEMPLATE_PLAYER = gql`
+  mutation GenerateTemplatePlayer {
+    generateTemplatePlayer
   }
 `;
 
@@ -123,7 +132,6 @@ const REMOVE_ALL_PLAYER = gql`
   }
 `;
 //enableTemplate(name:"777")
-
 
 const useStyles = makeStyles((theme) => ({
   margin: {
@@ -140,161 +148,209 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-
-
 function TabPanel(props) {
-    const { children, value, index, ...other } = props;
-  
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`full-width-tabpanel-${index}`}
+      aria-labelledby={`full-width-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box p={3}>{children}</Box>}
+    </div>
+  );
+}
+const GET_TEMPLATE = gql`
+  query GetTemplate($name: String!) {
+    template(name: $name) {
+      roles {
+        name
+        number
+        id
+      }
+      description
+    }
+    players {
+      id
+      name
+      roleName
+    }
+  }
+`;
+
+function TemplateRoleTable(props) {
+  return (
+    <RoleTable
+      query={GET_ENABLED_TEMPLATE}
+      variables={{}}
+      parseData={(data) => {
+        const playerGroup = {};
+
+        data.players.forEach((p) => {
+          const { roleName, name, id } = p;
+          if (playerGroup[roleName]) {
+            playerGroup[roleName].push({ name: name || "", id });
+          } else {
+            playerGroup[roleName] = [{ name: name || "", id }];
+          }
+        });
+
+        console.log(playerGroup);
+
+        const result = [];
+
+        data.enabledTemplate.roles.forEach((r) => {
+          console.log("r", r);
+
+          const { name } = r;
+          result.push({ ...r, players: playerGroup[name] });
+        });
+
+        console.log(result);
+
+        return result;
+      }}
+      pollInterval={500}
+    />
+  );
+}
+
+function Game(props) {
+  const classes = useStyles();
+
+  const { loading, error, data } = useQuery(GET_ROLES, {
+    pollInterval: 500,
+  });
+
+  //const [updateRoleNumber] = useMutation(UPDATE_ROLE_NUMBER);
+
+  const [generateRole] = useMutation(GENERATE_TEMPLATE_ROLE);
+  const [generatePlayer] = useMutation(GENERATE_TEMPLATE_PLAYER);
+  const [removeAllPlayer] = useMutation(REMOVE_ALL_PLAYER);
+  //const [roleId, setRoleId] = React.useState(-1);
+  //const [roleNumber, setRoleNumber] = React.useState(0);
+
+  const [value, setValue] = useDebounce(props.name, 500);
+  const [name, setName] = React.useState(props.name||'');
+  const [updatePlayerName, { called }] = useMutation(UPDATE_PLAYER_NAME);
+
+  React.useEffect(() => {
+    if (value && (value !== props.name || called)) {
+      updatePlayerName({
+        variables: { id: 0, name: value },
+      });
+    }
+  }, [value]);
+  /*
+  const handleRoleChange = (event, newValue) => {
+    setRoleId(newValue.id);
+  };
+  */
+
+  if (props.isPlayerMode) {
     return (
-      <div
-        role="tabpanel"
-        hidden={value !== index}
-        id={`full-width-tabpanel-${index}`}
-        aria-labelledby={`full-width-tab-${index}`}
-        {...other}
-      >
-        {value === index && <Box p={3}>{children}</Box>}
+      <div style={{}}>
+        <Box display="flex">
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => {
+              generateRole();
+            }}
+          >
+            產生角色
+          </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => {
+              removeAllPlayer();
+            }}
+          >
+            刪除玩家
+          </Button>
+        </Box>
+        <Box display="flex">
+        <TextField
+          id="standard-basic"
+          label="姓名"
+          variant="outlined"
+          margin="dense"
+          value={name}
+          onChange={(e) => {
+            setValue(e.target.value);
+            setName(e.target.value);
+          }}
+        />
+        </Box>
+        <PlayerTable data={data.players} />
       </div>
     );
   }
 
-
-function Game() {
-  const classes = useStyles();
-  const { loading, error, data } = useQuery(GET_ROLES, {
-    pollInterval: 500,
-    
-  });
-  const [updateRoleNumber] = useMutation(UPDATE_ROLE_NUMBER);
-
-  const [generateRole] = useMutation(GENERATE_ROLE);
-  const [generatePlayer] = useMutation(GENERATE_PLAYER);
-  const [removeAllPlayer] = useMutation(REMOVE_ALL_PLAYER);
-  const [roleId, setRoleId] = React.useState(-1);
-  const [roleNumber, setRoleNumber] = React.useState(0);
-  if (loading) {
-    return <div>Loading</div>;
-  }
-
-  const handleRoleChange = (event, newValue) => {
-    setRoleId(newValue.id);
-  };
-
-  if (data.players.length > 1) {
-    return (
-      <div style={{ marginTop: 120 }}>
+  return (
+    <div style={{}}>
+      <Box display="flex">
         <Button
           variant="contained"
           color="primary"
           onClick={() => {
-            generateRole();
+            generatePlayer();
           }}
         >
-          產生角色
+          加入玩家
         </Button>
-        <Button
-          variant="contained"
-          color="secondary"
-          onClick={() => {
-            removeAllPlayer();
-          }}
-        >
-          刪除玩家
-        </Button>
-        <Container maxWidth="sm">
-          <PlayerTable data={data.players} />
-        </Container>
-      </div>
-    );
-  }
-
-  return (
-    <div style={{ marginTop: 120 }}>
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={() => {
-          generatePlayer();
-        }}
-      >
-        加入玩家
-      </Button>
-      <div style={{ display: "flex", justifyContent: "center" }}>
-        <Autocomplete
-          id="combo-box-demo"
-          options={data.roles.filter((d) => d.id > 0)}
-          getOptionLabel={(option) => option.name}
-          style={{ width: 300 }}
-          onChange={handleRoleChange}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label="角色"
-              variant="outlined"
-              margin="dense"
-            />
-          )}
-        />
-
-        <TextField
-          id="standard-basic"
-          label="人數"
-          variant="outlined"
-          className={classes.margin}
-          margin="dense"
-          type="number"
-          value={roleNumber}
-          onChange={(e) => setRoleNumber(e.target.value)}
-        />
-        <div style={{ marginTop: 5 }}>
-          <Fab
-            size="medium"
-            color="secondary"
-            aria-label="add"
-            size="small"
-            onClick={() => {
-              console.log(roleId, roleNumber);
-              updateRoleNumber({
-                variables: { id: roleId, number: parseInt(roleNumber) },
-              });
-            }}
-          >
-            <SaveIcon />
-          </Fab>
-        </div>
-      </div>
-      <Container maxWidth="sm">{/*<RoleTable />*/}</Container>
+      </Box>
+      <EnabedTemplateInfo />
     </div>
   );
 }
 
-export default function God() {
+export default function God(props) {
   const [value, setValue] = React.useState(0);
-
+  const { loading, error, data } = useQuery(GET_ROLES, {
+    pollInterval: 500,
+  });
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
+
+  if (loading) {
+    return <div>Loading</div>;
+  }
+
+  const { id, pass, name } = props;
+
+  const isPlayerMode = data.players.length > 1 ? true : false;
+
   return (
-    <Container maxWidth="sm">
-      <Paper square>
-        <Tabs
-          value={value}
-          indicatorColor="primary"
-          textColor="primary"
-          onChange={handleChange}
-          aria-label="disabled tabs example"
-        >
-          <Tab label="遊戲" />
-          <Tab label="模式" />
-          <Tab label="黑夜順序" />
-        </Tabs>
-        <TabPanel value={value} index={0}>
-          <Game />
+    <Paper elevation={3}>
+      <Tabs
+        value={value}
+        indicatorColor="primary"
+        textColor="primary"
+        onChange={handleChange}
+        aria-label="disabled tabs example"
+        variant="fullWidth"
+      >
+        <Tab label="遊戲" />
+        <Tab label={isPlayerMode ? "黑夜視野" : "模式選擇"} />
+        {isPlayerMode && <Tab label="模式" />}
+      </Tabs>
+      <TabPanel value={value} index={0}>
+        <Game isPlayerMode={isPlayerMode} id={id} pass={pass} name={name} />
+      </TabPanel>
+      <TabPanel value={value} index={1}>
+        {isPlayerMode ? <TemplateRoleTable /> : <Admin />}
+      </TabPanel>
+      {isPlayerMode && (
+        <TabPanel value={value} index={2}>
+          <EnabedTemplateInfo />
         </TabPanel>
-        <TabPanel value={value} index={1}>
-          <Admin />
-        </TabPanel>
-      </Paper>
-    </Container>
+      )}
+    </Paper>
   );
 }

@@ -11,7 +11,7 @@ import { gql } from "apollo-boost";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import TextField from "@material-ui/core/TextField";
 import PlayerTable from "./PlayerTable";
-import RoleTable from "./RoleTable";
+import { RoleTable } from "./RoleTable";
 import Fab from "@material-ui/core/Fab";
 import AddIcon from "@material-ui/icons/Add";
 import SaveIcon from "@material-ui/icons/Save";
@@ -26,6 +26,9 @@ import IconButton from "@material-ui/core/IconButton";
 import DragBox from "../src/drag/Container";
 import { DndProvider } from "react-dnd";
 import Backend from "react-dnd-html5-backend";
+
+
+
 const GET_TEMPLATE = gql`
   query GetTemplate($name: String!) {
     template(name: $name) {
@@ -52,12 +55,10 @@ const UPDATE_RULE = gql`
 `;
 
 const UPDATE_ROLE_PRIORITY = gql`
-  mutation UpdateRolePriority($name: String!, $ids:[Int]!) {
+  mutation UpdateRolePriority($name: String!, $ids: [Int]!) {
     updateTemplateRolePriority(name: $name, ids: $ids)
   }
 `;
-
-
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -75,70 +76,67 @@ function TabPanel(props) {
   );
 }
 
-const convertToDragData = (data)=>{
-    const result = [];
-    data.forEach(d=>{
-        const {name, id} = d;
-        result.push({id, text:name});
-    })
-    return result;
-}
+const convertToDragData = (data) => {
+  const result = [];
+  data.forEach((d) => {
+    const { name, id } = d;
+    result.push({ id, text: name });
+  });
+  return result;
+};
 
 function EditDarkPriority(props) {
   const { name } = props;
 
-
-
   const [priorityList, setPrioritylist] = React.useState([]);
-  const [orgPriorityList, setOrgPriorityList] = React.useState([])
+  const [orgPriorityList, setOrgPriorityList] = React.useState([]);
   const [isLoading, setIsLoading] = React.useState(false);
   const { loading, error, data, refetch } = useQuery(GET_TEMPLATE, {
-    fetchPolicy: 'network-only',
+    fetchPolicy: "network-only",
     notifyOnNetworkStatusChange: true,
-    variables: { name }, onCompleted:(res)=>{
-        console.log('complete', res)
-        const idData = convertToDragData(res.template.roles);
-        setPrioritylist(idData.map(v=>v.id));
-        setOrgPriorityList(idData.map(v=>v.id));
-        
-    }
+    variables: { name },
+    onCompleted: (res) => {
+      console.log("complete", res);
+      const idData = convertToDragData(res.template.roles);
+      setPrioritylist(idData.map((v) => v.id));
+      setOrgPriorityList(idData.map((v) => v.id));
+    },
   });
-  const [updateRolePriority, res] = useMutation(UPDATE_ROLE_PRIORITY, {onCompleted:()=>{
-
-    
-    refetch()
-  }});
-
-  
+  const [updateRolePriority, res] = useMutation(UPDATE_ROLE_PRIORITY, {
+    onCompleted: () => {
+      refetch();
+    },
+  });
 
   if (loading || res.loading) {
     return <div>Loading</div>;
   }
 
-  console.log(data, orgPriorityList, priorityList)
-  const dragData = convertToDragData(data.template.roles)
+  console.log(data, orgPriorityList, priorityList);
+  const dragData = convertToDragData(data.template.roles);
 
-  
-  
   return (
-    <DndProvider backend={Backend} >
-        <IconButton
+    <DndProvider backend={Backend}>
+      <IconButton
         aria-label="delete"
         onClick={() => {
-            updateRolePriority({variables:{name, ids:priorityList}});
-            
+          updateRolePriority({ variables: { name, ids: priorityList } });
         }}
-        color={ orgPriorityList.toString()=== priorityList.toString()  ? "primary" : "secondary"}
+        color={
+          orgPriorityList.toString() === priorityList.toString()
+            ? "primary"
+            : "secondary"
+        }
       >
         <SaveIcon />
       </IconButton>
-      <DragBox data={dragData} onUpdate={(data)=>{
-
-          console.log('update view')
-          setPrioritylist(data.map(v=>v.id));
-          
-      }}/>
-     
+      <DragBox
+        data={dragData}
+        onUpdate={(data) => {
+          console.log("update view");
+          setPrioritylist(data.map((v) => v.id));
+        }}
+      />
     </DndProvider>
   );
 }
@@ -162,9 +160,13 @@ function EditRole(props) {
         query={GET_TEMPLATE}
         variables={{ name }}
         parseData={(data) => {
+            if (!data) {
+                return [];
+            }
           return data.template.roles;
         }}
-      />
+        pollInterval={500}
+    />
     </div>
   );
 }
@@ -227,35 +229,36 @@ export default function EditTemplate(props) {
   const { name } = props;
 
   const [value, setValue] = React.useState(0);
-
+  
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
 
   return (
-    <Container maxWidth="sm">
-      <Paper square>
-        <Tabs
-          value={value}
-          indicatorColor="primary"
-          textColor="primary"
-          onChange={handleChange}
-          aria-label="disabled tabs example"
-        >
-          <Tab label="角色" />
-          <Tab label="規則" />
-          <Tab label="黑夜順序" />
-        </Tabs>
-        <TabPanel value={value} index={0}>
-          <EditRole name={name} />
-        </TabPanel>
-        <TabPanel value={value} index={1}>
-          <EditRule name={name} />
-        </TabPanel>
-        <TabPanel value={value} index={2}>
-          <EditDarkPriority name={name}/>
-        </TabPanel>
-      </Paper>
-    </Container>
+    <Paper square>
+      <Tabs
+        value={value}
+        indicatorColor="primary"
+        textColor="primary"
+        onChange={handleChange}
+        aria-label="disabled tabs example"
+      >
+        <Tab label="角色" />
+        <Tab label="規則" />
+        <Tab label="黑夜順序" />
+        
+      </Tabs>
+      <TabPanel value={value} index={0}>
+        <EditRole name={name} />
+      </TabPanel>
+      <TabPanel value={value} index={1}>
+        <EditRule name={name} />
+      </TabPanel>
+      <TabPanel value={value} index={2}>
+        <EditDarkPriority name={name} />
+        
+      </TabPanel>
+     
+    </Paper>
   );
 }

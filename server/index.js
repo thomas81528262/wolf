@@ -5,8 +5,6 @@ const WolfModel = require("./model");
 const typeDefs = gql`
   # Comments in GraphQL strings (such as this one) start with the hash (#) symbol.
 
- 
-
   type Player {
     name: String
     id: Int
@@ -24,8 +22,8 @@ const typeDefs = gql`
   type Template {
     name: String
     description: String
-    roles:[Role]
-    isEnabled:Boolean
+    roles: [Role]
+    isEnabled: Boolean
   }
 
   type PlayerStatus {
@@ -34,15 +32,15 @@ const typeDefs = gql`
   }
 
   input RoleOrder {
-   id: [Int]
+    id: [Int]
   }
 
   # The "Query" type is special: it lists all of the available queries that
   # clients can execute, along with the return type for each. In this
   # case, the "books" query returns an array of zero or more Books (defined above).
   type Query {
-    enabledTemplate:Template
-    template(name:String):Template
+    enabledTemplate: Template
+    template(name: String): Template
     templates: [Template]
     players: [Player]
     roles: [Role]
@@ -55,30 +53,30 @@ const typeDefs = gql`
     generatePlayer: String
     generateRole: String
     removeAllPlayer: String
-    addNewTemplate(name:String): String
+    addNewTemplate(name: String): String
+    deleteTemplate(name:String):String
+    generateTemplatePlayer: String
+    generateTemplateRole: String
     updateTemplateDescription(name: String, description: String): String
-    updateTemplateRole(name: String, roleId: Int, number: Int):String
-    updateTemplateRolePriority(ids:[Int], name: String): String
-    enableTemplate(name:String): String
+    updateTemplateRole(name: String, roleId: Int, number: Int): String
+    updateTemplateRolePriority(ids: [Int], name: String): String
+    enableTemplate(name: String): String
   }
 `;
 
 const resolvers = {
   Query: {
-    enabledTemplate: async(root, args, context) =>{
-     
+    enabledTemplate: async (root, args, context) => {
       const result = await WolfModel.getEnabledTemplate();
       return result;
     },
-    template: async(root, args, context) =>{
-      const {name} = args;
-      const result = await WolfModel.getEnabledTemplate({name});
+    template: async (root, args, context) => {
+      const { name } = args;
+      const result = await WolfModel.getEnabledTemplate({ name });
       return result;
     },
     templates: async () => {
       const result = await WolfModel.getAllTemplate();
-
-      console.log(result)
 
       return result;
     },
@@ -99,34 +97,40 @@ const resolvers = {
   },
   Mutation: {
     enableTemplate: async (root, args, context) => {
-      const { name} = args;
-      
-      await WolfModel.enableTemplate({name})
+      const { name } = args;
+
+      await WolfModel.enableTemplate({ name });
       return "pass";
     },
     updateTemplateRolePriority: async (root, args, context) => {
-      const { ids, name} = args;
-      
-      await WolfModel.updateTemplateRolePriority({name, ids})
+      const { ids, name } = args;
+
+      await WolfModel.updateTemplateRolePriority({ name, ids });
       return "pass";
     },
 
     updateTemplateRole: async (root, args, context) => {
       const { name, roleId, number } = args;
-      console.log(roleId)
-      await WolfModel.updateTemplateRole({name, roleId, number })
+      console.log(roleId);
+      await WolfModel.updateTemplateRole({ name, roleId, number });
       return "pass";
     },
     addNewTemplate: async (root, args, context) => {
       const { name, description } = args;
 
-      await WolfModel.addNewTemplate({name})
+      await WolfModel.addNewTemplate({ name });
+      return "pass";
+    },
+    deleteTemplate: async (root, args, context) => {
+      const { name, description } = args;
+
+      await WolfModel.deleteTemplate({ name });
       return "pass";
     },
 
     updateTemplateDescription: async (root, args, context) => {
       const { name, description } = args;
-      console.log(name, description)
+      console.log(name, description);
       await WolfModel.updateTemplateDescription({ name, description });
       return "pass";
     },
@@ -147,7 +151,14 @@ const resolvers = {
       await WolfModel.updatePlayerName({ id, name });
       return "pass";
     },
-
+    generateTemplatePlayer: async (root, args, context) => {
+      await WolfModel.generateTemplatePlayer();
+      return "pass";
+    },
+    generateTemplateRole: async (root, args, context) => {
+      await WolfModel.generateTemplateRole();
+      return "pass";
+    },
     generatePlayer: async (root, args, context) => {
       await WolfModel.generatePlayer();
       return "pass";

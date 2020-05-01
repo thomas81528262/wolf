@@ -144,6 +144,11 @@ ON CONFLICT (author, name)
   }
 
   static async insertTemplateHeader({ name }) {
+
+    if (!name) {
+      throw Error("The template name is Empty!!!")
+    }
+
     try {
       const text = `insert into public.template_header (name) values($1)`;
       const values = [name];
@@ -155,9 +160,29 @@ ON CONFLICT (author, name)
     }
   }
 
+  static async deleteTemplateHeader({name}) {
+
+    /*
+    if (!name) {
+      throw Error("The template name is Empty!!!")
+    }
+    */
+
+    try {
+      const text = `delete from public.template_header where name=$1`;
+      const values = [name];
+      await pool.query(text, values);
+      return "pass";
+    } catch (err) {
+      console.log(err.stack);
+      return "pass";
+    }
+  }
+
+
   static async updateTemplateDescription({ name, description }) {
     try {
-      console.log(name, description);
+      //console.log(name, description);
       const text = `update public.template_header set description=$1 where name=$2`;
       const values = [description, name];
       await pool.query(text, values);
