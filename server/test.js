@@ -7,8 +7,8 @@ const timeout = (ms) => new Promise((res)=>setTimeout(res,ms));
 async function run() {
     await timeout(3000);
     //await WolfModel.generatePlayer()
-    const result = await Db.insertTemplateHeader({description:'test'});
-    console.log(result)
+   await Db.upsertTemplateHeader({name:"測試",description:'test'});
+    await Db.upsertTeplateRole({name:"測試", roleId:5, number:6})
     //await WolfModel.generateRole();
     //Db.updateRoleNumber({number:10, id:1})
 }

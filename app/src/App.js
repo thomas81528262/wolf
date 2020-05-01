@@ -41,6 +41,7 @@ import { useDebounce, useDebounceCallback } from "@react-hook/debounce";
 import ApolloClient from "apollo-boost";
 
 import God from "./God";
+import Admin from "./Admin"
 
 const client = new ApolloClient({
   uri: "/graphql",
@@ -442,6 +443,7 @@ function App() {
     <div className="App">
       <ApolloProvider client={client}>
         <Login />
+        
       </ApolloProvider>
     </div>
   );

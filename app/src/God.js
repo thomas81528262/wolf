@@ -16,6 +16,11 @@ import Fab from "@material-ui/core/Fab";
 import AddIcon from "@material-ui/icons/Add";
 import SaveIcon from "@material-ui/icons/Save";
 import Container from "@material-ui/core/Container";
+import Paper from "@material-ui/core/Paper";
+import Tabs from "@material-ui/core/Tabs";
+import Tab from "@material-ui/core/Tab";
+import Box from "@material-ui/core/Box";
+import Admin from "./Admin"
 const GET_PLAYERS = gql`
   {
     players {
@@ -40,6 +45,20 @@ const GET_ROLES = gql`
       isEmpty
     }
   }
+`;
+
+const GET_ENABLED_TEMPLATE = gql`
+{
+    enabledTemplate {
+    name
+    description
+    roles {
+      name
+      id
+      number
+    }
+  }
+}
 `;
 
 const GET_PLAYER = gql`
@@ -103,6 +122,9 @@ const REMOVE_ALL_PLAYER = gql`
     removeAllPlayer
   }
 `;
+//enableTemplate(name:"777")
+
+
 const useStyles = makeStyles((theme) => ({
   margin: {
     margin: theme.spacing(1),
@@ -118,12 +140,33 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function God() {
+
+
+function TabPanel(props) {
+    const { children, value, index, ...other } = props;
+  
+    return (
+      <div
+        role="tabpanel"
+        hidden={value !== index}
+        id={`full-width-tabpanel-${index}`}
+        aria-labelledby={`full-width-tab-${index}`}
+        {...other}
+      >
+        {value === index && <Box p={3}>{children}</Box>}
+      </div>
+    );
+  }
+
+
+function Game() {
   const classes = useStyles();
   const { loading, error, data } = useQuery(GET_ROLES, {
     pollInterval: 500,
+    
   });
   const [updateRoleNumber] = useMutation(UPDATE_ROLE_NUMBER);
+
   const [generateRole] = useMutation(GENERATE_ROLE);
   const [generatePlayer] = useMutation(GENERATE_PLAYER);
   const [removeAllPlayer] = useMutation(REMOVE_ALL_PLAYER);
@@ -159,7 +202,7 @@ export default function God() {
           刪除玩家
         </Button>
         <Container maxWidth="sm">
-        <PlayerTable data={data.players} />
+          <PlayerTable data={data.players} />
         </Container>
       </div>
     );
@@ -220,9 +263,38 @@ export default function God() {
           </Fab>
         </div>
       </div>
-      <Container maxWidth="sm">
-        <RoleTable />
-      </Container>
+      <Container maxWidth="sm">{/*<RoleTable />*/}</Container>
     </div>
+  );
+}
+
+export default function God() {
+  const [value, setValue] = React.useState(0);
+
+  const handleChange = (event, newValue) => {
+    setValue(newValue);
+  };
+  return (
+    <Container maxWidth="sm">
+      <Paper square>
+        <Tabs
+          value={value}
+          indicatorColor="primary"
+          textColor="primary"
+          onChange={handleChange}
+          aria-label="disabled tabs example"
+        >
+          <Tab label="遊戲" />
+          <Tab label="模式" />
+          <Tab label="黑夜順序" />
+        </Tabs>
+        <TabPanel value={value} index={0}>
+          <Game />
+        </TabPanel>
+        <TabPanel value={value} index={1}>
+          <Admin />
+        </TabPanel>
+      </Paper>
+    </Container>
   );
 }

@@ -99,8 +99,9 @@ function SimpleTable(props) {
   );
 }
 
-export default function RoleTable() {
-  const { loading, error, data } = useQuery(GET_ROLES, {
+export default function RoleTable(props) {
+  const {variables, query} = props;
+  const { loading, error, data:rawData } = useQuery(query, {variables,
     pollInterval: 500,
   });
 
@@ -108,9 +109,13 @@ export default function RoleTable() {
     return null;
   }
 
+  const data = props.parseData(rawData)
+  
+  console.log(data)
+
   return (
    
-      <SimpleTable data={data.roles.filter((d) => d.id > 0)} />
+      <SimpleTable data={data} />
     
   );
 }
