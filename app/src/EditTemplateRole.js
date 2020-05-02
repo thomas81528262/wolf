@@ -159,11 +159,9 @@ function EditRole(props) {
       <RoleTable
         query={GET_TEMPLATE}
         variables={{ name }}
-        parseData={(data) => {
-            if (!data) {
-                return [];
-            }
-          return data.template.roles;
+        parseData={(d) => {
+            console.log(d)
+          return d.template.roles;
         }}
         pollInterval={500}
     />
@@ -227,7 +225,7 @@ function EditRule(props) {
 
 export default function EditTemplate(props) {
   const { name } = props;
-
+    
   const [value, setValue] = React.useState(0);
   
   const handleChange = (event, newValue) => {

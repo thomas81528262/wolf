@@ -50,11 +50,7 @@ const GET_TEMPLATES = gql`
     templates {
       isEnabled
       name
-      description
-      roles {
-        name
-        number
-      }
+      
     }
   }
 `;
@@ -116,7 +112,7 @@ function TemplateTable(props) {
                 <IconButton
                   aria-label="delete"
                   onClick={() => {
-                    
+                      console.log(row.name)
                       props.onEdit(row.name);
                     
                   }}
@@ -227,7 +223,6 @@ export default function Admin() {
         <TemplateTable
           data={data.templates}
           onEdit={(name) => {
-            console.log(name)
             setEditName(name);
           }}
           onSelect={(name) => {

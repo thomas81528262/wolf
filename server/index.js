@@ -72,7 +72,7 @@ const resolvers = {
     },
     template: async (root, args, context) => {
       const { name } = args;
-      const result = await WolfModel.getEnabledTemplate({ name });
+      const result = await WolfModel.getTemplate({ name });
       return result;
     },
     templates: async () => {

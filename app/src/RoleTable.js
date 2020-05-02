@@ -111,16 +111,17 @@ function RoleTable(props) {
   const { variables, query, pollInterval } = props;
   const { loading, error, data: rawData } = useQuery(query, {
     variables,
-    pollInterval,
+    fetchPolicy:'network-only',
+    pollInterval
   });
 
-  if (loading || !rawData) {
-    return null;
+  if (loading ) {
+    return <div>Loading</div>;
   }
 
   const data = props.parseData(rawData);
 
-  console.log(data);
+  console.log(data, variables, query, rawData);
 
   return <BaseTable data={data} />;
 }
