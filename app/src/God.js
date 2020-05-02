@@ -286,7 +286,7 @@ function Game(props) {
           }}
         />
         </Box>
-        <PlayerTable data={data.players} />
+        <PlayerTable data={props.players} />
       </div>
     );
   }
@@ -341,7 +341,7 @@ export default function God(props) {
         {isPlayerMode && <Tab label="模式" />}
       </Tabs>
       <TabPanel value={value} index={0}>
-        <Game isPlayerMode={isPlayerMode} id={id} pass={pass} name={name} />
+        <Game isPlayerMode={isPlayerMode} id={id} pass={pass} name={name} players={data.players}/>
       </TabPanel>
       <TabPanel value={value} index={1}>
         {isPlayerMode ? <TemplateRoleTable /> : <Admin />}
