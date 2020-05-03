@@ -328,7 +328,7 @@ export default function God(props) {
       <TabPanel value={value} index={1}>
         {isPlayerMode ? <TemplateRoleTable /> : <Admin />}
       </TabPanel>
-      {!isPlayerMode && (
+      {isPlayerMode && (
         <TabPanel value={value} index={2}>
           <EnabedTemplateInfo />
         </TabPanel>

@@ -62,7 +62,7 @@ export default function EnabledTemplate(props) {
         <TextField
           id="outlined-multiline-static"
           multiline
-          rows={4}
+          rows={6}
           fullWidth
           value={description}
           variant="outlined"
