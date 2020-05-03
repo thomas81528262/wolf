@@ -46,6 +46,7 @@ import Player from "./Player";
 
 const client = new ApolloClient({
   uri: "/graphql",
+  connectToDevTools: true
 });
 const useStyles = makeStyles((theme) => ({
   margin: {

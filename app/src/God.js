@@ -163,23 +163,7 @@ function TabPanel(props) {
     </div>
   );
 }
-const GET_TEMPLATE = gql`
-  query GetTemplate($name: String!) {
-    template(name: $name) {
-      roles {
-        name
-        number
-        id
-      }
-      description
-    }
-    players {
-      id
-      name
-      roleName
-    }
-  }
-`;
+
 
 function TemplateRoleTable(props) {
   return (
@@ -221,9 +205,7 @@ function TemplateRoleTable(props) {
 function Game(props) {
   const classes = useStyles();
 
-  const { loading, error, data } = useQuery(GET_ROLES, {
-    pollInterval: 500,
-  });
+  
 
   //const [updateRoleNumber] = useMutation(UPDATE_ROLE_NUMBER);
 
@@ -346,7 +328,7 @@ export default function God(props) {
       <TabPanel value={value} index={1}>
         {isPlayerMode ? <TemplateRoleTable /> : <Admin />}
       </TabPanel>
-      {isPlayerMode && (
+      {!isPlayerMode && (
         <TabPanel value={value} index={2}>
           <EnabedTemplateInfo />
         </TabPanel>

@@ -109,11 +109,19 @@ function BaseTable(props) {
 
 function RoleTable(props) {
   const { variables, query, pollInterval } = props;
-  const { loading, error, data: rawData } = useQuery(query, {
+
+  
+  const { loading, error, data: rawData, startPolling, stopPolling } = useQuery(query, {
+    fetchPolicy:"network-only",
     variables,
-    fetchPolicy:'network-only',
-    pollInterval
+    //pollInterval
   });
+
+
+  React.useEffect(() => {
+    startPolling(pollInterval); // will be called only once
+    return stopPolling; // just return cleanup function without making new one
+  }, []);
 
   if (loading ) {
     return <div>Loading</div>;

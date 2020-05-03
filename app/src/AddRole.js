@@ -22,14 +22,9 @@ const GET_ROLES = gql`
     roles {
       id
       name
-      number
+      
     }
-    players {
-      id
-      name
-      roleName
-      isEmpty
-    }
+    
   }
 `;
 

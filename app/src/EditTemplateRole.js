@@ -108,6 +108,8 @@ function EditDarkPriority(props) {
     },
   });
 
+  
+
   if (loading || res.loading) {
     return <div>Loading</div>;
   }
@@ -144,6 +146,16 @@ function EditDarkPriority(props) {
 function EditRole(props) {
   const { name } = props;
   const [updateRoleNumber] = useMutation(UPDATE_ROLE_NUMBER);
+
+  React.useEffect(() => {
+    
+    console.log('mount' + name);
+
+    return ()=>{
+      console.log('umount' + name)
+    }
+  }, []);
+
   return (
     <div>
       <Typography variant="h2" gutterBottom>
@@ -231,8 +243,9 @@ export default function EditTemplate(props) {
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
-
+  console.log(name)
   return (
+   
     <Paper square>
       <Tabs
         value={value}
@@ -258,5 +271,6 @@ export default function EditTemplate(props) {
       </TabPanel>
      
     </Paper>
+    
   );
 }

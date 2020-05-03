@@ -50,7 +50,6 @@ const GET_TEMPLATES = gql`
     templates {
       isEnabled
       name
-      
     }
   }
 `;
@@ -67,14 +66,13 @@ const DELETE_TEMPLATE = gql`
   }
 `;
 
-
 const ENABLE_TEMPLATE = gql`
   mutation EnableTemplate($name: String!) {
     enableTemplate(name: $name)
   }
 `;
 
-function TemplateTable(props) {
+function TemplateControl(props) {
   const classes = useStyles();
 
   return (
@@ -99,7 +97,7 @@ function TemplateTable(props) {
                 <Checkbox
                   onChange={(e) => {
                     if (e.target.checked) {
-                    props.onSelect(row.name);
+                      props.onSelect(row.name);
                     }
                   }}
                   color="primary"
@@ -112,9 +110,8 @@ function TemplateTable(props) {
                 <IconButton
                   aria-label="delete"
                   onClick={() => {
-                      console.log(row.name)
-                      props.onEdit(row.name);
-                    
+                    console.log(row.name);
+                    props.onEdit(row.name);
                   }}
                 >
                   <CreateIcon />
@@ -124,9 +121,8 @@ function TemplateTable(props) {
                 <IconButton
                   aria-label="delete"
                   onClick={() => {
-                    
-                      //props.onEdit(row.name);
-                      props.onDelete(row.name)
+                    //props.onEdit(row.name);
+                    props.onDelete(row.name);
                   }}
                   disabled={row.isEnabled}
                 >
@@ -141,56 +137,47 @@ function TemplateTable(props) {
   );
 }
 
-export default function Admin() {
+function TemplateTable(props) {
   const classes = useStyles();
-
-  const [name, setName] = React.useState("");
-  const [editName, setEditName] = React.useState("");
+  
   const [addTemplate] = useMutation(ADD_TEMPLATE);
-  const [deleteTemplate] = useMutation(DELETE_TEMPLATE)
+  const [deleteTemplate] = useMutation(DELETE_TEMPLATE);
+  const [name, setName] = React.useState("");
   const [isBusy, setIsBusy] = React.useState(false);
-
   const { loading, error, data, stopPolling, startPolling, called } = useQuery(
     GET_TEMPLATES,
     {
-      pollInterval: 500,
+      //pollInterval: 500,
       //notifyOnNetworkStatusChange:true
     }
   );
+
+
+
   const [enableTemplate, enableResult] = useMutation(ENABLE_TEMPLATE, {
     onCompleted: () => {
       setIsBusy(true);
       startPolling(500);
       setTimeout(() => {
         setIsBusy(false);
-        
       }, 2000);
-      
     },
   });
+
+  React.useEffect(() => {
+    startPolling(500); // will be called only once
+    return stopPolling; // just return cleanup function without making new one
+  }, []);
+
+  if (loading ) {
+    return <div>Loading</div>;
+  }
+
 
   if (loading || enableResult.loading || isBusy) {
     return <div>Loading</div>;
   }
 
-  if (editName) {
-    return (
-      <div>
-        <Box display="flex">
-        <Button
-          variant="contained"
-          color="secondary"
-          onClick={() => {
-            setEditName("");
-          }}
-        >
-          退出
-        </Button>
-        </Box>
-        <EditTemplateRole name={editName} />
-      </div>
-    );
-  }
 
   return (
     <div>
@@ -220,20 +207,78 @@ export default function Admin() {
         </div>
       </div>
       <Container maxWidth="sm">
-        <TemplateTable
+        <TemplateControl
           data={data.templates}
           onEdit={(name) => {
-            setEditName(name);
+            props.setEditName(name);
           }}
           onSelect={(name) => {
             enableTemplate({ variables: { name } });
             stopPolling();
           }}
-          onDelete={(name)=>{
-            deleteTemplate({variables:{name}})
+          onDelete={(name) => {
+            deleteTemplate({ variables: { name } });
           }}
         />
-      </Container>
+        </Container>
     </div>
+  );
+}
+
+export default function Admin() {
+  const classes = useStyles();
+
+  const [name, setName] = React.useState("");
+  const [editName, setEditName] = React.useState("");
+  const [addTemplate] = useMutation(ADD_TEMPLATE);
+  const [deleteTemplate] = useMutation(DELETE_TEMPLATE);
+  const [isBusy, setIsBusy] = React.useState(false);
+
+
+  /*
+  const { loading, error, data, stopPolling, startPolling, called } = useQuery(
+    GET_TEMPLATES,
+    {
+      pollInterval: 500,
+      //notifyOnNetworkStatusChange:true
+    }
+  );
+  const [enableTemplate, enableResult] = useMutation(ENABLE_TEMPLATE, {
+    onCompleted: () => {
+      setIsBusy(true);
+      startPolling(500);
+      setTimeout(() => {
+        setIsBusy(false);
+      }, 2000);
+    },
+  });
+
+
+  if (loading || enableResult.loading || isBusy) {
+    return <div>Loading</div>;
+  }
+  */
+
+  if (editName) {
+    return (
+      <div>
+        <Box display="flex">
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => {
+              setEditName("");
+            }}
+          >
+            退出
+          </Button>
+        </Box>
+        <EditTemplateRole name={editName} />
+      </div>
+    );
+  }
+
+  return (
+    <TemplateTable setEditName={name=>{setEditName(name)}}/>
   );
 }
