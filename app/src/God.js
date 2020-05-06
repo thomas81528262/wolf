@@ -24,15 +24,6 @@ import Admin from "./Admin";
 import Typography from "@material-ui/core/Typography";
 import EnabedTemplateInfo from "./EnabledTemplateInfo";
 import { useDebounce, useDebounceCallback } from "@react-hook/debounce";
-const GET_PLAYERS = gql`
-  {
-    players {
-      id
-      name
-      isEmpty
-    }
-  }
-`;
 
 const GET_ROLES = gql`
   {
@@ -64,53 +55,9 @@ const GET_ENABLED_TEMPLATE = gql`
   }
 `;
 
-const GET_PLAYER = gql`
-  query GetPlayer($id: Int!, $pass: String!) {
-    player(id: $id, pass: $pass) {
-      id
-      name
-    }
-  }
-`;
-
-const GET_PLAYER_INFO = gql`
-  query GetPlayer($id: Int!, $pass: String!) {
-    player(id: $id, pass: $pass) {
-      id
-      name
-      roleName
-    }
-    players {
-      id
-      name
-    }
-  }
-`;
-
-const UPDATE_ROLE_NUMBER = gql`
-  mutation UpdateRoleNumber($id: Int!, $number: Int!) {
-    updateRoleNumber(id: $id, number: $number)
-  }
-`;
-
-const UPDATE_PLAYER_PASS = gql`
-  mutation UpdatePlayerPass($id: Int!, $pass: String!) {
-    updatePlayerPass(id: $id, pass: $pass) {
-      isValid
-      name
-    }
-  }
-`;
-
 const UPDATE_PLAYER_NAME = gql`
   mutation UpdatePlayerName($id: Int!, $name: String!) {
     updatePlayerName(id: $id, name: $name)
-  }
-`;
-
-const GENERATE_ROLE = gql`
-  mutation GenerateRole {
-    generateRole
   }
 `;
 
@@ -132,6 +79,12 @@ const REMOVE_ALL_PLAYER = gql`
   }
 `;
 //enableTemplate(name:"777")
+
+const DARK_START = gql`
+  mutation DarkStart {
+    darkStart
+  }
+`;
 
 const useStyles = makeStyles((theme) => ({
   margin: {
@@ -163,7 +116,6 @@ function TabPanel(props) {
     </div>
   );
 }
-
 
 function TemplateRoleTable(props) {
   return (
@@ -205,18 +157,17 @@ function TemplateRoleTable(props) {
 function Game(props) {
   const classes = useStyles();
 
-  
-
   //const [updateRoleNumber] = useMutation(UPDATE_ROLE_NUMBER);
 
   const [generateRole] = useMutation(GENERATE_TEMPLATE_ROLE);
   const [generatePlayer] = useMutation(GENERATE_TEMPLATE_PLAYER);
   const [removeAllPlayer] = useMutation(REMOVE_ALL_PLAYER);
+  const [darkStart] = useMutation(DARK_START);
   //const [roleId, setRoleId] = React.useState(-1);
   //const [roleNumber, setRoleNumber] = React.useState(0);
 
   const [value, setValue] = useDebounce(props.name, 500);
-  const [name, setName] = React.useState(props.name||'');
+  const [name, setName] = React.useState(props.name || "");
   const [updatePlayerName, { called }] = useMutation(UPDATE_PLAYER_NAME);
 
   React.useEffect(() => {
@@ -254,19 +205,28 @@ function Game(props) {
           >
             刪除玩家
           </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => {
+              darkStart();
+            }}
+          >
+            黑夜開始
+          </Button>
         </Box>
         <Box display="flex">
-        <TextField
-          id="standard-basic"
-          label="姓名"
-          variant="outlined"
-          margin="dense"
-          value={name}
-          onChange={(e) => {
-            setValue(e.target.value);
-            setName(e.target.value);
-          }}
-        />
+          <TextField
+            id="standard-basic"
+            label="姓名"
+            variant="outlined"
+            margin="dense"
+            value={name}
+            onChange={(e) => {
+              setValue(e.target.value);
+              setName(e.target.value);
+            }}
+          />
         </Box>
         <PlayerTable data={props.players} />
       </div>
@@ -323,7 +283,13 @@ export default function God(props) {
         {isPlayerMode && <Tab label="模式" />}
       </Tabs>
       <TabPanel value={value} index={0}>
-        <Game isPlayerMode={isPlayerMode} id={id} pass={pass} name={name} players={data.players}/>
+        <Game
+          isPlayerMode={isPlayerMode}
+          id={id}
+          pass={pass}
+          name={name}
+          players={data.players}
+        />
       </TabPanel>
       <TabPanel value={value} index={1}>
         {isPlayerMode ? <TemplateRoleTable /> : <Admin />}

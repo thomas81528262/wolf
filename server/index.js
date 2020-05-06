@@ -2,6 +2,7 @@ var express = require("express");
 var app = express();
 const { ApolloServer, gql } = require("apollo-server-express");
 const WolfModel = require("./model");
+const Game = require("./game");
 const typeDefs = gql`
   # Comments in GraphQL strings (such as this one) start with the hash (#) symbol.
 
@@ -10,6 +11,8 @@ const typeDefs = gql`
     id: Int
     roleName: String
     isEmpty: Boolean
+    isKill: Boolean
+    isDie: Boolean
   }
 
   type Role {
@@ -45,8 +48,10 @@ const typeDefs = gql`
     players: [Player]
     roles: [Role]
     player(id: Int, pass: String): Player
+    wolfKillList:[Player]
   }
   type Mutation {
+    exeDarkAction(id:Int, targetId:Int): String
     updateRoleNumber(id: Int, number: Int): String
     updatePlayerPass(id: Int, pass: String): PlayerStatus
     updatePlayerName(id: Int, name: String): String
@@ -61,11 +66,22 @@ const typeDefs = gql`
     updateTemplateRole(name: String, roleId: Int, number: Int): String
     updateTemplateRolePriority(ids: [Int], name: String): String
     enableTemplate(name: String): String
+    darkStart:String
   }
 `;
 
+const timeout = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+
 const resolvers = {
   Query: {
+
+    
+
+    wolfKillList:  (root, args, context) => {
+      const result = Game.dark.wolfKillingList;
+      return result;
+    },
     enabledTemplate: async (root, args, context) => {
       const result = await WolfModel.getEnabledTemplate();
       return result;
@@ -97,6 +113,19 @@ const resolvers = {
     },
   },
   Mutation: {
+    exeDarkAction:async(root, args, context)=>{
+      const { targetId } = args;
+      Game.dark.actionFunction({playerId:targetId})
+      
+      return "pass"
+    },
+    darkStart:async()=>{
+      Game.dark.start();
+     
+      
+      return "pass"
+    },
+
     enableTemplate: async (root, args, context) => {
       const { name } = args;
 

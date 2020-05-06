@@ -31,8 +31,10 @@ import Box from "@material-ui/core/Box";
 import Container from "@material-ui/core/Container";
 import Tabs from "@material-ui/core/Tabs";
 import Tab from "@material-ui/core/Tab";
-
+import Dialog from "@material-ui/core/Dialog";
 import Avatar from "react-avatar";
+import Radio from "@material-ui/core/Radio";
+import DialogContent from '@material-ui/core/DialogContent';
 import {
   fade,
   withStyles,
@@ -43,7 +45,6 @@ import { useDebounce, useDebounceCallback } from "@react-hook/debounce";
 import ApolloClient from "apollo-boost";
 
 import EnabedTemplateInfo from "./EnabledTemplateInfo";
-
 
 const client = new ApolloClient({
   uri: "/graphql",
@@ -70,11 +71,8 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-
-
 const GET_PLAYERS = gql`
   {
-   
     players {
       id
       name
@@ -83,8 +81,6 @@ const GET_PLAYERS = gql`
     }
   }
 `;
-
-
 
 const GET_PLAYER_INFO = gql`
   query GetPlayer($id: Int!, $pass: String!) {
@@ -97,6 +93,10 @@ const GET_PLAYER_INFO = gql`
       id
       name
       isEmpty
+    }
+    wolfKillList {
+      id
+      isKill
     }
   }
 `;
@@ -122,6 +122,11 @@ const UPDATE_PLAYER_NAME = gql`
   }
 `;
 
+const DARK_ACTION = gql`
+mutation DarkAction($targetId: Int!) {
+  exeDarkAction(targetId: $targetId)
+}
+`;
 
 
 function TabPanel(props) {
@@ -191,12 +196,11 @@ function PlayerControl(props) {
     pollInterval: 500,
   });
 
-  console.log(props);
-
+  const [open, setOpen] = React.useState(true);
   const [value, setValue] = useDebounce(props.name, 500);
   const [name, setName] = React.useState(props.name);
   const [updatePlayerName, { called }] = useMutation(UPDATE_PLAYER_NAME);
-
+  const [darkActon] = useMutation(DARK_ACTION)
   React.useEffect(() => {
     if (value && (value !== props.name || called)) {
       updatePlayerName({
@@ -209,23 +213,41 @@ function PlayerControl(props) {
     return <div>Loading</div>;
   }
 
-  
   const { id, name: playerName, roleName } = data.player;
   return (
     <>
-        <Box display="flex">
-      <TextField
-        id="standard-basic"
-        label="姓名"
-        variant="outlined"
-        className={classes.margin}
-        margin="dense"
-        value={name}
-        onChange={(e) => {
-          setValue(e.target.value);
-          setName(e.target.value);
-        }}
-      />
+      <Dialog aria-labelledby="simple-dialog-title" open={open}>
+      <DialogContent>
+        {data.wolfKillList.map((v) => (
+          <div>
+          <Radio
+            checked={v.isKill}
+            name="radio-button-demo"
+            inputProps={{ "aria-label": "B" }}
+            onChange={()=>{
+              console.log(v.id)
+              darkActon({variables:{targetId:v.id}})
+            }}
+          />
+          {`player ${v.id}`}
+          </div>
+        ))}
+       </DialogContent>
+      </Dialog>
+
+      <Box display="flex">
+        <TextField
+          id="standard-basic"
+          label="姓名"
+          variant="outlined"
+          className={classes.margin}
+          margin="dense"
+          value={name}
+          onChange={(e) => {
+            setValue(e.target.value);
+            setName(e.target.value);
+          }}
+        />
       </Box>
       <Card className={classes.root}>
         <CardContent>
@@ -243,14 +265,10 @@ function PlayerControl(props) {
 export default function Player(props) {
   const { id, pass, name } = props;
   const [value, setValue] = React.useState(0);
-  
+
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
-
-
-
-  
 
   return (
     <Paper elevation={3}>
