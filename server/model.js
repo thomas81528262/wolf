@@ -1,29 +1,26 @@
 const Db = require("./db");
 const shuffle = require("shuffle-array");
-
+const Game = require("./game");
 class WolfModel {
-
-
-
-  static async enableTemplate({name}) {
-    await Db.enableTemplate({name});
+  static async enableTemplate({ name }) {
+    await Db.enableTemplate({ name });
   }
 
   static async getTemplate({ name }) {
     const roles = await Db.getAllTemplateRole({ name });
-    const description = await Db.getTemplateDescription({name});
-    return { roles , description, name};
+    const description = await Db.getTemplateDescription({ name });
+    return { roles, description, name };
   }
 
   static async getEnabledTemplate() {
     const template = await Db.getEnabledTemplate();
-    const {name} = template;
+    const { name } = template;
     let roles = null;
     if (name) {
       roles = await Db.getAllTemplateRole({ name });
     }
 
-    return {...template, roles}
+    return { ...template, roles };
   }
 
   static async getAllTemplate() {
@@ -33,8 +30,7 @@ class WolfModel {
     for (let i = 0; i < templates.length; i += 1) {
       const { name, description, isEnabled } = templates[i];
       const roles = await Db.getAllTemplateRole({ name });
-      
-      
+
       result.push({ name, description, roles, isEnabled });
     }
 
@@ -45,17 +41,16 @@ class WolfModel {
     await Db.insertTemplateHeader({ name });
   }
 
-  static async deleteTemplate({name}) {
-    await Db.deleteTemplateHeader({name});
+  static async deleteTemplate({ name }) {
+    await Db.deleteTemplateHeader({ name });
   }
 
-  static async updateTemplateRolePriority({name, ids}) {
-    await Db.updateTemplateRolePriority({name, ids})
+  static async updateTemplateRolePriority({ name, ids }) {
+    await Db.updateTemplateRolePriority({ name, ids });
   }
 
-
-  static async updateTemplateRole({name, roleId, number}) {
-    await Db.upsertTemplateRole({name, roleId, number})
+  static async updateTemplateRole({ name, roleId, number }) {
+    await Db.upsertTemplateRole({ name, roleId, number });
   }
 
   static async updateTemplateDescription({ name, description }) {
@@ -127,15 +122,17 @@ class WolfModel {
 
   static async generateTemplateRole() {
     const template = await Db.getEnabledTemplate();
-    const {name} = template;
-    const result  = await Db.getAllTemplateRole({ name });
-    console.log(result)
+    const { name } = template;
+    const result = await Db.getAllTemplateRole({ name });
+    console.log(result);
     const list = [];
     result.forEach((d) => {
-      const { number, id } = d;
+      const { number, id, functionName } = d;
+
+      console.log(d);
       if (number) {
         for (let i = 0; i < number; i += 1) {
-          list.push(id);
+          list.push({ id, functionName});
         }
       }
     });
@@ -143,15 +140,17 @@ class WolfModel {
     shuffle(list);
 
     list.forEach((value, idx) => {
-      Db.updatePlayerRole({ id: idx + 1, roleId: value });
+      const { id: roleId, functionName } = value;
+      Game.dark.assignDarkRole({ id: idx + 1 , roleFunctionName:functionName});
+      Db.updatePlayerRole({ id: idx + 1, roleId });
     });
   }
 
   static async generateTemplatePlayer() {
     //const result = await Db.getAllRole();
     const template = await Db.getEnabledTemplate();
-    const {name} = template;
-    const result  = await Db.getAllTemplateRole({ name });
+    const { name } = template;
+    const result = await Db.getAllTemplateRole({ name });
     let totalNumber = 0;
     result.forEach((d) => {
       const { number } = d;

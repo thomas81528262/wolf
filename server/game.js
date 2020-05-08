@@ -6,6 +6,7 @@ const nullActionFunction = () => {
 
 class Dark {
   constructor() {
+    this.playerFunctionNameMapping = {};
     this.isStart = false;
     this.remainTime = 0;
     this.actionFunction = nullActionFunction;
@@ -22,6 +23,17 @@ class Dark {
     };
   }
 
+
+  reset() {
+
+  }
+
+
+  assignDarkRole({ id, roleFunctionName }) {
+    this.roundActions[id] = { playerId: id, isDie: 0, isWolfKill: 0 };
+    this.playerFunctionNameMapping[id] = { roleFunctionName };
+  }
+
   addAction() {
     const { playerId } = this.currentAction;
 
@@ -30,27 +42,49 @@ class Dark {
         ...this.roundActions[playerId],
         ...this.currentAction,
       };
-    } else {
+    } else if(playerId){
       this.roundActions[playerId] = { ...this.currentAction };
     }
 
     console.log(this.roundActions);
   }
 
-  wolfKill({ playerId }) {
+  wolfKill({ id, playerId }) {
+    if (
+      !this.playerFunctionNameMapping[id] &&
+      this.playerFunctionNameMapping[id].roleFunctionName !== "wolf"
+    ) {
+      console.log("you are not wolf");
+      return { msg: "You are not Wolf!" };
+    }
+
+    if (playerId === -1) {
+      this.currentAction = {};
+    }
+
     const { roundActions } = this;
 
     if (!roundActions[playerId]) {
+      console.log("the player is not exist");
       return { msg: "The player is not exist", hasError: true };
     } else if (roundActions[playerId].die) {
       return { msg: "The player is die", hasError: true };
     }
 
     this.currentAction = { playerId, isWolfKill: this.darkDay };
-    return { hasError: true };
+
+    return { hasError: false };
   }
 
-  get wolfKillingList() {
+  wolfKillingList({ id }) {
+    if (!this.playerFunctionNameMapping[id]) {
+      return [];
+    }
+
+    if (this.playerFunctionNameMapping[id].roleFunctionName !== "wolf") {
+      return [];
+    }
+
     const result = [];
     for (let [key, value] of Object.entries(this.roundActions)) {
       const { isDie, playerId } = value;
@@ -58,7 +92,7 @@ class Dark {
       if (!isDie) {
         if (playerId === this.currentAction.playerId) {
           const { isWolfKill } = this.currentAction;
-          result.push({ id: playerId, isKill:isWolfKill });
+          result.push({ id: playerId, isKill: isWolfKill });
         } else {
           result.push({ id: playerId });
         }
@@ -119,13 +153,14 @@ class Dark {
       return { msg: "the dark is start" };
     }
     this.darkDay += 1;
-
+    /*
     this.roundActions = {
       0: { playerId: 0, isDie: 0, isWolfKill: 0 },
       1: { playerId: 1, isDie: 0, isWolfKill: 0 },
       2: { playerId: 2, isDie: 0, isWolfKill: 0 },
       3: { playerId: 3, isDie: 0, isWolfKill: 0 },
     };
+    */
 
     this.isStart = true;
     //const roles = [{ name: "狼人", darkTimeSec: 10, roleFunction: "狼人" }];

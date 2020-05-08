@@ -34,7 +34,7 @@ import Tab from "@material-ui/core/Tab";
 import Dialog from "@material-ui/core/Dialog";
 import Avatar from "react-avatar";
 import Radio from "@material-ui/core/Radio";
-import DialogContent from '@material-ui/core/DialogContent';
+import DialogContent from "@material-ui/core/DialogContent";
 import {
   fade,
   withStyles,
@@ -94,9 +94,12 @@ const GET_PLAYER_INFO = gql`
       name
       isEmpty
     }
-    wolfKillList {
+    wolfKillList(id: $id) {
       id
       isKill
+    }
+    darkInfo {
+      isStart
     }
   }
 `;
@@ -123,11 +126,10 @@ const UPDATE_PLAYER_NAME = gql`
 `;
 
 const DARK_ACTION = gql`
-mutation DarkAction($targetId: Int!) {
-  exeDarkAction(targetId: $targetId)
-}
+  mutation DarkAction($targetId: Int!, $id: Int!) {
+    exeDarkAction(targetId: $targetId, id: $id)
+  }
 `;
-
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -187,6 +189,38 @@ function PlayerTable(props) {
   );
 }
 
+function WolfAction(props) {
+  const [darkActon] = useMutation(DARK_ACTION);
+  const killingList = props.data.wolfKillList.filter(v=>v.isKill)
+  return (
+    <DialogContent>
+      {props.data.wolfKillList.map((v) => (
+        <div>
+          <Radio
+            checked={v.isKill}
+            name="radio-button-demo"
+            inputProps={{ "aria-label": "B" }}
+            onChange={() => {
+              console.log(v.id);
+              darkActon({ variables: { targetId: v.id, id: props.id } });
+            }}
+          />
+          {`player ${v.id}`}
+        </div>
+      ))}
+      <Radio
+        checked={killingList.length === 0}
+        name="radio-button-demo"
+        inputProps={{ "aria-label": "B" }}
+        onChange={() => {
+          darkActon({ variables: { targetId: -1, id: props.id } });
+        }}
+      />
+      {`none`}
+    </DialogContent>
+  );
+}
+
 function PlayerControl(props) {
   const classes = useStyles();
 
@@ -200,7 +234,7 @@ function PlayerControl(props) {
   const [value, setValue] = useDebounce(props.name, 500);
   const [name, setName] = React.useState(props.name);
   const [updatePlayerName, { called }] = useMutation(UPDATE_PLAYER_NAME);
-  const [darkActon] = useMutation(DARK_ACTION)
+
   React.useEffect(() => {
     if (value && (value !== props.name || called)) {
       updatePlayerName({
@@ -216,23 +250,13 @@ function PlayerControl(props) {
   const { id, name: playerName, roleName } = data.player;
   return (
     <>
-      <Dialog aria-labelledby="simple-dialog-title" open={open}>
-      <DialogContent>
-        {data.wolfKillList.map((v) => (
-          <div>
-          <Radio
-            checked={v.isKill}
-            name="radio-button-demo"
-            inputProps={{ "aria-label": "B" }}
-            onChange={()=>{
-              console.log(v.id)
-              darkActon({variables:{targetId:v.id}})
-            }}
-          />
-          {`player ${v.id}`}
-          </div>
-        ))}
-       </DialogContent>
+      <Dialog
+        aria-labelledby="simple-dialog-title"
+        open={data.darkInfo.isStart}
+      >
+        {data.wolfKillList.length > 0 && (
+          <WolfAction data={data} id={props.id} />
+        )}
       </Dialog>
 
       <Box display="flex">

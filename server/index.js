@@ -34,6 +34,11 @@ const typeDefs = gql`
     name: String
   }
 
+  type DarkInfo {
+    isStart: Boolean
+  }
+
+
   input RoleOrder {
     id: [Int]
   }
@@ -48,7 +53,8 @@ const typeDefs = gql`
     players: [Player]
     roles: [Role]
     player(id: Int, pass: String): Player
-    wolfKillList:[Player]
+    wolfKillList(id:Int):[Player]
+    darkInfo:DarkInfo
   }
   type Mutation {
     exeDarkAction(id:Int, targetId:Int): String
@@ -75,11 +81,14 @@ const timeout = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const resolvers = {
   Query: {
-
-    
-
+    darkInfo:()=> {
+      
+      const {isStart} = Game.dark;
+      return {isStart};
+    },
     wolfKillList:  (root, args, context) => {
-      const result = Game.dark.wolfKillingList;
+      const {id} = args;
+      const result = Game.dark.wolfKillingList({id});
       return result;
     },
     enabledTemplate: async (root, args, context) => {
@@ -88,7 +97,6 @@ const resolvers = {
     },
     template: async (root, args, context) => {
       const { name } = args;
-      console.log(name,'kk')
       const result = await WolfModel.getTemplate({ name });
       return result;
     },
@@ -114,8 +122,8 @@ const resolvers = {
   },
   Mutation: {
     exeDarkAction:async(root, args, context)=>{
-      const { targetId } = args;
-      Game.dark.actionFunction({playerId:targetId})
+      const { targetId, id } = args;
+      Game.dark.actionFunction({playerId:targetId, id})
       
       return "pass"
     },
