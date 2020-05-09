@@ -1,18 +1,11 @@
 const { Pool, Client } = require("pg");
 const pool = new Pool({
-
-  /*
-  user: "floujtzjxxytbh",
-  host: "ec2-52-202-146-43.compute-1.amazonaws.com",
-  database: "d6lad3k4gi0rd1",
-  password: "369e391e10e6990490436293d1f220372bc210b5e8aebcd6dd30fc8983d31844",
-  port: 5432,
-  */
- connectionString:"postgres://umeqrxssrauukh:e8f4bd7760c4c116d1e568d5458fcb1b8401052f007e28453355bea62ae8f8bd@ec2-52-72-221-20.compute-1.amazonaws.com:5432/daqktoamjphvns",
-  ssl: {
-    rejectUnauthorized: false,
-  },
+ connectionString:process.env.DATABASE_URL,
+ ssl: process.env.NODE_ENV === 'dev' ? false:{
+  rejectUnauthorized: false,
+},
 });
+
 
 class Db {
   /*

@@ -1,3 +1,7 @@
+
+
+# Wolf Project
+
 ## Project structure
 
 `server/`: backend code
@@ -17,6 +21,7 @@ HTTPS: `$ git clone https://github.com/thomas81528262/wolf.git`
 #### install node
 
 ##### Mac
+
 `$ brew install node` or visit [here](https://nodejs.org/en/download/) to download the installer
 
 ##### Windows
@@ -41,7 +46,7 @@ change the directory location accrodingly
 
 #### Image building and running
 
-```
+```bash
 $ docker build -t {app_name} .
 
 $ docker image
@@ -56,7 +61,7 @@ $ docker logs {your_container_ID}
 
 # get some output from the server (optional)
 
-$ docker run -p {port# you like}:8080 -d {app_name}
+$ docker run -p {export_port}:8080 -d {app_name}
 
 # run the image
 # to test the app open localhost:{port#}
@@ -64,8 +69,22 @@ $ docker run -p {port# you like}:8080 -d {app_name}
 
 ```
 
-#### mount src folder without build image
+#### mount local folder
 
-```
+```bash
 $ docker run  -p 4000:4000 -v {src_path_in_your_host}:{path_inside_the_docker_image}  -it node:10 /bin/sh
+
+# the container will mount the local folder from your host
+```
+
+## Local Development
+
+### run local db
+
+```bash
+#turn on the db
+$ docker-compose up -d
+#turn off the db
+$ docker-compose down
+
 ```
