@@ -37,7 +37,7 @@ Go [here](https://docs.docker.com/engine/install/) to select the installer accor
 
 #### Modify Dockerfile
 
-change the directory location accrodingly
+change the directory location accordingly
 
 #### Image building and running
 
