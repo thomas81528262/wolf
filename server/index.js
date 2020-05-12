@@ -34,10 +34,17 @@ const typeDefs = gql`
     name: String
   }
 
-  type DarkInfo {
-    isStart: Boolean
+  enum ActRoleType {
+    WITCH
+    WOLF
   }
 
+  type DarkInfo {
+    isStart: Boolean
+    remainTime: Int
+    targetList: [Player]
+    actRoleType:ActRoleType
+  }
 
   input RoleOrder {
     id: [Int]
@@ -53,11 +60,11 @@ const typeDefs = gql`
     players: [Player]
     roles: [Role]
     player(id: Int, pass: String): Player
-    wolfKillList(id:Int):[Player]
-    darkInfo:DarkInfo
+    wolfKillList(id: Int): [Player]
+    darkInfo(id: Int): DarkInfo
   }
   type Mutation {
-    exeDarkAction(id:Int, targetId:Int): String
+    exeDarkAction(id: Int, targetId: Int): String
     updateRoleNumber(id: Int, number: Int): String
     updatePlayerPass(id: Int, pass: String): PlayerStatus
     updatePlayerName(id: Int, name: String): String
@@ -65,32 +72,39 @@ const typeDefs = gql`
     generateRole: String
     removeAllPlayer: String
     addNewTemplate(name: String): String
-    deleteTemplate(name:String):String
+    deleteTemplate(name: String): String
     generateTemplatePlayer: String
     generateTemplateRole: String
     updateTemplateDescription(name: String, description: String): String
     updateTemplateRole(name: String, roleId: Int, number: Int): String
     updateTemplateRolePriority(ids: [Int], name: String): String
     enableTemplate(name: String): String
-    darkStart:String
+    darkStart: String
   }
 `;
 
 const timeout = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-
 const resolvers = {
   Query: {
-    darkInfo:()=> {
-      
-      const {isStart} = Game.dark;
-      return {isStart};
+    darkInfo: (root, args, context) => {
+      const { id } = args;
+      const actionResult = Game.dark.resultFunction({ id });
+      const { isStart, remainTime, actRoleType } = Game.dark;
+      return { isStart, remainTime, targetList:actionResult, actRoleType };
     },
-    wolfKillList:  (root, args, context) => {
-      const {id} = args;
-      const result = Game.dark.wolfKillingList({id});
+    wolfKillList: (root, args, context) => {
+      const { id } = args;
+      const result = Game.dark.wolfKillingList({ id });
       return result;
     },
+    /*
+    whichKillList: (root, args, context) => {
+      const {id} = args;
+      const result = Game.dark.witchKillingList({id});
+      return result;
+    },
+    */
     enabledTemplate: async (root, args, context) => {
       const result = await WolfModel.getEnabledTemplate();
       return result;
@@ -121,17 +135,16 @@ const resolvers = {
     },
   },
   Mutation: {
-    exeDarkAction:async(root, args, context)=>{
+    exeDarkAction: async (root, args, context) => {
       const { targetId, id } = args;
-      Game.dark.actionFunction({playerId:targetId, id})
-      
-      return "pass"
+      Game.dark.actionFunction({ playerId: targetId, id });
+
+      return "pass";
     },
-    darkStart:async()=>{
+    darkStart: async () => {
       Game.dark.start();
-     
-      
-      return "pass"
+
+      return "pass";
     },
 
     enableTemplate: async (root, args, context) => {

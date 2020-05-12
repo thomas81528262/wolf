@@ -98,8 +98,14 @@ const GET_PLAYER_INFO = gql`
       id
       isKill
     }
-    darkInfo {
+    darkInfo(id:$id) {
       isStart
+      remainTime
+      actRoleType
+      targetList {
+        id
+        isKill
+      }
     }
   }
 `;
@@ -189,12 +195,13 @@ function PlayerTable(props) {
   );
 }
 
-function WolfAction(props) {
+function DarkAction(props) {
   const [darkActon] = useMutation(DARK_ACTION);
-  const killingList = props.data.wolfKillList.filter(v=>v.isKill)
+  const killingList = props.data.darkInfo.targetList.filter(v=>v.isKill)
   return (
     <DialogContent>
-      {props.data.wolfKillList.map((v) => (
+      {props.data.darkInfo.remainTime}
+      {props.data.darkInfo.targetList.map((v) => (
         <div>
           <Radio
             checked={v.isKill}
@@ -254,8 +261,8 @@ function PlayerControl(props) {
         aria-labelledby="simple-dialog-title"
         open={data.darkInfo.isStart}
       >
-        {data.wolfKillList.length > 0 && (
-          <WolfAction data={data} id={props.id} />
+        {data.darkInfo.actRoleType && (
+          <DarkAction data={data} id={props.id} />
         )}
       </Dialog>
 

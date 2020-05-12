@@ -1,7 +1,7 @@
 const timeout = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
+const Db = require("./db");
 const nullActionFunction = () => {
-  console.log("no action");
+  //console.log("no action");
 };
 
 class Dark {
@@ -10,52 +10,84 @@ class Dark {
     this.isStart = false;
     this.remainTime = 0;
     this.actionFunction = nullActionFunction;
+    this.resultFunction = nullActionFunction;
     this.roleFunctionName = null;
     this.darkDay = 0;
     this.actionList = [];
     this.roundActions = {};
     this.currentAction = {};
     this.players = [];
+    this.actRoleType = null;
 
-    this.actionFucntionMapping = {
-      witch: [],
-      wolf: [this.wolfKill],
+    this.witchControl = { isPoisonUsed: false, isCureUsed: false };
+
+    this.actionFunctionMapping = {
+      witch: [
+        {
+          act: this.witchKill,
+          darkTimeSec: 15,
+          msg: "女巫毒人",
+          actRoleType: "WITCH",
+          res: this.witchKillingList,
+        },
+        {
+          act: this.witchCure,
+          darkTimeSec: 15,
+          msg: "女巫救人",
+          actRoleType: "WITCH",
+          res: this.witchKillingList,
+        },
+      ],
+      wolf: [
+        {
+          act: this.wolfKill,
+          darkTimeSec: 15,
+          msg: "狼人殺人",
+          res: this.wolfKillingList,
+          actRoleType: "WOLF",
+        },
+      ],
+      prophet: [
+        {
+          act: this.prophetCheck,
+          darkTimeSec: 15,
+          msg: "預言家驗人",
+          res: this.wolfKillingList,
+          actRoleType: "PROPHET",
+        },
+      ],
     };
   }
 
-
-  reset() {
-
-  }
-
+  reset() {}
 
   assignDarkRole({ id, roleFunctionName }) {
-    this.roundActions[id] = { playerId: id, isDie: 0, isWolfKill: 0 };
+    this.roundActions[id] = { playerId: id, isDie: 0, wolfKillDay: 0 };
     this.playerFunctionNameMapping[id] = { roleFunctionName };
   }
 
   addAction() {
     const { playerId } = this.currentAction;
 
-    if ([playerId]) {
+    if (this.roundActions[playerId]) {
       this.roundActions[playerId] = {
         ...this.roundActions[playerId],
         ...this.currentAction,
       };
-    } else if(playerId){
+    } else if (playerId) {
       this.roundActions[playerId] = { ...this.currentAction };
     }
 
     console.log(this.roundActions);
   }
 
-  wolfKill({ id, playerId }) {
+  characterCheckAction({ role, id, playerId, errorMsg }) {
     if (
       !this.playerFunctionNameMapping[id] &&
-      this.playerFunctionNameMapping[id].roleFunctionName !== "wolf"
+      this.playerFunctionNameMapping[id].roleFunctionName !== role
     ) {
-      console.log("you are not wolf");
-      return { msg: "You are not Wolf!" };
+      console.log(errorMsg);
+      return { msg: errorMsg };
     }
 
     if (playerId === -1) {
@@ -68,10 +100,59 @@ class Dark {
       console.log("the player is not exist");
       return { msg: "The player is not exist", hasError: true };
     } else if (roundActions[playerId].die) {
+      console.log("the player is die");
       return { msg: "The player is die", hasError: true };
     }
 
-    this.currentAction = { playerId, isWolfKill: this.darkDay };
+    return { hasError: false };
+  }
+
+  prophetCheck({id, playerId}) {
+    const result = this.characterCheckAction({
+        role: "prophet",
+        id,
+        playerId,
+        errorMsg: "You are not prophet",
+      });
+
+      if (result.hasError) {
+        return result;
+      }
+
+      for (let [key, value] of Object.entries(this.roundActions)) {
+        const { isDie } = value;
+        if (isDie) {
+          return;
+        }
+      }
+
+
+    this.currentAction = { playerId, prophetCheckDay: this.darkDay };
+    return { hasError: false };
+
+  }
+
+  wolfKill({ id, playerId }) {
+    const result = this.characterCheckAction({
+      role: "wolf",
+      id,
+      playerId,
+      errorMsg: "You are not wolf",
+    });
+
+    if (result.hasError) {
+      return result;
+    }
+
+    for (let [key, value] of Object.entries(this.roundActions)) {
+        const { isDie } = value;
+        if (isDie) {
+          return;
+        }
+      }
+
+
+    this.currentAction = { playerId, wolfKillDay: this.darkDay };
 
     return { hasError: false };
   }
@@ -91,8 +172,8 @@ class Dark {
 
       if (!isDie) {
         if (playerId === this.currentAction.playerId) {
-          const { isWolfKill } = this.currentAction;
-          result.push({ id: playerId, isKill: isWolfKill });
+          const { wolfKillDay } = this.currentAction;
+          result.push({ id: playerId, isKill: wolfKillDay });
         } else {
           result.push({ id: playerId });
         }
@@ -102,44 +183,140 @@ class Dark {
     return result;
   }
 
-  witchKill({ playerId }) {
-    this.currentAction = { playerId, isWhichKill: this.darkDay };
+  witchKill({ id, playerId }) {
+    const result = this.characterCheckAction({
+      role: "witch",
+      id,
+      playerId,
+      errorMsg: "You are not witch",
+    });
+
+    if (result.hasError) {
+      return result;
+    }
+
+    for (let [key, value] of Object.entries(this.roundActions)) {
+      const { witchKillDay, witchCureDay, isDie } = value;
+      if (witchKillDay || witchCureDay === this.darkDay || isDie) {
+        return;
+      }
+    }
+
+    this.currentAction = { playerId, witchKillDay: this.darkDay };
   }
 
-  witchCure({ playerId }) {
-    const {
-      roundActions: { cur },
-    } = this;
+  witchKillingList({ id }) {
+    if (!this.playerFunctionNameMapping[id]) {
+      return [];
+    }
 
-    if (cur.isWolfKill) {
-      this.currentAction = { playerId, isWhichCure: this.darkDay };
+    if (this.playerFunctionNameMapping[id].roleFunctionName !== "witch") {
+      return [];
+    }
+
+    const result = [];
+    let isNotAvaiable = false;
+    
+    for (let [key, value] of Object.entries(this.roundActions)) {
+      const { isDie, playerId } = value;
+
+        if (value.witchKillDay || value.witchCureDay) {
+            isNotAvaiable = true;
+            break;
+        }
+
+
+      if (!isDie) {
+        if (playerId === this.currentAction.playerId) {
+          const { witchKillDay } = this.currentAction;
+          result.push({ id: playerId, isKill: witchKillDay });
+        } else {
+          result.push({ id: playerId });
+        }
+      }
+    }
+
+    if (isNotAvaiable) {
+        return [];
+    }
+
+    return result;
+  }
+  witchCure({ playerId }) {
+    if (this.roundActions[playerId].wolfKillDay === this.darkDay) {
+      this.currentAction = { playerId, witchCureDay: this.darkDay };
+    }
+  }
+
+  witchCuringList({ id }) {
+    if (!this.playerFunctionNameMapping[id]) {
+      return [];
+    }
+
+    if (this.playerFunctionNameMapping[id].roleFunctionName !== "witch") {
+      return [];
+    }
+
+    const result = [];
+    for (let [key, value] of Object.entries(this.roundActions)) {
+      const { isDie, playerId, wolfKillDay } = value;
+
+      if (!isDie && wolfKillDay === this.darkDay) {
+        if (playerId === this.currentAction.playerId) {
+          const { witchKillDay } = this.currentAction;
+          result.push({ id: playerId, isKill: witchKillDay });
+        } else {
+          result.push({ id: playerId });
+        }
+      }
     }
   }
 
   getResult() {
     const result = { ...this.roundActions };
     for (let [key, value] of Object.entries(this.roundActions)) {
-      const { isWolfKill } = value;
+      const { wolfKillDay, witchCureDay, witchKillDay } = value;
 
-      if (isWolfKill) {
-        result[key] = { ...result[key], isDie: this.darkDay };
+      if (wolfKillDay) {
+        if (!witchCureDay) {
+          result[key] = { ...result[key], isDie: this.darkDay, wolfKillDay };
+        } else {
+          result[key] = {
+            ...result[key],
+            isDie: this.darkDay,
+            wolfKillDay,
+            witchCureDay,
+          };
+        }
+      }
+
+      if (witchKillDay) {
+        result[key] = { ...result[key], isDie: this.darkDay, witchKillDay };
       }
     }
     this.roundActions = result;
     console.log(this.roundActions);
   }
 
-  iniActionList(roles) {
+  async iniActionList() {
+    const template = await Db.getEnabledTemplate();
+    const { name } = template;
+    const roles = await Db.getAllTemplateRole({ name });
     const actionList = [];
     roles.forEach((r) => {
-      const { functionnName, darkTimeSec } = r;
-      const fList = this.actionFucntionMapping[functionnName];
+      const { functionName } = r;
+      const fList = this.actionFunctionMapping[functionName];
+      console.log(this.actionFunctionMapping[functionName]);
       if (fList) {
         fList.forEach((f) => {
+          const { act, darkTimeSec, res, actRoleType } = f;
+
           actionList.push({
-            act: f,
-            roleFunctionName: functionnName,
+            act,
+            roleFunctionName: functionName,
             darkTimeSec,
+            res,
+            actRoleType,
           });
         });
       }
@@ -152,17 +329,18 @@ class Dark {
     if (this.isStart) {
       return { msg: "the dark is start" };
     }
-    this.darkDay += 1;
+
     /*
     this.roundActions = {
-      0: { playerId: 0, isDie: 0, isWolfKill: 0 },
-      1: { playerId: 1, isDie: 0, isWolfKill: 0 },
-      2: { playerId: 2, isDie: 0, isWolfKill: 0 },
-      3: { playerId: 3, isDie: 0, isWolfKill: 0 },
+      0: { playerId: 0, isDie: 0, wolfKillDay: 0 },
+      1: { playerId: 1, isDie: 0, wolfKillDay: 0 },
+      2: { playerId: 2, isDie: 0, wolfKillDay: 0 },
+      3: { playerId: 3, isDie: 0, wolfKillDay: 0 },
     };
     */
 
     this.isStart = true;
+    this.darkDay += 1;
     //const roles = [{ name: "狼人", darkTimeSec: 10, roleFunction: "狼人" }];
     /*
     const actionList = [
@@ -171,14 +349,21 @@ class Dark {
     ];
     */
 
-    const actionList = this.iniActionList([
-      { functionnName: "wolf", darkTimeSec: 30 },
-    ]);
+    const actionList = await this.iniActionList();
+    console.log(actionList, "action list");
 
     for (let i = 0; i < actionList.length; i += 1) {
-      const { darkTimeSec, act, roleFunctionName } = actionList[i];
+      const {
+        darkTimeSec,
+        act,
+        roleFunctionName,
+        res,
+        actRoleType,
+      } = actionList[i];
       this.actionFunction = act;
+      this.resultFunction = res;
       this.roleFunctionName = roleFunctionName;
+      this.actRoleType = actRoleType;
       let remainTime = darkTimeSec;
 
       while (remainTime) {

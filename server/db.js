@@ -1,11 +1,13 @@
 const { Pool, Client } = require("pg");
 const pool = new Pool({
- connectionString:process.env.DATABASE_URL,
- ssl: process.env.NODE_ENV === 'dev' ? false:{
-  rejectUnauthorized: false,
-},
+  connectionString: process.env.DATABASE_URL,
+  ssl:
+    process.env.NODE_ENV === "dev"
+      ? false
+      : {
+          rejectUnauthorized: false,
+        },
 });
-
 
 class Db {
   /*
@@ -15,33 +17,34 @@ ON CONFLICT (author, name)
    price = EXCLUDED.price;
   */
 
- static async enableTemplate({  name }) {
-  const client = await pool.connect();
+  static async enableTemplate({ name }) {
+    const client = await pool.connect();
 
-  try {
-    await client.query("BEGIN");
-    const queryCheckText = "SELECT name, description from public.template_header where name = $1";
-    const result = await client.query(queryCheckText, [name]);
-    if (result.rows.length !==1) {
-      throw Error('Can not find template')
+    try {
+      await client.query("BEGIN");
+      const queryCheckText =
+        "SELECT name, description from public.template_header where name = $1";
+      const result = await client.query(queryCheckText, [name]);
+      if (result.rows.length !== 1) {
+        throw Error("Can not find template");
+      }
+
+      const queryTextDisabled =
+        "update public.template_header set isenabled=false";
+      await client.query(queryTextDisabled);
+      const queryText =
+        "update public.template_header set isenabled=true where name=$1";
+      await client.query(queryText, [name]);
+
+      await client.query("COMMIT");
+    } catch (e) {
+      console.log(e);
+      await client.query("ROLLBACK");
+      throw e;
+    } finally {
+      client.release();
     }
-
-
-    const queryTextDisabled = "update public.template_header set isenabled=false";
-    await client.query(queryTextDisabled);
-    const queryText = "update public.template_header set isenabled=true where name=$1"
-    await client.query(queryText, [ name]);
-
-    await client.query("COMMIT");
-  } catch (e) {
-    console.log(e);
-    await client.query("ROLLBACK");
-    throw e;
-  } finally {
-    client.release();
   }
-}
-
 
   static async updateTemplateRolePriority({ ids, name }) {
     const client = await pool.connect();
@@ -115,8 +118,7 @@ ON CONFLICT (author, name)
 
   static async getAllTemplateRole({ name }) {
     try {
-      const text =
-        `SELECT role.name as name, roleid as id, template_role.number, role.functionname as "functionName" from public.template_role left join public.role on roleId=role.id where template_role.name=$1 order by darkpriority`;
+      const text = `SELECT role.name as name, roleid as id, template_role.number, role.functionname as "functionName" from public.template_role left join public.role on roleId=role.id where template_role.name=$1 order by darkpriority`;
       const values = [name];
       const result = await pool.query(text, values);
       return result.rows;
@@ -141,9 +143,8 @@ ON CONFLICT (author, name)
   }
 
   static async insertTemplateHeader({ name }) {
-
     if (!name) {
-      throw Error("The template name is Empty!!!")
+      throw Error("The template name is Empty!!!");
     }
 
     try {
@@ -157,8 +158,7 @@ ON CONFLICT (author, name)
     }
   }
 
-  static async deleteTemplateHeader({name}) {
-
+  static async deleteTemplateHeader({ name }) {
     /*
     if (!name) {
       throw Error("The template name is Empty!!!")
@@ -175,7 +175,6 @@ ON CONFLICT (author, name)
       return "pass";
     }
   }
-
 
   static async updateTemplateDescription({ name, description }) {
     try {
