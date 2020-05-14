@@ -315,6 +315,12 @@ class Dark {
       if (witchKillDay === this.darkDay) {
         result[key] = { ...result[key], isDie: this.darkDay, witchKillDay };
       }
+
+
+      if (prophetCheck === this.darkDay) {
+          result[key] = {...result[key]}
+      }
+
     }
     this.roundActions = result;
     console.log(this.roundActions);
