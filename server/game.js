@@ -61,25 +61,12 @@ class Dark {
 
   reset() {}
 
-  assignDarkRole({ id, roleFunctionName }) {
-    this.roundActions[id] = { playerId: id, isDie: 0, wolfKillDay: 0 };
+  assignDarkRole({ id, roleFunctionName, camp }) {
+    this.roundActions[id] = { playerId: id, isDie: 0, wolfKillDay: 0 , revealedRole:{}, camp};
     this.playerFunctionNameMapping[id] = { roleFunctionName };
   }
 
-  addAction() {
-    const { playerId } = this.currentAction;
 
-    if (this.roundActions[playerId]) {
-      this.roundActions[playerId] = {
-        ...this.roundActions[playerId],
-        ...this.currentAction,
-      };
-    } else if (playerId) {
-      this.roundActions[playerId] = { ...this.currentAction };
-    }
-
-    console.log(this.roundActions);
-  }
 
   characterCheckAction({ role, id, playerId, errorMsg }) {
     if (
@@ -119,37 +106,34 @@ class Dark {
       return result;
     }
 
-   
-
-    this.currentAction = { playerId, prophetCheckDay: this.darkDay , id};
+    this.currentAction = { playerId, prophetCheckDay: this.darkDay, id };
     return { hasError: false };
   }
 
-
-  prophetCheckList({id}) {
+  prophetCheckList({ id }) {
     if (!this.playerFunctionNameMapping[id]) {
-        return [];
-      }
-  
-      if (this.playerFunctionNameMapping[id].roleFunctionName !== "prophet") {
-        return [];
-      }
-  
-      const result = [];
-      for (let [key, value] of Object.entries(this.roundActions)) {
-        const { isDie, playerId ,prophetCheckDay} = value;
-  
-        if (!isDie && !prophetCheckDay) {
-          if (playerId === this.currentAction.playerId) {
-            const { prophetCheckDay } = this.currentAction;
-            result.push({ id: playerId, isKill: prophetCheckDay });
-          } else {
-            result.push({ id: playerId });
-          }
+      return [];
+    }
+
+    if (this.playerFunctionNameMapping[id].roleFunctionName !== "prophet") {
+      return [];
+    }
+
+    const result = [];
+    for (let [key, value] of Object.entries(this.roundActions)) {
+      const { isDie, playerId, prophetCheckDay } = value;
+
+      if (!isDie && !prophetCheckDay) {
+        if (playerId === this.currentAction.playerId) {
+          const { prophetCheckDay } = this.currentAction;
+          result.push({ id: playerId, isKill: prophetCheckDay });
+        } else {
+          result.push({ id: playerId });
         }
       }
-  
-      return result;
+    }
+
+    return result;
   }
 
   wolfKill({ id, playerId }) {
@@ -163,8 +147,6 @@ class Dark {
     if (result.hasError) {
       return result;
     }
-
-   
 
     this.currentAction = { playerId, wolfKillDay: this.darkDay };
 
@@ -294,17 +276,38 @@ class Dark {
     return result;
   }
 
+
+  addAction() {
+    const { playerId, id, prophetCheckDay } = this.currentAction;
+
+    if (this.roundActions[playerId]) {
+      this.roundActions[playerId] = {
+        ...this.roundActions[playerId],
+        ...this.currentAction,
+      };
+    } else if (playerId) {
+      this.roundActions[playerId] = { ...this.currentAction };
+    }
+
+    if (prophetCheckDay) {
+      //this.roundActions[id].revealedRole[playerId] = 
+    }
+
+
+    console.log(this.roundActions);
+  }
+
   getResult() {
     const result = { ...this.roundActions };
-    for (let [key, value] of Object.entries(this.roundActions)) {
-      const { wolfKillDay, witchCureDay, witchKillDay , prophetCheckDay} = value;
+    for (let [id, value] of Object.entries(this.roundActions)) {
+      const { wolfKillDay, witchCureDay, witchKillDay } = value;
 
       if (wolfKillDay === this.darkDay) {
         if (!witchCureDay === this.darkDay) {
-          result[key] = { ...result[key], isDie: this.darkDay, wolfKillDay };
+          result[id] = { ...result[id], isDie: this.darkDay };
         } else {
-          result[key] = {
-            ...result[key],
+          result[id] = {
+            ...result[id],
             isDie: this.darkDay,
             wolfKillDay,
             witchCureDay,
@@ -313,14 +316,8 @@ class Dark {
       }
 
       if (witchKillDay === this.darkDay) {
-        result[key] = { ...result[key], isDie: this.darkDay, witchKillDay };
+        result[id] = { ...result[id], isDie: this.darkDay };
       }
-
-
-      if (prophetCheck === this.darkDay) {
-          result[key] = {...result[key]}
-      }
-
     }
     this.roundActions = result;
     console.log(this.roundActions);

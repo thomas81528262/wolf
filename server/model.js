@@ -127,12 +127,12 @@ class WolfModel {
     console.log(result);
     const list = [];
     result.forEach((d) => {
-      const { number, id, functionName } = d;
+      const { number, id, functionName, camp } = d;
 
       console.log(d);
       if (number) {
         for (let i = 0; i < number; i += 1) {
-          list.push({ id, functionName});
+          list.push({ id, functionName, camp});
         }
       }
     });
@@ -140,8 +140,8 @@ class WolfModel {
     shuffle(list);
 
     list.forEach((value, idx) => {
-      const { id: roleId, functionName } = value;
-      Game.dark.assignDarkRole({ id: idx + 1 , roleFunctionName:functionName});
+      const { id: roleId, functionName ,camp} = value;
+      Game.dark.assignDarkRole({ id: idx + 1 , roleFunctionName:functionName, camp});
       Db.updatePlayerRole({ id: idx + 1, roleId });
     });
   }

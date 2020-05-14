@@ -118,7 +118,7 @@ ON CONFLICT (author, name)
 
   static async getAllTemplateRole({ name }) {
     try {
-      const text = `SELECT role.name as name, roleid as id, template_role.number, role.functionname as "functionName" from public.template_role left join public.role on roleId=role.id where template_role.name=$1 order by darkpriority`;
+      const text = `SELECT role.name as name,role.camp, roleid as id, template_role.number, role.functionname as "functionName" from public.template_role left join public.role on roleId=role.id where template_role.name=$1 order by darkpriority`;
       const values = [name];
       const result = await pool.query(text, values);
       return result.rows;
