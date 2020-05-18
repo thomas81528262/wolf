@@ -139,6 +139,9 @@ class WolfModel {
 
     shuffle(list);
 
+
+    Game.dark.reset();
+
     list.forEach((value, idx) => {
       const { id: roleId, functionName ,camp} = value;
       Game.dark.assignDarkRole({ id: idx + 1 , roleFunctionName:functionName, camp});

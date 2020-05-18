@@ -13,6 +13,7 @@ const typeDefs = gql`
     isEmpty: Boolean
     isKill: Boolean
     isDie: Boolean
+    revealedRole: String
   }
 
   type Role {
@@ -35,15 +36,20 @@ const typeDefs = gql`
   }
 
   enum ActRoleType {
-    WITCH
+    WITCH_KILL
+    WITCH_SAVE
     WOLF
+    PROPHET
+    HUNTER
+    GUARD
   }
 
   type DarkInfo {
     isStart: Boolean
     remainTime: Int
     targetList: [Player]
-    actRoleType:ActRoleType
+    actRoleType: ActRoleType
+    darkDay: Int
   }
 
   input RoleOrder {
@@ -57,7 +63,7 @@ const typeDefs = gql`
     enabledTemplate: Template
     template(name: String): Template
     templates: [Template]
-    players: [Player]
+    players(id: Int): [Player]
     roles: [Role]
     player(id: Int, pass: String): Player
     wolfKillList(id: Int): [Player]
@@ -90,8 +96,8 @@ const resolvers = {
     darkInfo: (root, args, context) => {
       const { id } = args;
       const actionResult = Game.dark.resultFunction({ id });
-      const { isStart, remainTime, actRoleType } = Game.dark;
-      return { isStart, remainTime, targetList:actionResult, actRoleType };
+      const { isStart, remainTime, actRoleType ,darkDay} = Game.dark;
+      return { isStart, remainTime, targetList: actionResult, actRoleType , darkDay};
     },
     wolfKillList: (root, args, context) => {
       const { id } = args;
@@ -119,8 +125,29 @@ const resolvers = {
 
       return result;
     },
-    players: async () => {
+    players: async (root, args, context) => {
+      const { id } = args;
+
       const result = await WolfModel.getPlayerList();
+
+      if (id) {
+        const roles = Game.dark.getRevealedRole({ id });
+
+        roles.forEach((r) => {
+          const { playerId, revealedRole } = r;
+          result[playerId] = { ...result[playerId], revealedRole };
+        });
+      }
+
+      result.forEach((role, idx) => {
+        if (!Game.dark.roundActions[idx]) {
+          return;
+        }
+
+        const { isDie } = Game.dark.roundActions[idx];
+
+        result[idx] = { ...result[idx], isDie };
+      });
 
       return result;
     },
@@ -162,7 +189,7 @@ const resolvers = {
 
     updateTemplateRole: async (root, args, context) => {
       const { name, roleId, number } = args;
-      console.log(roleId);
+
       await WolfModel.updateTemplateRole({ name, roleId, number });
       return "pass";
     },
@@ -181,7 +208,7 @@ const resolvers = {
 
     updateTemplateDescription: async (root, args, context) => {
       const { name, description } = args;
-      console.log(name, description);
+
       await WolfModel.updateTemplateDescription({ name, description });
       return "pass";
     },

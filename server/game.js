@@ -6,37 +6,41 @@ const nullActionFunction = () => {
 
 class Dark {
   constructor() {
-    this.playerFunctionNameMapping = {};
-    this.isStart = false;
-    this.remainTime = 0;
-    this.actionFunction = nullActionFunction;
-    this.resultFunction = nullActionFunction;
-    this.roleFunctionName = null;
-    this.darkDay = 0;
-    this.actionList = [];
-    this.roundActions = {};
-    this.currentAction = {};
-    this.players = [];
-    this.actRoleType = null;
-
-    this.witchControl = { isPoisonUsed: false, isCureUsed: false };
-
+    this.reset();
     this.actionFunctionMapping = {
-      witch: [
+      guard:[{
+        act: this.guardProtect,
+        darkTimeSec: 15,
+        msg: "守衛守人",
+        actRoleType: "GUARD",
+        res: this.guardProtectList,
+      },],
+      hunter: [
+        
         {
-          act: this.witchKill,
+          act: this.hunterKill,
           darkTimeSec: 15,
-          msg: "女巫毒人",
-          actRoleType: "WITCH",
-          res: this.witchKillingList,
+          msg: "獵人獵殺",
+          actRoleType: "HUNTER",
+          res: this.hunterKillList,
         },
+      ],
+      witch: [
+        
         {
           act: this.witchCure,
           darkTimeSec: 15,
           msg: "女巫救人",
-          actRoleType: "WITCH",
-          res: this.witchKillingList,
+          actRoleType: "WITCH_SAVE",
+          res: this.witchCuringList,
         },
+        {
+          act: this.witchKill,
+          darkTimeSec: 15,
+          msg: "女巫毒人",
+          actRoleType: "WITCH_KILL",
+          res: this.witchKillingList,
+        }
       ],
       wolf: [
         {
@@ -52,21 +56,41 @@ class Dark {
           act: this.prophetCheck,
           darkTimeSec: 15,
           msg: "預言家驗人",
-          res: this.wolfKillingList,
+          res: this.prophetCheckList,
           actRoleType: "PROPHET",
         },
       ],
     };
   }
 
-  reset() {}
+  reset() {
+    this.playerFunctionNameMapping = {};
+    this.isStart = false;
+    this.remainTime = 0;
+    this.actionFunction = nullActionFunction;
+    this.resultFunction = nullActionFunction;
+    this.roleFunctionName = null;
+    this.darkDay = 0;
+    this.actionList = [];
+    this.roundActions = {};
+    this.currentAction = {};
+    this.players = [];
+    this.actRoleType = null;
 
-  assignDarkRole({ id, roleFunctionName, camp }) {
-    this.roundActions[id] = { playerId: id, isDie: 0, wolfKillDay: 0 , revealedRole:{}, camp};
-    this.playerFunctionNameMapping[id] = { roleFunctionName };
+    this.witchControl = { isPoisonUsed: false, isCureUsed: false };
+
   }
 
-
+  assignDarkRole({ id, roleFunctionName, camp }) {
+    this.roundActions[id] = {
+      playerId: id,
+      isDie: 0,
+      wolfKillDay: 0,
+      revealedRole: [],
+      camp,
+    };
+    this.playerFunctionNameMapping[id] = { roleFunctionName };
+  }
 
   characterCheckAction({ role, id, playerId, errorMsg }) {
     if (
@@ -79,6 +103,7 @@ class Dark {
 
     if (playerId === -1) {
       this.currentAction = {};
+      return { hasError: false };
     }
 
     const { roundActions } = this;
@@ -119,6 +144,11 @@ class Dark {
       return [];
     }
 
+    if( this.roundActions[id].isDie) {
+      return [];
+    }
+
+
     const result = [];
     for (let [key, value] of Object.entries(this.roundActions)) {
       const { isDie, playerId, prophetCheckDay } = value;
@@ -134,6 +164,133 @@ class Dark {
     }
 
     return result;
+  }
+
+  guardProtect({id, playerId}) {
+    const result = this.characterCheckAction({
+      role: "guard",
+      id,
+      playerId,
+      errorMsg: "You are not guard",
+    });
+
+    if (result.hasError) {
+      return result;
+    }
+
+    if (!this.roundActions[playerId]) {
+      this.currentAction = {};
+      return;
+    }
+
+    this.currentAction = { playerId, guardProtectDay: this.darkDay, id };
+    return { hasError: false };
+
+  }
+
+  guardProtectList({id, playerId}) {
+    if (!this.playerFunctionNameMapping[id]) {
+      return [];
+    }
+
+    if (this.playerFunctionNameMapping[id].roleFunctionName !== "guard") {
+      return [];
+    }
+
+    if( this.roundActions[id].isDie) {
+      return [];
+    }
+
+    const result = [];
+    for (let [key, value] of Object.entries(this.roundActions)) {
+      const { isDie, playerId, guardProtectDay } = value;
+
+      if (guardProtectDay === this.darkDay - 1) {
+        continue;
+      }
+
+
+      if (!isDie) {
+        if (playerId === this.currentAction.playerId) {
+          const { guardProtectDay } = this.currentAction;
+          result.push({ id: playerId, isKill: guardProtectDay });
+        } else {
+          result.push({ id: playerId });
+        }
+      }
+    }
+    return result;
+  }
+
+
+
+  hunterKill({ id, playerId }) {
+    const result = this.characterCheckAction({
+      role: "hunter",
+      id,
+      playerId,
+      errorMsg: "You are not hunter",
+    });
+
+    if (result.hasError) {
+      return result;
+    }
+
+    if (!this.roundActions[playerId]) {
+      this.currentAction = {};
+      return;
+    }
+
+    const status = this.roundActions[id];
+    const { wolfKillDay, witchKillDay } = status;
+    if (wolfKillDay === this.darkDay) {
+      if (witchKillDay !== this.darkDay) {
+        this.currentAction = { playerId, hunterKillDay: this.darkDay };
+      }
+    }
+  }
+
+  hunterKillList({ id }) {
+    if (!this.playerFunctionNameMapping[id]) {
+      return [];
+    }
+
+    if (this.playerFunctionNameMapping[id].roleFunctionName !== "hunter") {
+      return [];
+    }
+
+    if( this.roundActions[id].isDie) {
+      return [];
+    }
+
+
+    const result = [];
+    const status = this.roundActions[id];
+    const { wolfKillDay, witchKillDay } = status;
+    if (wolfKillDay === this.darkDay) {
+      if (witchKillDay !== this.darkDay) {
+        for (let [key, value] of Object.entries(this.roundActions)) {
+          const { isDie, playerId } = value;
+
+          if (playerId === id) {
+            continue;
+          }
+
+
+          if (!isDie) {
+            if (playerId === this.currentAction.playerId) {
+              const { hunterKillDay } = this.currentAction;
+              result.push({ id: playerId, isKill: hunterKillDay });
+            } else {
+              result.push({ id: playerId });
+            }
+          }
+        }
+      }
+    }
+
+    return result;
+
   }
 
   wolfKill({ id, playerId }) {
@@ -159,6 +316,10 @@ class Dark {
     }
 
     if (this.playerFunctionNameMapping[id].roleFunctionName !== "wolf") {
+      return [];
+    }
+
+    if( this.roundActions[id].isDie) {
       return [];
     }
 
@@ -191,6 +352,11 @@ class Dark {
       return result;
     }
 
+    if (!this.roundActions[playerId]) {
+      this.currentAction = {};
+      return;
+    }
+
     for (let [key, value] of Object.entries(this.roundActions)) {
       const { witchKillDay, witchCureDay, isDie } = value;
       if (witchKillDay || witchCureDay === this.darkDay || isDie) {
@@ -210,13 +376,17 @@ class Dark {
       return [];
     }
 
+    if( this.roundActions[id].isDie) {
+      return [];
+    }
+
     const result = [];
     let isNotAvaiable = false;
 
     for (let [key, value] of Object.entries(this.roundActions)) {
       const { isDie, playerId } = value;
-
-      if (value.witchKillDay || value.witchCureDay) {
+      
+      if (value.witchKillDay || value.witchCureDay === this.darkDay) {
         isNotAvaiable = true;
         break;
       }
@@ -238,6 +408,11 @@ class Dark {
     return result;
   }
   witchCure({ playerId }) {
+    if (!this.roundActions[playerId]) {
+      this.currentAction = {};
+      return;
+    }
+
     if (this.roundActions[playerId].wolfKillDay === this.darkDay) {
       this.currentAction = { playerId, witchCureDay: this.darkDay };
     }
@@ -252,17 +427,27 @@ class Dark {
       return [];
     }
 
+    if( this.roundActions[id].isDie) {
+      return [];
+    }
+
     const result = [];
+    let isNotAvaiable = false;
     for (let [key, value] of Object.entries(this.roundActions)) {
       const { isDie, playerId, wolfKillDay } = value;
-      if (value.witchCureDay) {
+
+      if (id === playerId) {
+        continue
+      }
+
+      if (value.witchCureDay || value.witchKillDay === this.darkDay) {
         isNotAvaiable = true;
         break;
       }
       if (!isDie && wolfKillDay === this.darkDay) {
         if (playerId === this.currentAction.playerId) {
-          const { witchKillDay } = this.currentAction;
-          result.push({ id: playerId, isKill: witchKillDay });
+          const { witchCureDay } = this.currentAction;
+          result.push({ id: playerId, isKill: witchCureDay });
         } else {
           result.push({ id: playerId });
         }
@@ -275,7 +460,6 @@ class Dark {
 
     return result;
   }
-
 
   addAction() {
     const { playerId, id, prophetCheckDay } = this.currentAction;
@@ -290,25 +474,37 @@ class Dark {
     }
 
     if (prophetCheckDay) {
-      //this.roundActions[id].revealedRole[playerId] = 
+      this.roundActions[id].revealedRole.push({
+        revealedRole: this.roundActions[id].camp,
+        playerId,
+      });
+    }
+  }
+
+  getRevealedRole({ id }) {
+    if (this.roundActions[id]) {
+      return this.roundActions[id].revealedRole;
     }
 
-
-    console.log(this.roundActions);
+    return [];
   }
 
   getResult() {
     const result = { ...this.roundActions };
     for (let [id, value] of Object.entries(this.roundActions)) {
-      const { wolfKillDay, witchCureDay, witchKillDay } = value;
+      const { wolfKillDay, witchCureDay, witchKillDay, hunterKillDay,guardProtectDay  } = value;
 
       if (wolfKillDay === this.darkDay) {
-        if (!witchCureDay === this.darkDay) {
-          result[id] = { ...result[id], isDie: this.darkDay };
-        } else {
+        if (!(witchCureDay === this.darkDay ^ guardProtectDay  === this.darkDay)) {
           result[id] = {
             ...result[id],
             isDie: this.darkDay,
+            wolfKillDay,
+            witchCureDay,
+          };
+        } else {
+          result[id] = {
+            ...result[id],
             wolfKillDay,
             witchCureDay,
           };
@@ -316,11 +512,15 @@ class Dark {
       }
 
       if (witchKillDay === this.darkDay) {
-        result[id] = { ...result[id], isDie: this.darkDay };
+        result[id] = { ...result[id], isDie: this.darkDay, witchKillDay };
       }
+
+      if (hunterKillDay === this.darkDay) {
+        result[id] = { ...result[id], isDie: this.darkDay, hunterKillDay };
+      }
+
     }
     this.roundActions = result;
-    console.log(this.roundActions);
   }
 
   async iniActionList() {
@@ -331,7 +531,7 @@ class Dark {
     roles.forEach((r) => {
       const { functionName } = r;
       const fList = this.actionFunctionMapping[functionName];
-      console.log(this.actionFunctionMapping[functionName]);
+
       if (fList) {
         fList.forEach((f) => {
           const { act, darkTimeSec, res, actRoleType } = f;

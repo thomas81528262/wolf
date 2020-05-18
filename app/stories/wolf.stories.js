@@ -47,11 +47,48 @@ export const GodView = () => (
   </ApolloProvider>
 );
 
-export const PlayerView = () => (
+export const PlayerView1 = () => (
   <ApolloProvider client={client}>
      <CssBaseline />
     <Container maxWidth="sm">
       <Player id={1} pass={'123'} name={'thomas'}/>
+    </Container>
+  </ApolloProvider>
+);
+
+export const PlayerView2 = () => (
+  <ApolloProvider client={client}>
+     <CssBaseline />
+    <Container maxWidth="sm">
+      <Player id={2} pass={'123'} name={'thomas'}/>
+    </Container>
+  </ApolloProvider>
+);
+
+export const PlayerView3 = () => (
+  <ApolloProvider client={client}>
+     <CssBaseline />
+    <Container maxWidth="sm">
+      <Player id={3} pass={'123'} name={'thomas'}/>
+    </Container>
+  </ApolloProvider>
+);
+
+
+export const PlayerView4 = () => (
+  <ApolloProvider client={client}>
+     <CssBaseline />
+    <Container maxWidth="sm">
+      <Player id={4} pass={'123'} name={'thomas'}/>
+    </Container>
+  </ApolloProvider>
+);
+
+export const PlayerView5 = () => (
+  <ApolloProvider client={client}>
+     <CssBaseline />
+    <Container maxWidth="sm">
+      <Player id={5} pass={'123'} name={'thomas'}/>
     </Container>
   </ApolloProvider>
 );

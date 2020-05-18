@@ -51,6 +51,8 @@ export default function PlayerTable(props) {
               <TableRow key={row.id}>
                 <TableCell component="th" scope="row">
                   {row.id}
+
+                  
                 </TableCell>
                 <TableCell align="right">{row.name}</TableCell>
                 <TableCell align="right">{row.roleName}</TableCell>

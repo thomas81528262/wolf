@@ -35,6 +35,8 @@ import Dialog from "@material-ui/core/Dialog";
 import Avatar from "react-avatar";
 import Radio from "@material-ui/core/Radio";
 import DialogContent from "@material-ui/core/DialogContent";
+import DialogTitle from "@material-ui/core/DialogTitle";
+import DialogContentText from "@material-ui/core/DialogContentText";
 import {
   fade,
   withStyles,
@@ -89,19 +91,22 @@ const GET_PLAYER_INFO = gql`
       name
       roleName
     }
-    players {
+    players(id: $id) {
       id
       name
       isEmpty
+      revealedRole
+      isDie
     }
     wolfKillList(id: $id) {
       id
       isKill
     }
-    darkInfo(id:$id) {
+    darkInfo(id: $id) {
       isStart
       remainTime
       actRoleType
+      darkDay
       targetList {
         id
         isKill
@@ -164,7 +169,7 @@ function PlayerTable(props) {
             <TableCell>ID</TableCell>
 
             <TableCell align="right">玩家</TableCell>
-
+            <TableCell align="right">？</TableCell>
             <TableCell align="right">上線</TableCell>
           </TableRow>
         </TableHead>
@@ -172,9 +177,16 @@ function PlayerTable(props) {
           {props.data.map((row) => (
             <TableRow key={row.id}>
               <TableCell component="th" scope="row">
-                {row.id}
+                {row.isDie ? (
+                  <span aria-label="paw" style={{ fontSize: 30 }}>
+                    🐾
+                  </span>
+                ) : (
+                  row.id
+                )}
               </TableCell>
               <TableCell align="right">{row.name}</TableCell>
+              <TableCell align="right">{row.revealedRole}</TableCell>
               <TableCell align="right">
                 <span
                   style={{
@@ -195,35 +207,70 @@ function PlayerTable(props) {
   );
 }
 
+const dialogContent = {
+  WITCH_KILL: { text: "女巫毒人中", music: new Audio("/witch_kill.mp3") },
+  WITCH_SAVE: { text: "女巫救人中", music: new Audio("/witch_save.mp3") },
+  WOLF: { text: "狼人正在忙碌的殺人 請稍後", music: new Audio("/wolf.mp3") },
+  PROPHET: { text: "預言家驗人", music: new Audio("/prophet.mp3") },
+  HUNTER:{text:"獵人獵殺" ,music: new Audio("/hunter.mp3")},
+  GUARD:{text:"守衛守人" ,music: new Audio("/guard.mp3")}
+};
+
 function DarkAction(props) {
   const [darkActon] = useMutation(DARK_ACTION);
-  const killingList = props.data.darkInfo.targetList.filter(v=>v.isKill)
+  const seletingList = props.data.darkInfo.targetList.filter(
+    (v) => v.isKill === true
+  );
+
+  console.log(seletingList);
+  //const [actRoleType, setActRoleType] = React.useState()
+  const { actRoleType } = props.data.darkInfo;
+
+  React.useEffect(() => {
+    console.log("rerender");
+    dialogContent[actRoleType].music.play();
+
+    return () => {
+      dialogContent[actRoleType].music.pause();
+    };
+  }, [actRoleType]);
+
   return (
     <DialogContent>
+      <DialogTitle id="simple-dialog-title">第 {props.data.darkInfo.darkDay} 夜</DialogTitle>
+
+      <DialogContentText id="alert-dialog-description">
+        {dialogContent[actRoleType].text}
+      </DialogContentText>
       {props.data.darkInfo.remainTime}
-      {props.data.darkInfo.targetList.map((v) => (
-        <div>
+
+      {props.data.darkInfo.targetList.length !== 0 && (
+        <>
+          {props.data.darkInfo.targetList.map((v, idx) => (
+            <div key={idx}>
+              <Radio
+                checked={v.isKill ? true : false}
+                name="radio-button-demo"
+                inputProps={{ "aria-label": "B" }}
+                onClick={() => {
+                  console.log(v.id);
+                  darkActon({ variables: { targetId: v.id, id: props.id } });
+                }}
+              />
+              {`player ${v.id}`}
+            </div>
+          ))}
           <Radio
-            checked={v.isKill}
+            checked={seletingList.length === 0 ? true : false}
             name="radio-button-demo"
             inputProps={{ "aria-label": "B" }}
             onChange={() => {
-              console.log(v.id);
-              darkActon({ variables: { targetId: v.id, id: props.id } });
+              darkActon({ variables: { targetId: -1, id: props.id } });
             }}
           />
-          {`player ${v.id}`}
-        </div>
-      ))}
-      <Radio
-        checked={killingList.length === 0}
-        name="radio-button-demo"
-        inputProps={{ "aria-label": "B" }}
-        onChange={() => {
-          darkActon({ variables: { targetId: -1, id: props.id } });
-        }}
-      />
-      {`none`}
+          {`none`}
+        </>
+      )}
     </DialogContent>
   );
 }
@@ -248,6 +295,8 @@ function PlayerControl(props) {
         variables: { id: props.id, name: value },
       });
     }
+
+    //audioEl.play()
   }, [value]);
 
   if (loading) {
@@ -261,9 +310,7 @@ function PlayerControl(props) {
         aria-labelledby="simple-dialog-title"
         open={data.darkInfo.isStart}
       >
-        {data.darkInfo.actRoleType && (
-          <DarkAction data={data} id={props.id} />
-        )}
+        {data.darkInfo.actRoleType && <DarkAction data={data} id={props.id} />}
       </Dialog>
 
       <Box display="flex">
