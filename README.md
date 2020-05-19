@@ -1,38 +1,50 @@
-
+# 🐺Wolf Project
 
-# Wolf Project
-
-## Project structure
+## Project Structure
 
 `server/`: backend code
 
 `app/`: front end code
 
-## Installation and building
+## Local Development
 
 ### clone the repo
 
-SSH: `$ git clone git@github.com:thomas81528262/wolf.git`
+SSH:
 
-HTTPS: `$ git clone https://github.com/thomas81528262/wolf.git`
+```bash
+git clone git@github.com:thomas81528262/wolf.git
+```
 
-### From terminal
+### prerequest installed
 
-#### install node
+1. nodejs (10.x and higher)
+2. postgres db (docker or local)
 
-##### Mac
+### run local db by docker-compose
+
+```bash
+#turn on the db and run under background
+$ docker-compose up -d
+#turn off the db
+$ docker-compose down
+```
+
+### read doc
+
+follow the README.md instruction under the `/app` and `/server`
+
+## Installation and building
+
+### install node
+
+#### Mac
 
 `$ brew install node` or visit [here](https://nodejs.org/en/download/) to download the installer
 
-##### Windows
+#### Windows
 
 Go [here](https://nodejs.org/en/download/) to download the installer
-
-#### run the app
-
-in repo
-
-`$ npm run start`
 
 ### Using docker
 
@@ -44,7 +56,7 @@ Go [here](https://docs.docker.com/engine/install/) to select the installer accor
 
 change the directory location accordingly
 
-#### Image building and running
+#### Docker Basic Command
 
 ```bash
 $ docker build -t {app_name} .
@@ -77,14 +89,4 @@ $ docker run  -p 4000:4000 -v {src_path_in_your_host}:{path_inside_the_docker_im
 # the container will mount the local folder from your host
 ```
 
-## Local Development
 
-### run local db
-
-```bash
-#turn on the db
-$ docker-compose up -d
-#turn off the db
-$ docker-compose down
-
-```

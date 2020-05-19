@@ -139,6 +139,7 @@ class WolfModel {
 
     shuffle(list);
 
+    
 
     Game.dark.reset();
 
@@ -147,6 +148,8 @@ class WolfModel {
       Game.dark.assignDarkRole({ id: idx + 1 , roleFunctionName:functionName, camp});
       Db.updatePlayerRole({ id: idx + 1, roleId });
     });
+
+    
   }
 
   static async generateTemplatePlayer() {

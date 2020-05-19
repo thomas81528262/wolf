@@ -4,6 +4,47 @@ const nullActionFunction = () => {
   //console.log("no action");
 };
 
+class Day {
+
+  constructor(dark) {
+    this.dark = dark;
+    this.voter = {};
+  }
+
+ 
+
+
+  getVoteList() {
+    const result = [];
+
+    for (let [id, value] of Object.entries(dark.roundActions)) {
+      const {isDie} = value;
+      if (!isDie) {
+        result.push({id});
+      }
+
+    }
+
+    return result;
+
+  }
+
+
+
+
+  voteToKill({id, playerId}) {
+
+    if (!this.voter[id]) {
+      this.voter[id] = {playerId};
+    }
+
+    
+  }
+}
+
+
+
+
 class Dark {
   constructor() {
     this.reset();

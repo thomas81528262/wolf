@@ -11,4 +11,5 @@ services:
       POSTGRES_PASSWORD: test
     volumes:
     #mapping the db path to the host folder
-    - ./db:/var/lib/postgresql/data
+    - ./db/data:/var/lib/postgresql/data
+    - ./db/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
