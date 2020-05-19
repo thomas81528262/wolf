@@ -19,7 +19,7 @@ git clone git@github.com:thomas81528262/wolf.git
 ### prerequest installed
 
 1. nodejs (10.x and higher)
-2. postgres db (docker or local)
+2. postgresql db (docker or local)
 
 ### run local db by docker-compose
 
