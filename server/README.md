@@ -4,7 +4,7 @@
 
 In the server directory, you can run:
 
-### `npm run install`
+### `npm install`
 
 Install all the essentail npm package.
 
