@@ -2,9 +2,7 @@ const Db = require("./db");
 const shuffle = require("shuffle-array");
 const Game = require("./game");
 const { withTimeout, Mutex } = require("async-mutex");
-const mutexWithTimeout = withTimeout(new Mutex(), 3000, ()=>{
-  console.log('time out')
-});
+const mutexWithTimeout = withTimeout(new Mutex(), 3000, new Error('timeout'));
 
 const timeout = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 class WolfModel {
@@ -166,9 +164,13 @@ class WolfModel {
       await Promise.all(waitRoleList);
      
       
-    } finally {
-      mutexWithTimeout.release();
+    } catch(e){
+      console.log(e)
     }
+      //
+    
+    mutexWithTimeout.release();
+    
 
 
   }
