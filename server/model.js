@@ -1,6 +1,12 @@
 const Db = require("./db");
 const shuffle = require("shuffle-array");
 const Game = require("./game");
+const { withTimeout, Mutex } = require("async-mutex");
+const mutexWithTimeout = withTimeout(new Mutex(), 3000, ()=>{
+  console.log('time out')
+});
+
+const timeout = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 class WolfModel {
   static async enableTemplate({ name }) {
     await Db.enableTemplate({ name });
@@ -121,35 +127,50 @@ class WolfModel {
   }
 
   static async generateTemplateRole() {
-    const template = await Db.getEnabledTemplate();
-    const { name } = template;
-    const result = await Db.getAllTemplateRole({ name });
-    console.log(result);
-    const list = [];
-    result.forEach((d) => {
-      const { number, id, functionName, camp } = d;
-
-      console.log(d);
-      if (number) {
-        for (let i = 0; i < number; i += 1) {
-          list.push({ id, functionName, camp});
+    
+    try {
+      await mutexWithTimeout.acquire();
+      const template = await Db.getEnabledTemplate();
+      const { name } = template;
+      const result = await Db.getAllTemplateRole({ name });
+     
+      const list = [];
+      result.forEach((d) => {
+        const { number, id, functionName, camp } = d;
+  
+        
+        if (number) {
+          for (let i = 0; i < number; i += 1) {
+            list.push({ id, functionName, camp });
+          }
         }
-      }
-    });
+      });
+  
+      shuffle(list);
+  
+      Game.dark.reset();
+      
+      const waitRoleList = [];
 
-    shuffle(list);
+      list.forEach((value, idx) => {
+        const { id: roleId, functionName, camp } = value;
+        Game.dark.assignDarkRole({
+          id: idx + 1,
+          roleFunctionName: functionName,
+          camp,
+        });
+        waitRoleList.push(Db.updatePlayerRole({ id: idx + 1, roleId }));
+      });
 
-    
+      
+      await Promise.all(waitRoleList);
+     
+      
+    } finally {
+      mutexWithTimeout.release();
+    }
 
-    Game.dark.reset();
 
-    list.forEach((value, idx) => {
-      const { id: roleId, functionName ,camp} = value;
-      Game.dark.assignDarkRole({ id: idx + 1 , roleFunctionName:functionName, camp});
-      Db.updatePlayerRole({ id: idx + 1, roleId });
-    });
-
-    
   }
 
   static async generateTemplatePlayer() {
