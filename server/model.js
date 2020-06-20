@@ -2,7 +2,7 @@ const Db = require("./db");
 const shuffle = require("shuffle-array");
 const Game = require("./game");
 const { withTimeout, Mutex } = require("async-mutex");
-const mutexWithTimeout = withTimeout(new Mutex(), 3000, new Error('timeout'));
+const mutexWithTimeout = withTimeout(new Mutex(), 1000, new Error("timeout"));
 
 const timeout = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 class WolfModel {
@@ -125,29 +125,31 @@ class WolfModel {
   }
 
   static async generateTemplateRole() {
-    
+    if (mutexWithTimeout.isLocked()) {
+      return;
+    }
+
+    await mutexWithTimeout.acquire();
     try {
-      await mutexWithTimeout.acquire();
       const template = await Db.getEnabledTemplate();
       const { name } = template;
       const result = await Db.getAllTemplateRole({ name });
-     
+
       const list = [];
       result.forEach((d) => {
         const { number, id, functionName, camp } = d;
-  
-        
+
         if (number) {
           for (let i = 0; i < number; i += 1) {
             list.push({ id, functionName, camp });
           }
         }
       });
-  
+
       shuffle(list);
-  
+
       Game.dark.reset();
-      
+
       const waitRoleList = [];
 
       list.forEach((value, idx) => {
@@ -160,19 +162,10 @@ class WolfModel {
         waitRoleList.push(Db.updatePlayerRole({ id: idx + 1, roleId }));
       });
 
-      
       await Promise.all(waitRoleList);
-     
-      
-    } catch(e){
-      console.log(e)
+    } finally {
+      mutexWithTimeout.release();
     }
-      //
-    
-    mutexWithTimeout.release();
-    
-
-
   }
 
   static async generateTemplatePlayer() {
