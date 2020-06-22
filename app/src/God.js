@@ -29,7 +29,7 @@ import DialogTitle from "@material-ui/core/DialogTitle";
 import Radio from "@material-ui/core/Radio";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogActions from "@material-ui/core/DialogActions";
-
+import DialogContentText from "@material-ui/core/DialogContentText";
 const GET_ROLES = gql`
   {
     players {
@@ -39,6 +39,7 @@ const GET_ROLES = gql`
       isEmpty
       isDie
       isVoteFinish
+      votedNumber
     }
     gameInfo(id: 0) {
       isVoteFinish
@@ -172,14 +173,19 @@ function TemplateRoleTable(props) {
 
 function VoteAction(props) {
   const [targetList, setTargetList] = React.useState([]);
-  const [voteStart] = useMutation(VOTE_START, {onCompleted:()=>{
-    props.onClose();
-  }});
+  const [voteStart] = useMutation(VOTE_START, {
+    onCompleted: () => {
+      props.onClose();
+    },
+  });
   //const [submitVote, { called }] = useMutation(SUBMIT_VOTE);
 
   return (
     <>
       <DialogContent>
+        <DialogContentText id="alert-dialog-slide-description">
+          請選擇放逐的目標, 目標必須多於一人, 投票人數也必須多於一人
+        </DialogContentText>
         {props.players
           .filter((p) => !p.isDie && p.id !== 0)
           .map((player) => (
@@ -212,15 +218,17 @@ function VoteAction(props) {
         {`所有人`}
       </DialogContent>
       <DialogActions>
-        {(targetList.length === 0 || targetList.length > 1) && <Button
-          onClick={() => {
-            voteStart({ variables: { targets: targetList } });
-            //submitVote({variables:{id:props.id, target}})
-          }}
-          color="primary"
-        >
-          確認
-        </Button>}
+        {(targetList.length === 0 || targetList.length > 1) && (
+          <Button
+            onClick={() => {
+              voteStart({ variables: { targets: targetList } });
+              //submitVote({variables:{id:props.id, target}})
+            }}
+            color="primary"
+          >
+            確認
+          </Button>
+        )}
       </DialogActions>
     </>
   );

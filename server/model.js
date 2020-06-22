@@ -26,6 +26,7 @@ class WolfModel {
       return;
     }
 
+    this.isVoteFinish = false;
     this.isValidCandidate.clear();
     
 
@@ -55,7 +56,7 @@ class WolfModel {
         this.voteList[id] = 'D';
       }
     }
-    this.isVoteFinish = false;
+    
     console.log(this.voteList)
   }
 
@@ -72,7 +73,20 @@ class WolfModel {
       isVoteFinish = this.voteList[id] !== 0 || this.isVoteFinish;
     }
 
-    return { isValidCandidate, vote , isVoteFinish};
+    let votedNumber = 0;
+
+    if (this.voteHistory.length > 0) {
+      const lastIdx = this.voteHistory.length - 1;
+      this.voteHistory[lastIdx].forEach(tId=>{
+        if (tId === id) {
+          votedNumber += 1;
+        }
+      })
+    }
+
+
+
+    return { isValidCandidate, vote , isVoteFinish, votedNumber};
   }
 
   static getPlayerStatus({ id }) {

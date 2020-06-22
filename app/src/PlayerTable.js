@@ -50,6 +50,7 @@ export default function PlayerTable(props) {
 
             <TableCell align="right">玩家</TableCell>
             <TableCell align="right">角色</TableCell>
+            <TableCell align="right">投票</TableCell>
             <TableCell align="right">上線</TableCell>
           </TableRow>
         </TableHead>
@@ -71,6 +72,7 @@ export default function PlayerTable(props) {
               </TableCell>
               <TableCell align="right">{row.name}</TableCell>
               <TableCell align="right">{row.roleName}</TableCell>
+              <TableCell align="right">{row.votedNumber}</TableCell>
               <TableCell align="right">
                 <span
                   style={{

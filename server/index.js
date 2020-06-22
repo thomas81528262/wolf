@@ -17,6 +17,7 @@ const typeDefs = gql`
     vote: [String]
     isValidCandidate: Boolean
     isVoteFinish: Boolean
+    votedNumber: Int
   }
 
   type Role {
