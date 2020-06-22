@@ -14,6 +14,9 @@ const typeDefs = gql`
     isKill: Boolean
     isDie: Boolean
     revealedRole: String
+    vote: [String]
+    isValidCandidate: Boolean
+    isVoteFinish: Boolean
   }
 
   type Role {
@@ -52,6 +55,10 @@ const typeDefs = gql`
     darkDay: Int
   }
 
+  type GameInfo {
+    isVoteFinish: Boolean
+  }
+
   input RoleOrder {
     id: [Int]
   }
@@ -68,6 +75,7 @@ const typeDefs = gql`
     player(id: Int, pass: String): Player
     wolfKillList(id: Int): [Player]
     darkInfo(id: Int): DarkInfo
+    gameInfo(id: Int):GameInfo
   }
   type Mutation {
     exeDarkAction(id: Int, targetId: Int): String
@@ -86,6 +94,9 @@ const typeDefs = gql`
     updateTemplateRolePriority(ids: [Int], name: String): String
     enableTemplate(name: String): String
     darkStart: String
+    voteStart(targets:[Int]): String
+    submitVote(id:Int, target:Int):String
+    setDieStatus(id:Int): String
   }
 `;
 
@@ -93,6 +104,14 @@ const timeout = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const resolvers = {
   Query: {
+
+    gameInfo:(root, args, context)=> {
+      const {id} = args;
+      const isVoteFinish = WolfModel.getIsVoteFinish({id});
+      
+      return {isVoteFinish}
+    },
+
     darkInfo: (root, args, context) => {
       const { id } = args;
       const actionResult = Game.dark.resultFunction({ id });
@@ -130,11 +149,23 @@ const resolvers = {
 
       const result = await WolfModel.getPlayerList();
 
+      result.forEach((role, idx) => {
+       
+        
+        const voteStatus = WolfModel.getVoteStatus({id:idx})
+        const playerStatus = WolfModel.getPlayerStatus({id:idx});
+        
+        result[idx] = { ...result[idx], ...voteStatus, ...playerStatus };
+      });
+
+
+      /*
       if (id) {
         const roles = Game.dark.getRevealedRole({ id });
 
         roles.forEach((r) => {
           const { playerId, revealedRole } = r;
+          
           result[playerId] = { ...result[playerId], revealedRole };
         });
       }
@@ -145,9 +176,10 @@ const resolvers = {
         }
 
         const { isDie } = Game.dark.roundActions[idx];
-
-        result[idx] = { ...result[idx], isDie };
+       
+        result[idx] = { ...result[idx], isDie};
       });
+      */
 
       return result;
     },
@@ -162,11 +194,29 @@ const resolvers = {
     },
   },
   Mutation: {
+
+    setDieStatus: (root, args, context) =>{
+      const {id} = args;
+      WolfModel.setPlayerDieStatus({id});
+      return "pass"
+    },
+
     exeDarkAction: async (root, args, context) => {
       const { targetId, id } = args;
       Game.dark.actionFunction({ playerId: targetId, id });
 
       return "pass";
+    },
+
+    voteStart: async(root, args, context)=>{
+      const {targets} = args;
+      await WolfModel.startVote(targets);
+      return "pass"
+    },
+    submitVote: (root, args, context)=>{
+      const {id, target} = args;
+      WolfModel.submitVote({id, target});
+      return "pass"
     },
     darkStart: async () => {
       Game.dark.start();

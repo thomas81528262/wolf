@@ -6,6 +6,134 @@ const mutexWithTimeout = withTimeout(new Mutex(), 1000, new Error("timeout"));
 
 const timeout = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 class WolfModel {
+  static voteList = [];
+  static voteHistory = [];
+  static isValidCandidate = new Set();
+  static player = [];
+  static isVoteFinish = true;
+
+  static setPlayerDieStatus({ id }) {
+    const p = this.player[id];
+    console.log(p);
+    if (p) {
+      p.isDie = !p.isDie;
+    }
+  }
+
+  static async startVote(list) {
+    
+    if (!this.isVoteFinish) {
+      return;
+    }
+
+    
+
+    const result = await Db.getAllPlayer();
+    for (let i = 0; i < result.length; i += 1) {
+
+      
+      const {id} = result[i];
+      if (!id) {
+        continue;
+      }
+      console.log(this.player[id]);
+      if (!this.player[id].isDie) {
+
+        if (list.length === 0) {
+          this.isValidCandidate.add(id);
+          this.voteList[id] = 0;
+        } else if (list.includes(id)) {
+          this.voteList[id] = 'T';
+          this.isValidCandidate.add(id);
+        } else {
+          this.voteList[id] = 0;
+        }
+        
+      } else {
+        this.isValidCandidate.delete(id)
+        this.voteList[id] = 'D';
+      }
+    }
+    this.isVoteFinish = false;
+    console.log(this.voteList)
+  }
+
+  static getVoteStatus({ id }) {
+    const isValidCandidate = this.isValidCandidate.has(id);
+    const vote = [];
+    let isVoteFinish = true;
+
+    if (id) {
+      this.voteHistory.forEach((list) => {
+        const target = list[id];
+        vote.push(target);
+      });
+      isVoteFinish = this.voteList[id] !== 0 || this.isVoteFinish;
+    }
+
+    return { isValidCandidate, vote , isVoteFinish};
+  }
+
+  static getPlayerStatus({ id }) {
+    const p = this.player[id];
+
+    if (!p) {
+      return {};
+    }
+    return p;
+  }
+
+  static getIsVoteFinish({ id }) {
+    if (this.isVoteFinish) {
+      return true;
+    }
+
+    if (id === 0) {
+      return this.isVoteFinish;
+    }
+
+    return this.voteList[id] !== 0;
+  }
+
+  static getVoteResult({ id }) {
+    const result = [];
+
+    if (!id) {
+      return result;
+    }
+
+    this.voteHistory.forEach((list) => {
+      const target = list[id];
+      result.push(target);
+    });
+
+    return result;
+  }
+
+  static submitVote({ id, target }) {
+    if (this.isVoteFinish) {
+      return;
+    }
+
+    if (this.voteList[id] === 0) {
+      this.voteList[id] = target === -1 ? 'X': target;
+    }
+
+    let isFinish = true;
+
+    this.voteList.forEach((target, id) => {
+      if (target === 0 && id !== 0) {
+        isFinish = false;
+      }
+    });
+
+    if (isFinish) {
+      this.voteHistory.push(this.voteList);
+      this.voteList = [];
+      this.isVoteFinish = true;
+    }
+  }
+
   static async enableTemplate({ name }) {
     await Db.enableTemplate({ name });
   }
@@ -160,7 +288,10 @@ class WolfModel {
           camp,
         });
         waitRoleList.push(Db.updatePlayerRole({ id: idx + 1, roleId }));
+        this.player[idx + 1] = { isDie: false };
       });
+
+      this.voteHistory = [];
 
       await Promise.all(waitRoleList);
     } finally {

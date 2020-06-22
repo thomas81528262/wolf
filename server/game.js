@@ -46,6 +46,7 @@ class Day {
 
 
 class Dark {
+  
   constructor() {
     this.reset();
     this.actionFunctionMapping = {
