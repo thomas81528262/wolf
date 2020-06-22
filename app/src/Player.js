@@ -20,13 +20,7 @@ import Paper from "@material-ui/core/Paper";
 import Card from "@material-ui/core/Card";
 import CardContent from "@material-ui/core/CardContent";
 import Typography from "@material-ui/core/Typography";
-import AppBar from "@material-ui/core/AppBar";
-import Toolbar from "@material-ui/core/Toolbar";
-import IconButton from "@material-ui/core/IconButton";
-import MenuIcon from "@material-ui/icons/Menu";
-import Divider from "@material-ui/core/Divider";
-import Footer from "./Footer";
-import CssBaseline from "@material-ui/core/CssBaseline";
+import DialogActions from '@material-ui/core/DialogActions';
 import Box from "@material-ui/core/Box";
 import Container from "@material-ui/core/Container";
 import Tabs from "@material-ui/core/Tabs";
@@ -73,16 +67,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const GET_PLAYERS = gql`
-  {
-    players {
-      id
-      name
-      roleName
-      isEmpty
-    }
-  }
-`;
+
 
 const GET_PLAYER_INFO = gql`
   query GetPlayer($id: Int!, $pass: String!) {
@@ -97,10 +82,16 @@ const GET_PLAYER_INFO = gql`
       isEmpty
       revealedRole
       isDie
+      vote
+      isValidCandidate
+      isVoteFinish
     }
     wolfKillList(id: $id) {
       id
       isKill
+    }
+    gameInfo(id: $id) {
+      isVoteFinish
     }
     darkInfo(id: $id) {
       isStart
@@ -115,20 +106,12 @@ const GET_PLAYER_INFO = gql`
   }
 `;
 
-const UPDATE_ROLE_NUMBER = gql`
-  mutation UpdateRoleNumber($id: Int!, $number: Int!) {
-    updateRoleNumber(id: $id, number: $number)
-  }
-`;
 
-const UPDATE_PLAYER_PASS = gql`
-  mutation UpdatePlayerPass($id: Int!, $pass: String!) {
-    updatePlayerPass(id: $id, pass: $pass) {
-      isValid
-      name
-    }
+const SUBMIT_VOTE = gql`
+   mutation SubmitVote($id: Int!, $target: Int!) {
+    submitVote(id: $id, target: $target)
   }
-`;
+`
 
 const UPDATE_PLAYER_NAME = gql`
   mutation UpdatePlayerName($id: Int!, $name: String!) {
@@ -168,9 +151,10 @@ function PlayerTable(props) {
           <TableRow>
             <TableCell>ID</TableCell>
 
-            <TableCell align="right">玩家</TableCell>
-            <TableCell align="right">？</TableCell>
-            <TableCell align="right">上線</TableCell>
+            <TableCell align="center">玩家</TableCell>
+           
+            <TableCell align="center">放逐</TableCell>
+            <TableCell align="right">狀態</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -185,12 +169,12 @@ function PlayerTable(props) {
                   row.id
                 )}
               </TableCell>
-              <TableCell align="right">{row.name}</TableCell>
-              <TableCell align="right">{row.revealedRole}</TableCell>
+              <TableCell align="center">{row.name}</TableCell>
+              <TableCell align="right">{row.vote.toString()}</TableCell>
               <TableCell align="right">
                 <span
                   style={{
-                    color: row.isEmpty ? "gray" : "lightgreen",
+                    color: row.isEmpty ? "gray" : row.isVoteFinish? "lightgreen":"orange",
                     transition: "all .3s ease",
                     fontSize: "24px",
                     marginRight: "10px",
@@ -212,8 +196,8 @@ const dialogContent = {
   WITCH_SAVE: { text: "女巫救人中", music: new Audio("/witch_save.mp3") },
   WOLF: { text: "狼人正在忙碌的殺人 請稍後", music: new Audio("/wolf.mp3") },
   PROPHET: { text: "預言家驗人", music: new Audio("/prophet.mp3") },
-  HUNTER:{text:"獵人獵殺" ,music: new Audio("/hunter.mp3")},
-  GUARD:{text:"守衛守人" ,music: new Audio("/guard.mp3")}
+  HUNTER: { text: "獵人獵殺", music: new Audio("/hunter.mp3") },
+  GUARD: { text: "守衛守人", music: new Audio("/guard.mp3") },
 };
 
 function DarkAction(props) {
@@ -237,7 +221,9 @@ function DarkAction(props) {
 
   return (
     <DialogContent>
-      <DialogTitle id="simple-dialog-title">第 {props.data.darkInfo.darkDay} 夜</DialogTitle>
+      <DialogTitle id="simple-dialog-title">
+        第 {props.data.darkInfo.darkDay} 夜
+      </DialogTitle>
 
       <DialogContentText id="alert-dialog-description">
         {dialogContent[actRoleType].text}
@@ -275,6 +261,53 @@ function DarkAction(props) {
   );
 }
 
+function VoteAction(props) {
+
+  const [target, setTarget] = React.useState(-1);
+
+  const [submitVote, { called }] = useMutation(SUBMIT_VOTE);
+
+  return (
+    <>
+    <DialogContent>
+      
+      {props.players.filter(p=>p.isValidCandidate).map((player) => (
+         <div key={player.id}>
+        <Radio
+          checked={player.id === target}
+          name="radio-button-demo"
+          inputProps={{ "aria-label": "B" }}
+          onClick={() => {
+            
+            setTarget(player.id)
+          }}
+        />
+        {` ${player.id} : ${player.name||''}`}
+        </div>
+      ))}
+      <Radio
+          checked={-1 === target}
+          name="radio-button-demo"
+          inputProps={{ "aria-label": "B" }}
+          onClick={() => {
+            
+            setTarget(-1)
+          }}
+        />
+        {`棄權`}
+    </DialogContent>
+      <DialogActions>
+      <Button onClick={()=>{
+        submitVote({variables:{id:props.id, target}})
+      }} color="primary">
+        確認
+      </Button>
+      
+    </DialogActions>
+    </>
+  );
+}
+
 function PlayerControl(props) {
   const classes = useStyles();
 
@@ -306,11 +339,9 @@ function PlayerControl(props) {
   const { id, name: playerName, roleName } = data.player;
   return (
     <>
-      <Dialog
-        aria-labelledby="simple-dialog-title"
-        open={data.darkInfo.isStart}
-      >
-        {data.darkInfo.actRoleType && <DarkAction data={data} id={props.id} />}
+      <Dialog aria-labelledby="simple-dialog-title" open={!data.gameInfo.isVoteFinish}>
+      <DialogTitle id="form-dialog-title">放逐玩家</DialogTitle>
+        <VoteAction players={data.players} id={id}/>
       </Dialog>
 
       <Box display="flex">

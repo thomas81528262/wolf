@@ -157,7 +157,7 @@ function Login() {
   if (
     playerStatus.called &&
     playerStatus.data.updatePlayerPass.isValid &&
-    isValidPlayerStatus
+    isValidPlayerStatus 
   ) {
     return (
       <React.Fragment>

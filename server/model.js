@@ -26,6 +26,7 @@ class WolfModel {
       return;
     }
 
+    this.isValidCandidate.clear();
     
 
     const result = await Db.getAllPlayer();

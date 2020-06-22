@@ -24,6 +24,11 @@ import Admin from "./Admin";
 import Typography from "@material-ui/core/Typography";
 import EnabedTemplateInfo from "./EnabledTemplateInfo";
 import { useDebounce, useDebounceCallback } from "@react-hook/debounce";
+import Dialog from "@material-ui/core/Dialog";
+import DialogTitle from "@material-ui/core/DialogTitle";
+import Radio from "@material-ui/core/Radio";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogActions from "@material-ui/core/DialogActions";
 
 const GET_ROLES = gql`
   {
@@ -32,6 +37,11 @@ const GET_ROLES = gql`
       name
       roleName
       isEmpty
+      isDie
+      isVoteFinish
+    }
+    gameInfo(id: 0) {
+      isVoteFinish
     }
   }
 `;
@@ -83,6 +93,12 @@ const REMOVE_ALL_PLAYER = gql`
 const DARK_START = gql`
   mutation DarkStart {
     darkStart
+  }
+`;
+
+const VOTE_START = gql`
+  mutation DarkStart($targets: [Int]) {
+    voteStart(targets: $targets)
   }
 `;
 
@@ -154,6 +170,62 @@ function TemplateRoleTable(props) {
   );
 }
 
+function VoteAction(props) {
+  const [targetList, setTargetList] = React.useState([]);
+  const [voteStart] = useMutation(VOTE_START, {onCompleted:()=>{
+    props.onClose();
+  }});
+  //const [submitVote, { called }] = useMutation(SUBMIT_VOTE);
+
+  return (
+    <>
+      <DialogContent>
+        {props.players
+          .filter((p) => !p.isDie && p.id !== 0)
+          .map((player) => (
+            <div key={player.id}>
+              <Radio
+                checked={targetList.includes(player.id)}
+                name="radio-button-demo"
+                inputProps={{ "aria-label": "B" }}
+                onClick={() => {
+                  if (
+                    !targetList.includes(player.id) &&
+                    targetList.length + 1 !==
+                      props.players.filter((p) => !p.isDie && p.id !== 0).length
+                  ) {
+                    setTargetList([...targetList, player.id]);
+                  }
+                }}
+              />
+              {` ${player.id} : ${player.name || ""}`}
+            </div>
+          ))}
+        <Radio
+          checked={targetList.length === 0}
+          name="radio-button-demo"
+          inputProps={{ "aria-label": "B" }}
+          onClick={() => {
+            setTargetList([]);
+          }}
+        />
+        {`所有人`}
+      </DialogContent>
+      <DialogActions>
+        {(targetList.length === 0 || targetList.length > 1) && <Button
+          onClick={() => {
+            voteStart({ variables: { targets: targetList } });
+            //submitVote({variables:{id:props.id, target}})
+          }}
+          color="primary"
+        >
+          確認
+        </Button>}
+      </DialogActions>
+    </>
+  );
+}
+
 function Game(props) {
   const classes = useStyles();
 
@@ -162,10 +234,10 @@ function Game(props) {
   const [generateRole] = useMutation(GENERATE_TEMPLATE_ROLE);
   const [generatePlayer] = useMutation(GENERATE_TEMPLATE_PLAYER);
   const [removeAllPlayer] = useMutation(REMOVE_ALL_PLAYER);
-  const [darkStart] = useMutation(DARK_START);
+  const [voteStart] = useMutation(VOTE_START);
   //const [roleId, setRoleId] = React.useState(-1);
   //const [roleNumber, setRoleNumber] = React.useState(0);
-
+  const [isOpen, setIsOpen] = React.useState(false);
   const [value, setValue] = useDebounce(props.name, 500);
   const [name, setName] = React.useState(props.name || "");
   const [updatePlayerName, { called }] = useMutation(UPDATE_PLAYER_NAME);
@@ -186,6 +258,21 @@ function Game(props) {
   if (props.isPlayerMode) {
     return (
       <div style={{}}>
+        <Dialog
+          aria-labelledby="simple-dialog-title"
+          open={isOpen}
+          onClose={() => {
+            setIsOpen(false);
+          }}
+        >
+          <DialogTitle id="form-dialog-title">放逐開始</DialogTitle>
+          <VoteAction
+            players={props.players}
+            onClose={() => {
+              setIsOpen(false);
+            }}
+          />
+        </Dialog>
         <Box display="flex">
           <Button
             variant="contained"
@@ -209,10 +296,11 @@ function Game(props) {
             variant="contained"
             color="secondary"
             onClick={() => {
-              darkStart();
+              //voteStart();
+              setIsOpen(true);
             }}
           >
-            黑夜開始
+            放逐
           </Button>
         </Box>
         <Box display="flex">
