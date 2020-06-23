@@ -13,17 +13,35 @@ class WolfModel {
   static player = [];
   static isVoteFinish = true;
   static chiefId = -1;
-  static isReset = false;
+  
+
+  static get canStartVote() {
+
+    return this.player.length > 1 && this.player.filter(p=>!p.isJoin).length === 0;
+  }
+  
+
+  static reset() {
+    this.isVoteFinish = true;
+    this.chiefId = -1;
+    this.voteList = [];
+    this.voteHistory = [];
+    this.chiefVoteHistory = [];
+    
+    for (let id = 1; id < this.player.length; id +=1) {
+      this.player[id].isDie = false;
+    }
+  }
 
   static setPlayerDieStatus({ id }) {
     const p = this.player[id];
-    console.log(p);
     if (p) {
       p.isDie = !p.isDie;
     }
   }
 
   static setChiefId({ id }) {
+
 
     if (this.chiefId === id) {
       this.chiefId = -1;
@@ -34,7 +52,7 @@ class WolfModel {
   }
 
   static async startVote(list) {
-    if (!this.isVoteFinish || !this.isReset) {
+    if (!this.isVoteFinish || !this.canStartVote) {
       return;
     }
 
@@ -47,7 +65,7 @@ class WolfModel {
       if (!id) {
         continue;
       }
-      console.log(this.player[id]);
+      
       if (!this.player[id].isDie) {
         if (list.length === 0) {
           this.isValidCandidate.add(id);
@@ -64,7 +82,7 @@ class WolfModel {
       }
     }
 
-    console.log(this.voteList);
+    
   }
 
   static getVoteStatus({ id }) {
@@ -248,12 +266,13 @@ class WolfModel {
   static async updatePlayerPass({ id, pass }) {
     const info = await this.getPlayerInfo({ id, pass });
 
-    console.log(info.id);
+    
     if (info.id !== null && info.id !== undefined) {
       return { isValid: true, ...info };
     }
 
     const result = await Db.updatePlayerPass({ id, pass });
+    this.player[id].isJoin = true;
     console.log(result);
 
     return result;
@@ -261,14 +280,22 @@ class WolfModel {
 
   static async createPlayer({ totalNumber }) {
     await Db.removeAllPlayer();
-    console.log(totalNumber);
+
+
     //0 is GOD dont touch
+    
+    this.player = [{isJoin:true, isDie:false}];
     for (let i = 0; i < totalNumber; i += 1) {
       await Db.addPlayer({ id: i + 1 });
+      this.player.push({isJoin:false, isDie:false})
     }
+
+    
   }
   static async removeAllPlayer() {
     await Db.removeAllPlayer();
+    this.reset();
+    
   }
 
   static async generateRole() {
@@ -316,7 +343,7 @@ class WolfModel {
       shuffle(list);
 
       Game.dark.reset();
-
+      this.reset();
       const waitRoleList = [];
 
       list.forEach((value, idx) => {
@@ -327,14 +354,12 @@ class WolfModel {
           camp,
         });
         waitRoleList.push(Db.updatePlayerRole({ id: idx + 1, roleId }));
-        this.player[idx + 1] = { isDie: false };
+        
       });
 
-      this.voteHistory = [];
-      this.chiefVoteHistory = [];
-      this.chiefId = -1;
-      this.isReset = true;
+
       await Promise.all(waitRoleList);
+      
     } finally {
       mutexWithTimeout.release();
     }
