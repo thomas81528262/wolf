@@ -13,6 +13,7 @@ class WolfModel {
   static player = [];
   static isVoteFinish = true;
   static chiefId = -1;
+  static isReset = false;
 
   static setPlayerDieStatus({ id }) {
     const p = this.player[id];
@@ -23,11 +24,17 @@ class WolfModel {
   }
 
   static setChiefId({ id }) {
-    this.chiefId = id;
+
+    if (this.chiefId === id) {
+      this.chiefId = -1;
+    } else {
+      this.chiefId = id;
+    }
+    
   }
 
   static async startVote(list) {
-    if (!this.isVoteFinish) {
+    if (!this.isVoteFinish || !this.isReset) {
       return;
     }
 
@@ -326,6 +333,7 @@ class WolfModel {
       this.voteHistory = [];
       this.chiefVoteHistory = [];
       this.chiefId = -1;
+      this.isReset = true;
       await Promise.all(waitRoleList);
     } finally {
       mutexWithTimeout.release();
