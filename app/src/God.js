@@ -43,6 +43,7 @@ const GET_ROLES = gql`
     }
     gameInfo(id: 0) {
       isVoteFinish
+      chiefId
     }
   }
 `;
@@ -184,7 +185,7 @@ function VoteAction(props) {
     <>
       <DialogContent>
         <DialogContentText id="alert-dialog-slide-description">
-          請選擇放逐的目標, 目標必須多於一人, 投票人數也必須多於一人
+          { `${props.hasChief ?`請選擇放逐的目標`:`請選擇警長候選人`}, 目標必須多於一人, 投票人數也必須多於一人`}
         </DialogContentText>
         {props.players
           .filter((p) => !p.isDie && p.id !== 0)
@@ -263,6 +264,8 @@ function Game(props) {
   };
   */
 
+  const hasChief = props.chiefId !== -1;
+
   if (props.isPlayerMode) {
     return (
       <div style={{}}>
@@ -273,12 +276,13 @@ function Game(props) {
             setIsOpen(false);
           }}
         >
-          <DialogTitle id="form-dialog-title">放逐開始</DialogTitle>
+          <DialogTitle id="form-dialog-title">{hasChief? `放逐開始`: `競選警長`}</DialogTitle>
           <VoteAction
             players={props.players}
             onClose={() => {
               setIsOpen(false);
             }}
+            hasChief={hasChief}
           />
         </Dialog>
         <Box display="flex">
@@ -308,7 +312,7 @@ function Game(props) {
               setIsOpen(true);
             }}
           >
-            放逐
+            {hasChief ?`放逐`:`警長`}
           </Button>
         </Box>
         <Box display="flex">
@@ -324,7 +328,7 @@ function Game(props) {
             }}
           />
         </Box>
-        <PlayerTable data={props.players} />
+        <PlayerTable data={props.players} chiefId={props.chiefId}/>
       </div>
     );
   }
@@ -385,6 +389,7 @@ export default function God(props) {
           pass={pass}
           name={name}
           players={data.players}
+          chiefId={data.gameInfo.chiefId}
         />
       </TabPanel>
       <TabPanel value={value} index={1}>

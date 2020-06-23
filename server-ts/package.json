@@ -1,0 +1,17 @@
+{
+  "name": "server-ts",
+  "version": "1.0.0",
+  "description": "wolf-backend-ts",
+  "main": "test.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/jest": "^25.2.3",
+    "jest": "^26.0.1",
+    "ts-jest": "^26.0.0",
+    "typescript": "^3.9.3"
+  }
+}

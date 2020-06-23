@@ -3,5 +3,8 @@
   "version": "0.1.0",
   "scripts": {
     "start": "cd server && npm install && node index.js"
+  },
+  "dependencies": {
+    "async-mutex": "^0.2.3"
   }
 }

@@ -15,9 +15,10 @@ const typeDefs = gql`
     isDie: Boolean
     revealedRole: String
     vote: [String]
+    chiefVote:[String]
     isValidCandidate: Boolean
     isVoteFinish: Boolean
-    votedNumber: Int
+    votedNumber: Float
   }
 
   type Role {
@@ -58,6 +59,7 @@ const typeDefs = gql`
 
   type GameInfo {
     isVoteFinish: Boolean
+    chiefId:Int
   }
 
   input RoleOrder {
@@ -98,6 +100,7 @@ const typeDefs = gql`
     voteStart(targets:[Int]): String
     submitVote(id:Int, target:Int):String
     setDieStatus(id:Int): String
+    setChiefId(id:Int): String
   }
 `;
 
@@ -109,8 +112,8 @@ const resolvers = {
     gameInfo:(root, args, context)=> {
       const {id} = args;
       const isVoteFinish = WolfModel.getIsVoteFinish({id});
-      
-      return {isVoteFinish}
+      const {chiefId} = WolfModel;
+      return {isVoteFinish, chiefId}
     },
 
     darkInfo: (root, args, context) => {
@@ -195,6 +198,11 @@ const resolvers = {
     },
   },
   Mutation: {
+    setChiefId:(root, args, context)=>{
+      const {id} = args;
+      WolfModel.setChiefId({id});
+      return "pass";
+    },
 
     setDieStatus: (root, args, context) =>{
       const {id} = args;

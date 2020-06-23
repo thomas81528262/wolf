@@ -20,7 +20,7 @@ import Paper from "@material-ui/core/Paper";
 import Card from "@material-ui/core/Card";
 import CardContent from "@material-ui/core/CardContent";
 import Typography from "@material-ui/core/Typography";
-import DialogActions from '@material-ui/core/DialogActions';
+import DialogActions from "@material-ui/core/DialogActions";
 import Box from "@material-ui/core/Box";
 import Container from "@material-ui/core/Container";
 import Tabs from "@material-ui/core/Tabs";
@@ -67,8 +67,6 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-
-
 const GET_PLAYER_INFO = gql`
   query GetPlayer($id: Int!, $pass: String!) {
     player(id: $id, pass: $pass) {
@@ -83,6 +81,7 @@ const GET_PLAYER_INFO = gql`
       revealedRole
       isDie
       vote
+      chiefVote
       isValidCandidate
       isVoteFinish
     }
@@ -92,6 +91,7 @@ const GET_PLAYER_INFO = gql`
     }
     gameInfo(id: $id) {
       isVoteFinish
+      chiefId
     }
     darkInfo(id: $id) {
       isStart
@@ -106,12 +106,11 @@ const GET_PLAYER_INFO = gql`
   }
 `;
 
-
 const SUBMIT_VOTE = gql`
-   mutation SubmitVote($id: Int!, $target: Int!) {
+  mutation SubmitVote($id: Int!, $target: Int!) {
     submitVote(id: $id, target: $target)
   }
-`
+`;
 
 const UPDATE_PLAYER_NAME = gql`
   mutation UpdatePlayerName($id: Int!, $name: String!) {
@@ -152,7 +151,7 @@ function PlayerTable(props) {
             <TableCell>ID</TableCell>
 
             <TableCell align="center">玩家</TableCell>
-           
+            <TableCell align="center">警長</TableCell>
             <TableCell align="center">放逐</TableCell>
             <TableCell align="right">狀態</TableCell>
           </TableRow>
@@ -168,13 +167,23 @@ function PlayerTable(props) {
                 ) : (
                   row.id
                 )}
+                {row.id === props.chiefId && row.id !== 0 && (
+                  <span aria-label="paw" style={{ fontSize: 30 }}>
+                    🌟
+                  </span>
+                )}
               </TableCell>
               <TableCell align="center">{row.name}</TableCell>
+              <TableCell align="right">{row.chiefVote.toString()}</TableCell>
               <TableCell align="right">{row.vote.toString()}</TableCell>
               <TableCell align="right">
                 <span
                   style={{
-                    color: row.isEmpty ? "gray" : row.isVoteFinish? "lightgreen":"orange",
+                    color: row.isEmpty
+                      ? "gray"
+                      : row.isVoteFinish
+                      ? "lightgreen"
+                      : "orange",
                     transition: "all .3s ease",
                     fontSize: "24px",
                     marginRight: "10px",
@@ -262,48 +271,48 @@ function DarkAction(props) {
 }
 
 function VoteAction(props) {
-
   const [target, setTarget] = React.useState(-1);
 
   const [submitVote, { called }] = useMutation(SUBMIT_VOTE);
 
   return (
     <>
-    <DialogContent>
-      
-      {props.players.filter(p=>p.isValidCandidate).map((player) => (
-         <div key={player.id}>
+      <DialogContent>
+        {props.players
+          .filter((p) => p.isValidCandidate)
+          .map((player) => (
+            <div key={player.id}>
+              <Radio
+                checked={player.id === target}
+                name="radio-button-demo"
+                inputProps={{ "aria-label": "B" }}
+                onClick={() => {
+                  setTarget(player.id);
+                }}
+              />
+              {` ${player.id} : ${player.name || ""}`}
+            </div>
+          ))}
         <Radio
-          checked={player.id === target}
-          name="radio-button-demo"
-          inputProps={{ "aria-label": "B" }}
-          onClick={() => {
-            
-            setTarget(player.id)
-          }}
-        />
-        {` ${player.id} : ${player.name||''}`}
-        </div>
-      ))}
-      <Radio
           checked={-1 === target}
           name="radio-button-demo"
           inputProps={{ "aria-label": "B" }}
           onClick={() => {
-            
-            setTarget(-1)
+            setTarget(-1);
           }}
         />
         {`棄權`}
-    </DialogContent>
+      </DialogContent>
       <DialogActions>
-      <Button onClick={()=>{
-        submitVote({variables:{id:props.id, target}})
-      }} color="primary">
-        確認
-      </Button>
-      
-    </DialogActions>
+        <Button
+          onClick={() => {
+            submitVote({ variables: { id: props.id, target } });
+          }}
+          color="primary"
+        >
+          確認
+        </Button>
+      </DialogActions>
     </>
   );
 }
@@ -336,12 +345,16 @@ function PlayerControl(props) {
     return <div>Loading</div>;
   }
 
+  const hasChief = data.gameInfo.chiefId !== -1;
   const { id, name: playerName, roleName } = data.player;
   return (
     <>
-      <Dialog aria-labelledby="simple-dialog-title" open={!data.gameInfo.isVoteFinish}>
-      <DialogTitle id="form-dialog-title">放逐玩家</DialogTitle>
-        <VoteAction players={data.players} id={id}/>
+      <Dialog
+        aria-labelledby="simple-dialog-title"
+        open={!data.gameInfo.isVoteFinish}
+      >
+        <DialogTitle id="form-dialog-title">{hasChief?`放逐玩家`:`選擇警長`}</DialogTitle>
+        <VoteAction players={data.players} id={id} />
       </Dialog>
 
       <Box display="flex">
@@ -366,7 +379,7 @@ function PlayerControl(props) {
         </CardContent>
       </Card>
 
-      <PlayerTable data={data.players} />
+      <PlayerTable data={data.players} chiefId={data.gameInfo.chiefId} />
     </>
   );
 }

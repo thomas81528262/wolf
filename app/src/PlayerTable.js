@@ -21,7 +21,7 @@ const useStyles = makeStyles((theme) => ({
     margin: theme.spacing(1),
   },
   table: {
-    minWidth: 450,
+    minWidth: 550,
   },
   title: {
     flexGrow: 1,
@@ -36,19 +36,27 @@ const SET_DIE_STATUS = gql`
     setDieStatus(id: $id)
   }
 `
+const SET_CHIEF_ID = gql`
+mutation SetChiefId($id: Int!) {
+  setChiefId(id: $id)
+}
+`
+
 
 export default function PlayerTable(props) {
   const classes = useStyles();
   const [setDie] = useMutation(SET_DIE_STATUS);
+  const [setChiefId] = useMutation(SET_CHIEF_ID);
   return (
     <TableContainer component={Paper}>
       <Table className={classes.table} aria-label="simple table" size="small">
         <TableHead>
           <TableRow>
+            <TableCell>警長</TableCell>
             <TableCell>死亡</TableCell>
             <TableCell>ID</TableCell>
 
-            <TableCell align="right">玩家</TableCell>
+            <TableCell align="left">玩家</TableCell>
             <TableCell align="right">角色</TableCell>
             <TableCell align="right">投票</TableCell>
             <TableCell align="right">上線</TableCell>
@@ -57,6 +65,16 @@ export default function PlayerTable(props) {
         <TableBody>
           {props.data.map((row) => (
             <TableRow key={row.id}>
+               <TableCell>
+                <Checkbox
+                  onChange={(e) => {
+                    setChiefId({variables:{id:row.id}});
+                  }}
+                  checked={row.id === props.chiefId}
+                  color="primary"
+                  inputProps={{ "aria-label": "secondary checkbox" }}
+                />
+              </TableCell>
               <TableCell>
                 {row.id ? <Checkbox
                   onChange={(e) => {
