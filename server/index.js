@@ -1,8 +1,15 @@
 var express = require("express");
 var app = express();
-const { ApolloServer, gql } = require("apollo-server-express");
+const {
+  ApolloServer,
+  gql,
+  AuthenticationError,
+} = require("apollo-server-express");
 const WolfModel = require("./model");
 const Game = require("./game");
+const session = require("express-session");
+const MemoryStore = require("memorystore")(session);
+const authServer = require("./auth");
 const typeDefs = gql`
   # Comments in GraphQL strings (such as this one) start with the hash (#) symbol.
 
@@ -15,7 +22,7 @@ const typeDefs = gql`
     isDie: Boolean
     revealedRole: String
     vote: [String]
-    chiefVote:[String]
+    chiefVote: [String]
     isValidCandidate: Boolean
     isVoteFinish: Boolean
     votedNumber: Float
@@ -38,6 +45,7 @@ const typeDefs = gql`
   type PlayerStatus {
     isValid: Boolean
     name: String
+    id: Int
   }
 
   enum ActRoleType {
@@ -59,7 +67,7 @@ const typeDefs = gql`
 
   type GameInfo {
     isVoteFinish: Boolean
-    chiefId:Int
+    chiefId: Int
   }
 
   input RoleOrder {
@@ -78,7 +86,8 @@ const typeDefs = gql`
     player(id: Int, pass: String): Player
     wolfKillList(id: Int): [Player]
     darkInfo(id: Int): DarkInfo
-    gameInfo(id: Int):GameInfo
+    gameInfo(id: Int): GameInfo
+    login: PlayerStatus
   }
   type Mutation {
     exeDarkAction(id: Int, targetId: Int): String
@@ -97,10 +106,11 @@ const typeDefs = gql`
     updateTemplateRolePriority(ids: [Int], name: String): String
     enableTemplate(name: String): String
     darkStart: String
-    voteStart(targets:[Int]): String
-    submitVote(id:Int, target:Int):String
-    setDieStatus(id:Int): String
-    setChiefId(id:Int): String
+    voteStart(targets: [Int]): String
+    submitVote(target: Int): String
+    setDieStatus(id: Int): String
+    setChiefId(id: Int): String
+    logoff: String
   }
 `;
 
@@ -108,19 +118,32 @@ const timeout = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const resolvers = {
   Query: {
+    login: (root, args, context) => {
+      const { playerId, isValid } = context.session;
 
-    gameInfo:(root, args, context)=> {
-      const {id} = args;
-      const isVoteFinish = WolfModel.getIsVoteFinish({id});
-      const {chiefId} = WolfModel;
-      return {isVoteFinish, chiefId}
+      return { id: playerId, isValid };
+    },
+    gameInfo: (root, args, context) => {
+      if (context.session.playerId === undefined) {
+        throw new AuthenticationError("No Access!");
+      }
+      const { id } = args;
+      const isVoteFinish = WolfModel.getIsVoteFinish({ id });
+      const { chiefId } = WolfModel;
+      return { isVoteFinish, chiefId };
     },
 
     darkInfo: (root, args, context) => {
       const { id } = args;
       const actionResult = Game.dark.resultFunction({ id });
-      const { isStart, remainTime, actRoleType ,darkDay} = Game.dark;
-      return { isStart, remainTime, targetList: actionResult, actRoleType , darkDay};
+      const { isStart, remainTime, actRoleType, darkDay } = Game.dark;
+      return {
+        isStart,
+        remainTime,
+        targetList: actionResult,
+        actRoleType,
+        darkDay,
+      };
     },
     wolfKillList: (root, args, context) => {
       const { id } = args;
@@ -149,19 +172,20 @@ const resolvers = {
       return result;
     },
     players: async (root, args, context) => {
+      if (context.session.playerId === undefined) {
+        throw new AuthenticationError("No Access!");
+      }
+
       const { id } = args;
 
       const result = await WolfModel.getPlayerList();
 
       result.forEach((role, idx) => {
-       
-        
-        const voteStatus = WolfModel.getVoteStatus({id:idx})
-        const playerStatus = WolfModel.getPlayerStatus({id:idx});
-        
+        const voteStatus = WolfModel.getVoteStatus({ id: idx });
+        const playerStatus = WolfModel.getPlayerStatus({ id: idx });
+
         result[idx] = { ...result[idx], ...voteStatus, ...playerStatus };
       });
-
 
       /*
       if (id) {
@@ -198,16 +222,20 @@ const resolvers = {
     },
   },
   Mutation: {
-    setChiefId:(root, args, context)=>{
-      const {id} = args;
-      WolfModel.setChiefId({id});
+    logoff: (root, args, context) => {
+      context.session.destroy();
+      return "pass";
+    },
+    setChiefId: (root, args, context) => {
+      const { id } = args;
+      WolfModel.setChiefId({ id });
       return "pass";
     },
 
-    setDieStatus: (root, args, context) =>{
-      const {id} = args;
-      WolfModel.setPlayerDieStatus({id});
-      return "pass"
+    setDieStatus: (root, args, context) => {
+      const { id } = args;
+      WolfModel.setPlayerDieStatus({ id });
+      return "pass";
     },
 
     exeDarkAction: async (root, args, context) => {
@@ -217,15 +245,19 @@ const resolvers = {
       return "pass";
     },
 
-    voteStart: async(root, args, context)=>{
-      const {targets} = args;
+    voteStart: async (root, args, context) => {
+      const { targets } = args;
       await WolfModel.startVote(targets);
-      return "pass"
+      return "pass";
     },
-    submitVote: (root, args, context)=>{
-      const {id, target} = args;
-      WolfModel.submitVote({id, target});
-      return "pass"
+    submitVote: (root, args, context) => {
+      if (context.session.playerId === undefined) {
+        throw new AuthenticationError("No Access!");
+      }
+      const { playerId } = context.session;
+      const { target } = args;
+      WolfModel.submitVote({ id: playerId, target });
+      return "pass";
     },
     darkStart: async () => {
       Game.dark.start();
@@ -305,7 +337,7 @@ const resolvers = {
       return "pass";
     },
     removeAllPlayer: async (root, args, context) => {
-      await WolfModel.removeAllPlayer();
+      await WolfModel.removeAllPlayer({ store });
       return "pass";
     },
   },
@@ -319,15 +351,35 @@ app.get('/', function (req, res) {
 
 const webPath = "/web";
 
+const store = new MemoryStore({});
+
+app.use(
+  session({
+    secret: "thomas secret",
+    resave: false,
+    saveUninitialized: false,
+    cookie: { maxAge: 8 * 60 * 60 * 1000 },
+    store,
+  })
+);
+
 app.use(express.static(`${process.cwd()}${webPath}`));
 
 app.get("/", (request, response) => {
   response.sendFile(`${process.cwd()}${webPath}/index.html`);
 });
 
-const server = new ApolloServer({ typeDefs, resolvers });
-server.applyMiddleware({ app });
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
 
+  context: ({ req }) => {
+    return { session: req.session };
+  },
+});
+
+server.applyMiddleware({ app });
+authServer.applyMiddleware({ app, path: "/auth" });
 // The `listen` method launches a web server.
 var port = process.env.PORT || 4000;
 app.listen({ port }, () =>

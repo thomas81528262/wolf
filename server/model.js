@@ -13,13 +13,13 @@ class WolfModel {
   static player = [];
   static isVoteFinish = true;
   static chiefId = -1;
-  
 
   static get canStartVote() {
-
-    return this.player.length > 1 && this.player.filter(p=>!p.isJoin).length === 0;
+    return (
+      this.player.length > 1 &&
+      this.player.filter((p) => !p.isJoin).length === 0
+    );
   }
-  
 
   static reset() {
     this.isVoteFinish = true;
@@ -27,8 +27,8 @@ class WolfModel {
     this.voteList = [];
     this.voteHistory = [];
     this.chiefVoteHistory = [];
-    
-    for (let id = 1; id < this.player.length; id +=1) {
+
+    for (let id = 1; id < this.player.length; id += 1) {
       this.player[id].isDie = false;
     }
   }
@@ -41,14 +41,11 @@ class WolfModel {
   }
 
   static setChiefId({ id }) {
-
-
     if (this.chiefId === id) {
       this.chiefId = -1;
     } else {
       this.chiefId = id;
     }
-    
   }
 
   static async startVote(list) {
@@ -65,7 +62,7 @@ class WolfModel {
       if (!id) {
         continue;
       }
-      
+
       if (!this.player[id].isDie) {
         if (list.length === 0) {
           this.isValidCandidate.add(id);
@@ -81,30 +78,9 @@ class WolfModel {
         this.voteList[id] = "D";
       }
     }
-
-    
   }
 
-  static getVoteStatus({ id }) {
-    const isValidCandidate = this.isValidCandidate.has(id);
-    const vote = [];
-    const chiefVote = [];
-    let isVoteFinish = true;
-
-    if (id) {
-      this.voteHistory.forEach((list) => {
-        const target = list[id];
-        vote.push(target);
-      });
-
-      this.chiefVoteHistory.forEach(list=>{
-        const target = list[id];
-        chiefVote.push(target);
-      })
-
-      isVoteFinish = this.voteList[id] !== 0 || this.isVoteFinish;
-    }
-
+  static getVotedNumber({ id }) {
     let votedNumber = 0;
 
     const voteList =
@@ -123,7 +99,59 @@ class WolfModel {
       });
     }
 
-    return { isValidCandidate, vote, isVoteFinish, votedNumber, chiefVote };
+    return votedNumber;
+  }
+
+  static getVoteStatus({ id }) {
+    const isValidCandidate = this.isValidCandidate.has(id);
+    const vote = [];
+    const chiefVote = [];
+    let isVoteFinish = true;
+
+    if (id) {
+      this.voteHistory.forEach((list) => {
+        const target = list[id];
+        vote.push(target);
+      });
+
+      this.chiefVoteHistory.forEach((list) => {
+        const target = list[id];
+        chiefVote.push(target);
+      });
+
+      isVoteFinish = this.voteList[id] !== 0 || this.isVoteFinish;
+    }
+
+    /*
+    let votedNumber = 0;
+
+    const voteList =
+      this.chiefId === -1 ? this.chiefVoteHistory : this.voteHistory;
+
+    if (voteList.length > 0) {
+      const lastIdx = voteList.length - 1;
+      voteList[lastIdx].forEach((tId, idx) => {
+        if (tId === id) {
+          votedNumber += 1;
+
+          if (idx === this.chiefId) {
+            votedNumber += 0.5;
+          }
+        }
+      });
+    }
+    */
+
+   const votedNumber = this.player[id] ? this.player[id].votedNumber: 0;
+  
+
+    return {
+      isValidCandidate,
+      vote,
+      isVoteFinish,
+      votedNumber,
+      chiefVote,
+    };
   }
 
   static getPlayerStatus({ id }) {
@@ -188,6 +216,10 @@ class WolfModel {
 
       this.voteList = [];
       this.isVoteFinish = true;
+
+      this.player.forEach((p, id) => {
+        p.votedNumber = this.getVotedNumber({ id });
+      });
     }
   }
 
@@ -263,17 +295,22 @@ class WolfModel {
     return {};
   }
 
-  static async updatePlayerPass({ id, pass }) {
+  static async updatePlayerPass({ id, pass, session }) {
     const info = await this.getPlayerInfo({ id, pass });
 
-    
     if (info.id !== null && info.id !== undefined) {
+      session.playerId = id;
+      session.isValid = true;
       return { isValid: true, ...info };
     }
 
     const result = await Db.updatePlayerPass({ id, pass });
-    this.player[id].isJoin = true;
-    console.log(result);
+
+    if (result.isValid) {
+      session.playerId = id;
+      session.isValid = true;
+      this.player[id].isJoin = true;
+    }
 
     return result;
   }
@@ -281,21 +318,27 @@ class WolfModel {
   static async createPlayer({ totalNumber }) {
     await Db.removeAllPlayer();
 
-
     //0 is GOD dont touch
-    
-    this.player = [{isJoin:true, isDie:false}];
+
+    this.player = [{ isJoin: true, isDie: false }];
     for (let i = 0; i < totalNumber; i += 1) {
       await Db.addPlayer({ id: i + 1 });
-      this.player.push({isJoin:false, isDie:false})
+      this.player.push({ isJoin: false, isDie: false, votedNumber: 0 });
     }
-
-    
   }
-  static async removeAllPlayer() {
+  static async removeAllPlayer({ store }) {
     await Db.removeAllPlayer();
+    store.all((e, sessions) => {
+      Object.keys(sessions).forEach((k, v) => {
+        if (sessions[k].playerId) {
+          store.destroy(k);
+        }
+
+        //console.log(k, sessions[k].playerId)
+      });
+    });
+
     this.reset();
-    
   }
 
   static async generateRole() {
@@ -354,12 +397,9 @@ class WolfModel {
           camp,
         });
         waitRoleList.push(Db.updatePlayerRole({ id: idx + 1, roleId }));
-        
       });
 
-
       await Promise.all(waitRoleList);
-      
     } finally {
       mutexWithTimeout.release();
     }
