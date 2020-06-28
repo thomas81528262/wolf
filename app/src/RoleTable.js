@@ -1,5 +1,5 @@
-import React from "react";
-import { useQuery, useMutation } from "@apollo/react-hooks";
+import React, {useEffect} from "react";
+import { useQuery, useMutation , useLazyQuery} from "@apollo/client";
 import { gql } from "apollo-boost";
 import Table from "@material-ui/core/Table";
 import TableBody from "@material-ui/core/TableBody";
@@ -65,7 +65,7 @@ function processData(data) {
 function BaseTable(props) {
   const classes = useStyles();
 
-
+  console.log(props.data)
   
   const { total, data } = processData(props.data);
 
@@ -108,22 +108,39 @@ function BaseTable(props) {
 }
 
 function RoleTable(props) {
+
+  return <BaseTable data={props.data} />;
+
+  /*
   const { variables, query, pollInterval } = props;
 
   
-  const { loading, error, data: rawData, startPolling, stopPolling } = useQuery(query, {
-    fetchPolicy:"network-only",
+  const [queryData,{ loading, error, data: rawData, called}] = useLazyQuery(query, {
+    //fetchPolicy:"network-only",
     variables,
     //pollInterval
   });
 
 
-  React.useEffect(() => {
-    startPolling(pollInterval); // will be called only once
-    return stopPolling; // just return cleanup function without making new one
-  }, []);
+  let isMounted = true;
+ useEffect(() => {
+   if (isMounted) {
+     queryData();
+   }
 
-  if (loading ) {
+   const interval = setInterval(() => {
+     if (isMounted) {
+       queryData();
+     }
+   }, 500);
+
+   return () => {
+     clearInterval(interval);
+     isMounted = false;
+   };
+ }, []);
+
+  if (!called || !rawData) {
     return <div>Loading</div>;
   }
 
@@ -132,6 +149,7 @@ function RoleTable(props) {
   console.log(data, variables, query, rawData);
 
   return <BaseTable data={data} />;
+  */
 }
 
 export { RoleTable, BaseTable };

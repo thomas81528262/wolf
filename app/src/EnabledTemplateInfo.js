@@ -6,7 +6,7 @@ import {
   createMuiTheme,
 } from "@material-ui/core/styles";
 import Button from "@material-ui/core/Button";
-import { useQuery, useMutation } from "@apollo/react-hooks";
+import { useQuery, useMutation } from "@apollo/client";
 import { gql } from "apollo-boost";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import TextField from "@material-ui/core/TextField";
@@ -64,7 +64,7 @@ export default function EnabledTemplate(props) {
           multiline
           rows={6}
           fullWidth
-          value={description}
+          value={description || ""}
           variant="outlined"
           label="規則"
           disabled

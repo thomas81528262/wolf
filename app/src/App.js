@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import logo from "./logo.svg";
 import "./App.css";
 import Button from "@material-ui/core/Button";
@@ -8,8 +8,16 @@ import TextField from "@material-ui/core/TextField";
 import Fab from "@material-ui/core/Fab";
 import AddIcon from "@material-ui/icons/Add";
 import { gql } from "apollo-boost";
-import { useQuery, useMutation } from "@apollo/react-hooks";
-import { ApolloProvider } from "@apollo/react-hooks";
+import {
+  useLazyQuery,
+  useQuery,
+  useMutation,
+  ApolloProvider,
+  ApolloClient,
+  HttpLink,
+  InMemoryCache,
+} from "@apollo/client";
+
 import Table from "@material-ui/core/Table";
 import TableBody from "@material-ui/core/TableBody";
 import TableCell from "@material-ui/core/TableCell";
@@ -29,7 +37,7 @@ import Footer from "./Footer";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import Box from "@material-ui/core/Box";
 import Container from "@material-ui/core/Container";
-
+import { useHistory } from "react-router-dom";
 import Avatar from "react-avatar";
 import {
   fade,
@@ -38,16 +46,30 @@ import {
   createMuiTheme,
 } from "@material-ui/core/styles";
 import { useDebounce, useDebounceCallback } from "@react-hook/debounce";
-import ApolloClient from "apollo-boost";
+//import ApolloClient from "apollo-boost";
 
 import God from "./God";
 import Admin from "./Admin";
 import Player from "./Player";
 
+import LoginPage from "./Login";
+
+import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
+
 const client = new ApolloClient({
-  uri: "/graphql",
-  connectToDevTools: true
+  cache: new InMemoryCache(),
+  link: new HttpLink({
+    uri: "/graphql",
+  }),
 });
+
+const auth = new ApolloClient({
+  cache: new InMemoryCache(),
+  link: new HttpLink({
+    uri: "/auth",
+  }),
+});
+
 const useStyles = makeStyles((theme) => ({
   margin: {
     //margin: theme.spacing(1),
@@ -77,6 +99,16 @@ const GET_PLAYERS = gql`
       name
       isEmpty
     }
+    login {
+      id
+      isValid
+    }
+  }
+`;
+
+const LOG_OFF = gql`
+  mutation Logoff {
+    logoff
   }
 `;
 
@@ -97,49 +129,7 @@ function Copyright() {
     </Typography>
   );
 }
-
-function PlayerTable(props) {
-  const classes = useStyles();
-
-  return (
-    <TableContainer component={Paper}>
-      <Table className={classes.table} aria-label="simple table" size="small">
-        <TableHead>
-          <TableRow>
-            <TableCell>ID</TableCell>
-
-            <TableCell align="right">玩家</TableCell>
-
-            <TableCell align="right">上線</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {props.data.map((row) => (
-            <TableRow key={row.id}>
-              <TableCell component="th" scope="row">
-                {row.id}
-              </TableCell>
-              <TableCell align="right">{row.name}</TableCell>
-              <TableCell align="right">
-                <span
-                  style={{
-                    color: row.isEmpty ? "gray" : "lightgreen",
-                    transition: "all .3s ease",
-                    fontSize: "24px",
-                    marginRight: "10px",
-                  }}
-                >
-                  &#x25cf;
-                </span>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  );
-}
-
+/*
 function Login() {
   const classes = useStyles();
 
@@ -153,11 +143,11 @@ function Login() {
   }
 
   //if (playerStatus.data)
-  
+
   if (
     playerStatus.called &&
     playerStatus.data.updatePlayerPass.isValid &&
-    isValidPlayerStatus 
+    isValidPlayerStatus
   ) {
     return (
       <React.Fragment>
@@ -286,13 +276,158 @@ function Login() {
     </Container>
   );
 }
+*/
+
+function LogoffButton() {
+  const history = useHistory();
+  const [logoff] = useMutation(LOG_OFF, {
+    onCompleted: () => {
+      history.push("/");
+    },
+  });
+
+  return (
+    <Button
+      variant="contained"
+      color="secondary"
+      onClick={() => {
+        logoff();
+        //setIsValidPlayerStatus(false);
+      }}
+    >
+      退出
+    </Button>
+  );
+}
+
+function Game() {
+  const history = useHistory();
+  const [getPlayer, { loading, error, data }] = useLazyQuery(GET_PLAYERS, {
+    fetchPolicy: "network-only",
+  });
+
+  const classes = useStyles();
+
+  let isMounted = true;
+  useEffect(() => {
+    if (isMounted) {
+      getPlayer();
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  React.useEffect(() => {
+    if (error) {
+      error.graphQLErrors.forEach((e) => {
+        const { extensions } = e;
+        if (extensions.code === "UNAUTHENTICATED") {
+          history.push("/")
+          //setIsLogoff(true);
+        }
+      });
+    }
+  }, [error]);
+
+  if (loading || !data) {
+    return <div>Loading</div>;
+  }
+
+  //const [playerId, setPlayerId] = React.useState(-1);
+  //const [playerPass, setPlayerPass] = React.useState("");
+
+  //const [isLogoff, setIsLogoff] = React.useState(false);
+  /*
+  const { loading, error, data } = useQuery(GET_PLAYERS, {
+    fetchPolicy: "network-only",
+  });
+  */
+
+  /*
+  const [logoff, {loading:logoffLoading, data:logoffdata}] = useMutation(LOG_OFF, {
+    onCompleted: () => {
+      console.log('complete')
+      //setIsLogoff(true);
+    },
+  });
+  */
+
+  /*
+  
+  */
+
+  /*
+  React.useEffect(() => {
+    if (!loading && isLogoff && !logoffLoading) {
+      history.push("/");
+    }
+  }, [loading, isLogoff, logoffLoading]);
+  */
+  /*
+  if (loading) {
+    return <div>Loading</div>;
+  }
+  */
+
+  console.log(data, loading)
+
+  const playerId = data.login.id;
+  return (
+    <React.Fragment>
+      <CssBaseline />
+      <Container maxWidth="sm">
+        <AppBar position="absolute">
+          <Toolbar>
+            <IconButton
+              edge="start"
+              className={classes.menuButton}
+              color="inherit"
+              aria-label="menu"
+            >
+              <MenuIcon />
+            </IconButton>
+            <Typography variant="h6" className={classes.title}>
+              小狼狼
+            </Typography>
+            <LogoffButton />
+          </Toolbar>
+        </AppBar>
+
+        <div style={{ marginTop: 100, width: 600 }}>
+          {playerId === 0 ? (
+            <God id={playerId} pass={""} name={""} />
+          ) : (
+            <Player id={playerId} pass={""} name={""} />
+          )}
+        </div>
+
+        <Box pt={4}>
+          <Copyright />
+        </Box>
+      </Container>
+    </React.Fragment>
+  );
+}
 
 function App() {
   return (
     <div className="App">
-      <ApolloProvider client={client}>
-        <Login />
-      </ApolloProvider>
+      <Router>
+        <Switch>
+          <Route exact path="/">
+            <ApolloProvider client={auth}>
+              <LoginPage />
+            </ApolloProvider>
+          </Route>
+
+          <Route exact path="/game">
+            <ApolloProvider client={client}>
+              <Game />
+            </ApolloProvider>
+          </Route>
+        </Switch>
+      </Router>
     </div>
   );
 }

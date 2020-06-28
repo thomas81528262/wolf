@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import logo from "./logo.svg";
 import "./App.css";
 import Button from "@material-ui/core/Button";
@@ -8,8 +8,8 @@ import TextField from "@material-ui/core/TextField";
 import Fab from "@material-ui/core/Fab";
 import AddIcon from "@material-ui/icons/Add";
 import { gql } from "apollo-boost";
-import { useQuery, useMutation } from "@apollo/react-hooks";
-import { ApolloProvider } from "@apollo/react-hooks";
+import { useQuery, useMutation, useLazyQuery } from "@apollo/client";
+
 import Table from "@material-ui/core/Table";
 import TableBody from "@material-ui/core/TableBody";
 import TableCell from "@material-ui/core/TableCell";
@@ -38,13 +38,10 @@ import {
   createMuiTheme,
 } from "@material-ui/core/styles";
 import { useDebounce, useDebounceCallback } from "@react-hook/debounce";
-import ApolloClient from "apollo-boost";
 
 import EnabedTemplateInfo from "./EnabledTemplateInfo";
+import { useHistory } from "react-router-dom";
 
-const client = new ApolloClient({
-  uri: "/graphql",
-});
 const useStyles = makeStyles((theme) => ({
   margin: {
     //margin: theme.spacing(1),
@@ -107,8 +104,8 @@ const GET_PLAYER_INFO = gql`
 `;
 
 const SUBMIT_VOTE = gql`
-  mutation SubmitVote($id: Int!, $target: Int!) {
-    submitVote(id: $id, target: $target)
+  mutation SubmitVote($target: Int!) {
+    submitVote(target: $target)
   }
 `;
 
@@ -160,7 +157,7 @@ function PlayerTable(props) {
           {props.data.map((row) => (
             <TableRow key={row.id}>
               <TableCell component="th" scope="row">
-                {row.isDie ? (
+                {row.id === 0 ? `♾️` :row.isDie ? (
                   <span aria-label="paw" style={{ fontSize: 30 }}>
                     🐾
                   </span>
@@ -306,7 +303,7 @@ function VoteAction(props) {
       <DialogActions>
         <Button
           onClick={() => {
-            submitVote({ variables: { id: props.id, target } });
+            submitVote({ variables: { target } });
           }}
           color="primary"
         >
@@ -319,17 +316,35 @@ function VoteAction(props) {
 
 function PlayerControl(props) {
   const classes = useStyles();
+  const history = useHistory();
 
-  const { loading, error, data } = useQuery(GET_PLAYER_INFO, {
-    fetchPolicy: "network-only",
-    variables: { id: props.id, pass: props.pass },
-    pollInterval: 500,
-  });
+  const [
+    playerInfo,
+    { loading, error, data, called: playerCalled },
+  ] = useLazyQuery(GET_PLAYER_INFO, { fetchPolicy: "network-only" });
 
   const [open, setOpen] = React.useState(true);
   const [value, setValue] = useDebounce(props.name, 500);
   const [name, setName] = React.useState(props.name);
   const [updatePlayerName, { called }] = useMutation(UPDATE_PLAYER_NAME);
+
+  let isMounted = true;
+  useEffect(() => {
+    if (isMounted) {
+      playerInfo({variables: { id: props.id, pass: props.pass }});
+    }
+
+    const interval = setInterval(() => {
+      if (isMounted) {
+        playerInfo({ variables: { id: props.id, pass: props.pass } });
+      }
+    }, 500);
+
+    return () => {
+      clearInterval(interval);
+      isMounted = false;
+    };
+  }, []);
 
   React.useEffect(() => {
     if (value && (value !== props.name || called)) {
@@ -338,10 +353,14 @@ function PlayerControl(props) {
       });
     }
 
-    //audioEl.play()
-  }, [value]);
+    if (error && !loading) {
+      history.push("/");
+    }
 
-  if (loading) {
+    //audioEl.play()
+  }, [value, error, loading]);
+
+  if (!playerCalled || !data) {
     return <div>Loading</div>;
   }
 
@@ -353,7 +372,9 @@ function PlayerControl(props) {
         aria-labelledby="simple-dialog-title"
         open={!data.gameInfo.isVoteFinish}
       >
-        <DialogTitle id="form-dialog-title">{hasChief?`放逐玩家`:`選擇警長`}</DialogTitle>
+        <DialogTitle id="form-dialog-title">
+          {hasChief ? `放逐玩家` : `選擇警長`}
+        </DialogTitle>
         <VoteAction players={data.players} id={id} />
       </Dialog>
 

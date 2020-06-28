@@ -6,7 +6,7 @@ import {
   createMuiTheme,
 } from "@material-ui/core/styles";
 import Button from "@material-ui/core/Button";
-import { useQuery, useMutation } from "@apollo/react-hooks";
+import { useQuery, useMutation } from "@apollo/client";
 import { gql } from "apollo-boost";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import TextField from "@material-ui/core/TextField";

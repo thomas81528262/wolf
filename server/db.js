@@ -216,6 +216,23 @@ ON CONFLICT (author, name)
       return [];
     }
   }
+
+  static async getPlayerIdInfo({id}) {
+    try {
+      const text =
+        'SELECT player.id, player."name", roleId, role.name as "roleName", player."isempty" as "isEmpty"  FROM public.player left join public.role on roleId=role.id where player.id =$1;';
+      const values = [id];
+      const result = await pool.query(text, values);
+
+      return result.rows;
+    } catch (err) {
+      console.log(err.stack);
+      return [];
+    }
+
+  }
+
+
   static async updatePlayerName({ id, name }) {
     try {
       const text = 'update public.player set  "name"=$1 where id=$2';

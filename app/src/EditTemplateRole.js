@@ -6,7 +6,7 @@ import {
   createMuiTheme,
 } from "@material-ui/core/styles";
 import Button from "@material-ui/core/Button";
-import { useQuery, useMutation, useLazyQuery } from "@apollo/react-hooks";
+import { useQuery, useMutation, useLazyQuery } from "@apollo/client";
 import { gql } from "apollo-boost";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import TextField from "@material-ui/core/TextField";
@@ -92,8 +92,7 @@ function EditDarkPriority(props) {
   const [orgPriorityList, setOrgPriorityList] = React.useState([]);
   const [isLoading, setIsLoading] = React.useState(false);
   const { loading, error, data, refetch } = useQuery(GET_TEMPLATE, {
-    fetchPolicy: "network-only",
-    notifyOnNetworkStatusChange: true,
+    //fetchPolicy: "network-only",
     variables: { name },
     onCompleted: (res) => {
       console.log("complete", res);
@@ -144,7 +143,7 @@ function EditDarkPriority(props) {
 }
 
 function EditRole(props) {
-  const { name } = props;
+  const { name , data} = props;
   const [updateRoleNumber] = useMutation(UPDATE_ROLE_NUMBER);
 
   React.useEffect(() => {
@@ -168,7 +167,10 @@ function EditRole(props) {
         }}
       />
 
-      <RoleTable
+        <RoleTable data={data}/>
+
+      {/*<RoleTable
+        data={data}
         query={GET_TEMPLATE}
         variables={{ name }}
         parseData={(d) => {
@@ -176,7 +178,7 @@ function EditRole(props) {
           return d.template.roles;
         }}
         pollInterval={500}
-    />
+      />*/}
     </div>
   );
 }
@@ -236,14 +238,14 @@ function EditRule(props) {
 }
 
 export default function EditTemplate(props) {
-  const { name } = props;
+  const { name, data } = props;
     
   const [value, setValue] = React.useState(0);
   
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
-  console.log(name)
+  console.log(name, data)
   return (
    
     <Paper square>
@@ -260,7 +262,7 @@ export default function EditTemplate(props) {
         
       </Tabs>
       <TabPanel value={value} index={0}>
-        <EditRole name={name} />
+        <EditRole name={name} data={data}/>
       </TabPanel>
       <TabPanel value={value} index={1}>
         <EditRule name={name} />

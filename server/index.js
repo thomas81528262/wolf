@@ -216,8 +216,12 @@ const resolvers = {
       return result;
     },
     player: async (root, args, context) => {
-      const { id, pass } = args;
-      const result = await WolfModel.getPlayerInfo({ id, pass });
+      if (context.session.playerId === undefined) {
+        throw new AuthenticationError("No Access!");
+      }
+      
+      const {playerId} = context.session;
+      const result = await WolfModel.getPlayerIdInfo({id:playerId});
       return result;
     },
   },
@@ -365,7 +369,7 @@ app.use(
 
 app.use(express.static(`${process.cwd()}${webPath}`));
 
-app.get("/", (request, response) => {
+app.get("/*", (request, response) => {
   response.sendFile(`${process.cwd()}${webPath}/index.html`);
 });
 

@@ -6,7 +6,7 @@ import {
   createMuiTheme,
 } from "@material-ui/core/styles";
 import Button from "@material-ui/core/Button";
-import { useQuery, useMutation } from "@apollo/react-hooks";
+import { useQuery, useMutation } from "@apollo/client";
 import { gql } from "apollo-boost";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import TextField from "@material-ui/core/TextField";
@@ -156,16 +156,19 @@ function TemplateTable(props) {
 
   const [enableTemplate, enableResult] = useMutation(ENABLE_TEMPLATE, {
     onCompleted: () => {
+
+      /*
       setIsBusy(true);
       startPolling(500);
       setTimeout(() => {
         setIsBusy(false);
       }, 2000);
+      */
     },
   });
 
   React.useEffect(() => {
-    startPolling(500); // will be called only once
+    //startPolling(500); // will be called only once
     return stopPolling; // just return cleanup function without making new one
   }, []);
 
@@ -225,7 +228,7 @@ function TemplateTable(props) {
   );
 }
 
-export default function Admin() {
+export default function Admin(props) {
   const classes = useStyles();
 
   const [name, setName] = React.useState("");
@@ -234,6 +237,7 @@ export default function Admin() {
   const [deleteTemplate] = useMutation(DELETE_TEMPLATE);
   const [isBusy, setIsBusy] = React.useState(false);
 
+  console.log()
 
   /*
   const { loading, error, data, stopPolling, startPolling, called } = useQuery(
@@ -273,7 +277,7 @@ export default function Admin() {
             退出
           </Button>
         </Box>
-        <EditTemplateRole name={editName} />
+        <EditTemplateRole name={editName} data={props.data}/>
       </div>
     );
   }

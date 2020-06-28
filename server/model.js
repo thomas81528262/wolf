@@ -287,6 +287,14 @@ class WolfModel {
     return "pass";
   }
 
+  static async getPlayerIdInfo({ id}) {
+    const result = await Db.getPlayerIdInfo({ id});
+    if (result.length === 1) {
+      return result[0];
+    }
+    return {};
+  } 
+
   static async getPlayerInfo({ id, pass }) {
     const result = await Db.getPlayerInfo({ id, pass });
     if (result.length === 1) {

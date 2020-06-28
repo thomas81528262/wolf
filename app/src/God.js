@@ -1,12 +1,13 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   fade,
   withStyles,
   makeStyles,
   createMuiTheme,
 } from "@material-ui/core/styles";
+import { useHistory } from "react-router-dom";
 import Button from "@material-ui/core/Button";
-import { useQuery, useMutation } from "@apollo/react-hooks";
+import { useQuery, useMutation, useLazyQuery } from "@apollo/client";
 import { gql } from "apollo-boost";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import TextField from "@material-ui/core/TextField";
@@ -32,6 +33,17 @@ import DialogActions from "@material-ui/core/DialogActions";
 import DialogContentText from "@material-ui/core/DialogContentText";
 const GET_ROLES = gql`
   {
+
+
+    enabledTemplate {
+      name
+      description
+      roles {
+        name
+        id
+        number
+      }
+    }
     players {
       id
       name
@@ -135,9 +147,40 @@ function TabPanel(props) {
   );
 }
 
+const parseData = (data) => {
+  const playerGroup = {};
+
+  data.players.forEach((p) => {
+    const { roleName, name, id } = p;
+    if (playerGroup[roleName]) {
+      playerGroup[roleName].push({ name: name || "", id });
+    } else {
+      playerGroup[roleName] = [{ name: name || "", id }];
+    }
+  });
+
+  console.log(playerGroup);
+
+  const result = [];
+
+  data.enabledTemplate.roles.forEach((r) => {
+    const { name } = r;
+    result.push({ ...r, players: playerGroup[name] });
+  });
+
+  console.log(result);
+
+  return result;
+};
+
 function TemplateRoleTable(props) {
+  return <RoleTable data={props.data}/>
+
+
+  /*
   return (
     <RoleTable
+
       query={GET_ENABLED_TEMPLATE}
       variables={{}}
       parseData={(data) => {
@@ -170,6 +213,7 @@ function TemplateRoleTable(props) {
       pollInterval={500}
     />
   );
+  */
 }
 
 function VoteAction(props) {
@@ -185,7 +229,9 @@ function VoteAction(props) {
     <>
       <DialogContent>
         <DialogContentText id="alert-dialog-slide-description">
-          { `${props.hasChief ?`請選擇放逐的目標`:`請選擇警長候選人`}, 目標必須多於一人, 投票人數也必須多於一人`}
+          {`${
+            props.hasChief ? `請選擇放逐的目標` : `請選擇警長候選人`
+          }, 目標必須多於一人, 投票人數也必須多於一人`}
         </DialogContentText>
         {props.players
           .filter((p) => !p.isDie && p.id !== 0)
@@ -268,7 +314,7 @@ function Game(props) {
 
   if (props.isPlayerMode) {
     return (
-      <div style={{}}>
+      <>
         <Dialog
           aria-labelledby="simple-dialog-title"
           open={isOpen}
@@ -276,7 +322,9 @@ function Game(props) {
             setIsOpen(false);
           }}
         >
-          <DialogTitle id="form-dialog-title">{hasChief? `放逐開始`: `競選警長`}</DialogTitle>
+          <DialogTitle id="form-dialog-title">
+            {hasChief ? `放逐開始` : `競選警長`}
+          </DialogTitle>
           <VoteAction
             players={props.players}
             onClose={() => {
@@ -312,7 +360,7 @@ function Game(props) {
               setIsOpen(true);
             }}
           >
-            {hasChief ?`放逐`:`警長`}
+            {hasChief ? `放逐` : `警長`}
           </Button>
         </Box>
         <Box display="flex">
@@ -328,8 +376,8 @@ function Game(props) {
             }}
           />
         </Box>
-        <PlayerTable data={props.players} chiefId={props.chiefId}/>
-      </div>
+        <PlayerTable data={props.players} chiefId={props.chiefId} />
+      </>
     );
   }
 
@@ -352,15 +400,56 @@ function Game(props) {
 }
 
 export default function God(props) {
+  const history = useHistory();
   const [value, setValue] = React.useState(0);
-  const { loading, error, data } = useQuery(GET_ROLES, {
-    pollInterval: 500,
-  });
+  const [
+    getRole,
+    { loading, data, stopPolling, startPolling, error, called },
+  ] = useLazyQuery(GET_ROLES, { fetchPolicy: "network-only" });
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
+  /*
+  React.useEffect(() => {
+    startPolling(500);
+    return () => {
+      console.log("umount god");
+      stopPolling();
+    };
+  }, []);
+  */
 
-  if (loading) {
+  let isMounted = true;
+  useEffect(() => {
+    if (isMounted) {
+      getRole();
+    }
+
+    const interval = setInterval(() => {
+      if (isMounted) {
+        getRole();
+      }
+    }, 500);
+
+    return () => {
+      clearInterval(interval);
+      isMounted = false;
+    };
+  }, []);
+
+  React.useEffect(() => {
+    if (error && !loading) {
+      error.graphQLErrors.forEach((e) => {
+        const { extensions } = e;
+        if (extensions.code === "UNAUTHENTICATED") {
+          console.log("no access!!!");
+          history.push("/");
+        }
+      });
+    }
+  }, [error, loading]);
+
+  if (!called || !data) {
     return <div>Loading</div>;
   }
 
@@ -393,7 +482,7 @@ export default function God(props) {
         />
       </TabPanel>
       <TabPanel value={value} index={1}>
-        {isPlayerMode ? <TemplateRoleTable /> : <Admin />}
+        {isPlayerMode ? <TemplateRoleTable data={parseData(data)}/> : <Admin data={parseData(data)}/>}
       </TabPanel>
       {isPlayerMode && (
         <TabPanel value={value} index={2}>
