@@ -21,7 +21,7 @@ const useStyles = makeStyles((theme) => ({
     margin: theme.spacing(1),
   },
   table: {
-    minWidth: 550,
+    minWidth: 750,
   },
   title: {
     flexGrow: 1,
@@ -59,6 +59,8 @@ export default function PlayerTable(props) {
             <TableCell align="left">玩家</TableCell>
             <TableCell align="right">角色</TableCell>
             <TableCell align="right">投票</TableCell>
+            <TableCell align="center">警長</TableCell>
+            <TableCell align="center">放逐</TableCell>
             <TableCell align="right">上線</TableCell>
           </TableRow>
         </TableHead>
@@ -91,6 +93,8 @@ export default function PlayerTable(props) {
               <TableCell align="right">{row.name}</TableCell>
               <TableCell align="right">{row.roleName}</TableCell>
               <TableCell align="right">{row.votedNumber}</TableCell>
+              <TableCell align="right">{row.chiefVote.toString()}</TableCell>
+              <TableCell align="right">{row.vote.toString()}</TableCell>
               <TableCell align="right">
                 <span
                   style={{

@@ -121,6 +121,20 @@ const DARK_ACTION = gql`
   }
 `;
 
+const GET_ENABLED_TEMPLATE = gql`
+  {
+    enabledTemplate {
+      name
+      description
+      roles {
+        name
+        id
+        number
+      }
+    }
+  }
+`;
+
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
 
@@ -405,6 +419,18 @@ function PlayerControl(props) {
   );
 }
 
+function TemplateInfo() {
+  const { loading, error, data } = useQuery(GET_ENABLED_TEMPLATE, {
+    fetchPolicy: "network-only",
+  });
+
+  if (loading) {
+    return <div>Loading</div>;
+  }
+
+  return <EnabedTemplateInfo data={data}/>
+}
+
 export default function Player(props) {
   const { id, pass, name } = props;
   const [value, setValue] = React.useState(0);
@@ -414,6 +440,7 @@ export default function Player(props) {
   };
 
   return (
+    <Container maxWidth={"sm"}>
     <Paper elevation={3}>
       <Tabs
         value={value}
@@ -430,8 +457,9 @@ export default function Player(props) {
         <PlayerControl id={id} pass={pass} name={name} />
       </TabPanel>
       <TabPanel value={value} index={1}>
-        <EnabedTemplateInfo />
+        <TemplateInfo />
       </TabPanel>
     </Paper>
+    </Container>
   );
 }

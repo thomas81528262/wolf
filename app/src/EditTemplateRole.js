@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   fade,
   withStyles,
@@ -26,8 +26,6 @@ import IconButton from "@material-ui/core/IconButton";
 import DragBox from "../src/drag/Container";
 import { DndProvider } from "react-dnd";
 import Backend from "react-dnd-html5-backend";
-
-
 
 const GET_TEMPLATE = gql`
   query GetTemplate($name: String!) {
@@ -91,29 +89,45 @@ function EditDarkPriority(props) {
   const [priorityList, setPrioritylist] = React.useState([]);
   const [orgPriorityList, setOrgPriorityList] = React.useState([]);
   const [isLoading, setIsLoading] = React.useState(false);
-  const { loading, error, data, refetch } = useQuery(GET_TEMPLATE, {
-    //fetchPolicy: "network-only",
-    variables: { name },
+  const [geTemplate, { loading, error, data, called }] = useLazyQuery(
+    GET_TEMPLATE,
+    { fetchPolicy: "network-only" }
+
+    /*
     onCompleted: (res) => {
       console.log("complete", res);
       const idData = convertToDragData(res.template.roles);
-      setPrioritylist(idData.map((v) => v.id));
-      setOrgPriorityList(idData.map((v) => v.id));
+      //setPrioritylist(idData.map((v) => v.id));
+      //setOrgPriorityList(idData.map((v) => v.id));
     },
-  });
+    */
+  );
+
+  console.log(data);
   const [updateRolePriority, res] = useMutation(UPDATE_ROLE_PRIORITY, {
     onCompleted: () => {
-      refetch();
+      //refetch();
+      console.log("update dark");
+      geTemplate({ variables: { name } });
     },
   });
 
-  
+  React.useEffect(() => {
+    geTemplate({ variables: { name } });
+  }, []);
 
-  if (loading || res.loading) {
+  React.useEffect(() => {
+    if (!loading && called) {
+      const idData = convertToDragData(data.template.roles);
+      setPrioritylist(idData.map((v) => v.id));
+      setOrgPriorityList(idData.map((v) => v.id));
+    }
+  }, [data]);
+
+  if (!called || loading) {
     return <div>Loading</div>;
   }
 
-  console.log(data, orgPriorityList, priorityList);
   const dragData = convertToDragData(data.template.roles);
 
   return (
@@ -143,16 +157,15 @@ function EditDarkPriority(props) {
 }
 
 function EditRole(props) {
-  const { name , data} = props;
+  const { name, data } = props;
   const [updateRoleNumber] = useMutation(UPDATE_ROLE_NUMBER);
 
   React.useEffect(() => {
-    
-    console.log('mount' + name);
+    console.log("mount" + name);
 
-    return ()=>{
-      console.log('umount' + name)
-    }
+    return () => {
+      console.log("umount" + name);
+    };
   }, []);
 
   return (
@@ -167,7 +180,7 @@ function EditRole(props) {
         }}
       />
 
-        <RoleTable data={data}/>
+      <RoleTable data={data} />
 
       {/*<RoleTable
         data={data}
@@ -239,15 +252,14 @@ function EditRule(props) {
 
 export default function EditTemplate(props) {
   const { name, data } = props;
-    
+
   const [value, setValue] = React.useState(0);
-  
+
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
-  console.log(name, data)
+
   return (
-   
     <Paper square>
       <Tabs
         value={value}
@@ -259,20 +271,16 @@ export default function EditTemplate(props) {
         <Tab label="角色" />
         <Tab label="規則" />
         <Tab label="黑夜順序" />
-        
       </Tabs>
       <TabPanel value={value} index={0}>
-        <EditRole name={name} data={data}/>
+        <EditRole name={name} data={data} />
       </TabPanel>
       <TabPanel value={value} index={1}>
         <EditRule name={name} />
       </TabPanel>
       <TabPanel value={value} index={2}>
         <EditDarkPriority name={name} />
-        
       </TabPanel>
-     
     </Paper>
-    
   );
 }

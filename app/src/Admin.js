@@ -6,7 +6,7 @@ import {
   createMuiTheme,
 } from "@material-ui/core/styles";
 import Button from "@material-ui/core/Button";
-import { useQuery, useMutation } from "@apollo/client";
+import { useQuery, useMutation, useLazyQuery} from "@apollo/client";
 import { gql } from "apollo-boost";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import TextField from "@material-ui/core/TextField";
@@ -144,14 +144,13 @@ function TemplateTable(props) {
   const [deleteTemplate] = useMutation(DELETE_TEMPLATE);
   const [name, setName] = React.useState("");
   const [isBusy, setIsBusy] = React.useState(false);
-  const { loading, error, data, stopPolling, startPolling, called } = useQuery(
-    GET_TEMPLATES,
-    {
-      //pollInterval: 500,
-      //notifyOnNetworkStatusChange:true
-    }
-  );
 
+
+  /*
+  const [getTemplate ,{ loading, error, data, stopPolling, startPolling, called }] = useLazyQuery(
+    GET_TEMPLATES
+  );
+    */
 
 
   const [enableTemplate, enableResult] = useMutation(ENABLE_TEMPLATE, {
@@ -167,6 +166,8 @@ function TemplateTable(props) {
     },
   });
 
+
+  /*
   React.useEffect(() => {
     //startPolling(500); // will be called only once
     return stopPolling; // just return cleanup function without making new one
@@ -180,7 +181,8 @@ function TemplateTable(props) {
   if (loading || enableResult.loading || isBusy) {
     return <div>Loading</div>;
   }
-
+  */
+ 
 
   return (
     <div>
@@ -211,13 +213,13 @@ function TemplateTable(props) {
       </div>
       <Container maxWidth="sm">
         <TemplateControl
-          data={data.templates}
+          data={props.data.templates}
           onEdit={(name) => {
             props.setEditName(name);
           }}
           onSelect={(name) => {
             enableTemplate({ variables: { name } });
-            stopPolling();
+            //stopPolling();
           }}
           onDelete={(name) => {
             deleteTemplate({ variables: { name } });
@@ -283,6 +285,6 @@ export default function Admin(props) {
   }
 
   return (
-    <TemplateTable setEditName={name=>{setEditName(name)}}/>
+    <TemplateTable setEditName={name=>{setEditName(name)}} data={props.tData}/>
   );
 }

@@ -65,7 +65,7 @@ function processData(data) {
 function BaseTable(props) {
   const classes = useStyles();
 
-  console.log(props.data)
+ 
   
   const { total, data } = processData(props.data);
 

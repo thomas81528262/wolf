@@ -376,7 +376,7 @@ function Game() {
   return (
     <React.Fragment>
       <CssBaseline />
-      <Container maxWidth="sm">
+      
         <AppBar position="absolute">
           <Toolbar>
             <IconButton
@@ -394,18 +394,22 @@ function Game() {
           </Toolbar>
         </AppBar>
 
-        <div style={{ marginTop: 100, width: 600 }}>
+        <div style={{ marginTop: 100 }}>
           {playerId === 0 ? (
+            <Container maxWidth={playerId === 0 ? "md" : "sm"}>
             <God id={playerId} pass={""} name={""} />
+            </Container>
           ) : (
+           
             <Player id={playerId} pass={""} name={""} />
+            
           )}
         </div>
 
         <Box pt={4}>
           <Copyright />
         </Box>
-      </Container>
+     
     </React.Fragment>
   );
 }

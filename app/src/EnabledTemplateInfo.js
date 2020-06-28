@@ -42,6 +42,8 @@ const GET_ENABLED_TEMPLATE = gql`
 
 
 export default function EnabledTemplate(props) {
+
+  /*
     const { loading, error, data } = useQuery(GET_ENABLED_TEMPLATE, {
       fetchPolicy: "network-only",
     });
@@ -50,10 +52,10 @@ export default function EnabledTemplate(props) {
       return <div>Loading</div>;
     }
   
-   
-    const { name, description ,roles} = data.enabledTemplate;
+   */
+    const { name, description ,roles} = props.data.enabledTemplate;
 
-    console.log(data.enabledTemplate)
+    
     return (
       <div>
         <Typography variant="h2" gutterBottom>

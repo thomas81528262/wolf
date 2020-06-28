@@ -34,7 +34,10 @@ import DialogContentText from "@material-ui/core/DialogContentText";
 const GET_ROLES = gql`
   {
 
-
+    templates {
+      isEnabled
+      name
+    }
     enabledTemplate {
       name
       description
@@ -48,6 +51,8 @@ const GET_ROLES = gql`
       id
       name
       roleName
+      vote
+      chiefVote
       isEmpty
       isDie
       isVoteFinish
@@ -159,7 +164,7 @@ const parseData = (data) => {
     }
   });
 
-  console.log(playerGroup);
+ 
 
   const result = [];
 
@@ -168,7 +173,7 @@ const parseData = (data) => {
     result.push({ ...r, players: playerGroup[name] });
   });
 
-  console.log(result);
+  
 
   return result;
 };
@@ -394,7 +399,7 @@ function Game(props) {
           加入玩家
         </Button>
       </Box>
-      <EnabedTemplateInfo />
+      <EnabedTemplateInfo data={props.data}/>
     </div>
   );
 }
@@ -404,20 +409,12 @@ export default function God(props) {
   const [value, setValue] = React.useState(0);
   const [
     getRole,
-    { loading, data, stopPolling, startPolling, error, called },
+    { loading, data,  error, called },
   ] = useLazyQuery(GET_ROLES, { fetchPolicy: "network-only" });
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
-  /*
-  React.useEffect(() => {
-    startPolling(500);
-    return () => {
-      console.log("umount god");
-      stopPolling();
-    };
-  }, []);
-  */
+ 
 
   let isMounted = true;
   useEffect(() => {
@@ -456,8 +453,9 @@ export default function God(props) {
   const { id, pass, name } = props;
 
   const isPlayerMode = data.players.length > 1 ? true : false;
-
+  console.log(data)
   return (
+    <Container maxWidth={isPlayerMode && value ===0? "lg" : "sm"}>
     <Paper elevation={3}>
       <Tabs
         value={value}
@@ -479,16 +477,23 @@ export default function God(props) {
           name={name}
           players={data.players}
           chiefId={data.gameInfo.chiefId}
+          data={data}
+          
         />
       </TabPanel>
       <TabPanel value={value} index={1}>
-        {isPlayerMode ? <TemplateRoleTable data={parseData(data)}/> : <Admin data={parseData(data)}/>}
+     
+        {isPlayerMode ? <TemplateRoleTable data={parseData(data)}/> : <Admin data={parseData(data)} tData={data}/>}
+        
       </TabPanel>
+     
       {isPlayerMode && (
         <TabPanel value={value} index={2}>
-          <EnabedTemplateInfo />
+          <EnabedTemplateInfo data={data}/>
         </TabPanel>
       )}
+     
     </Paper>
+    </Container>
   );
 }
