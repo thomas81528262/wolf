@@ -113,6 +113,7 @@ function TemplateControl(props) {
                     console.log(row.name);
                     props.onEdit(row.name);
                   }}
+                  disabled={!row.isEnabled}
                 >
                   <CreateIcon />
                 </IconButton>
