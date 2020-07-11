@@ -220,6 +220,34 @@ class WolfModel {
       this.player.forEach((p, id) => {
         p.votedNumber = this.getVotedNumber({ id });
       });
+
+      if (this.chiefId === -1) {
+
+      }else {
+        let maxVote = -1;
+
+        this.player.forEach((p, id)=>{
+          maxVote = Math.max(p.votedNumber, maxVote);
+        });
+
+        const pNum = this.player.filter(p=>p.votedNumber === maxVote).length;
+        if (pNum === 1) {
+          this.player.forEach((p, id) => {
+            if (p.votedNumber === maxVote) {
+              p.isDie = true;
+            }
+          });
+        }
+
+
+
+
+
+
+
+      }
+
+
     }
   }
 
