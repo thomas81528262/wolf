@@ -63,6 +63,7 @@ const GET_ROLES = gql`
       isVoteFinish
       chiefId
       isDark
+      voteWeightedId
     }
   }
 `;
@@ -324,7 +325,7 @@ function Game(props) {
   if (props.isPlayerMode) {
 
     if (props.isDark) {
-      return <DarkPlayerTable data={props.players} chiefId={props.chiefId}/>
+      return <DarkPlayerTable data={props.players} chiefId={props.chiefId} voteWeightedId={props.voteWeightedId}/>
     }
 
 
@@ -392,7 +393,7 @@ function Game(props) {
             }}
           />
         </Box>
-        <PlayerTable data={props.players} chiefId={props.chiefId} />
+        <PlayerTable data={props.players} chiefId={props.chiefId} voteWeightedId={props.voteWeightedId}/>
       </>
     );
   }
@@ -508,6 +509,7 @@ export default function God(props) {
           players={data.players}
           chiefId={data.gameInfo.chiefId}
           isDark = {data.gameInfo.isDark}
+          voteWeightedId={data.gameInfo.voteWeightedId}
           data={data}
           
         />

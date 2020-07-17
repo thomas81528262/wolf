@@ -70,6 +70,7 @@ const typeDefs = gql`
     isVoteFinish: Boolean
     chiefId: Int
     isDark: Boolean
+    voteWeightedId: Int
   }
 
   input RoleOrder {
@@ -113,6 +114,7 @@ const typeDefs = gql`
     setDieStatus(id: Int): String
     setDarkDieStatus(targets:[Int]): String
     setChiefId(id: Int): String
+    setVoteWeightedId(id:Int): String
     logoff: String
   }
 `;
@@ -132,8 +134,8 @@ const resolvers = {
       }
       const { id } = args;
       const isVoteFinish = WolfModel.getIsVoteFinish({ id });
-      const { chiefId, isDark } = WolfModel;
-      return { isVoteFinish, chiefId , isDark};
+      const { chiefId, isDark, voteWeightedId } = WolfModel;
+      return { isVoteFinish, chiefId , isDark, voteWeightedId};
     },
 
     darkInfo: (root, args, context) => {
@@ -231,6 +233,11 @@ const resolvers = {
   Mutation: {
     logoff: (root, args, context) => {
       context.session.destroy();
+      return "pass";
+    },
+    setVoteWeightedId: (root, args, context) => {
+      const { id } = args;
+      WolfModel.setVoteWeightedId({ id });
       return "pass";
     },
     setChiefId: (root, args, context) => {

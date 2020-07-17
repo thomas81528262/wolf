@@ -42,11 +42,21 @@ mutation SetChiefId($id: Int!) {
 }
 `
 
+const SET_VOTE_WEIGHTED_ID = gql`
+mutation SetVoteWeightedId($id: Int!) {
+  setVoteWeightedId(id: $id)
+}
+`
+
+
+//voteWeightedId
+
 
 export default function PlayerTable(props) {
   const classes = useStyles();
   const [setDie] = useMutation(SET_DIE_STATUS);
   const [setChiefId] = useMutation(SET_CHIEF_ID);
+  const [setVoteWeightedId] = useMutation(SET_VOTE_WEIGHTED_ID);
   return (
     <TableContainer component={Paper}>
       <Table className={classes.table} aria-label="simple table" size="small">
@@ -54,6 +64,7 @@ export default function PlayerTable(props) {
           <TableRow>
             <TableCell>警長</TableCell>
             <TableCell>死亡</TableCell>
+            <TableCell>放逐加權</TableCell>
             <TableCell>ID</TableCell>
 
             <TableCell align="left">玩家</TableCell>
@@ -86,6 +97,17 @@ export default function PlayerTable(props) {
                   color="primary"
                   inputProps={{ "aria-label": "secondary checkbox" }}
                 />: null}
+              </TableCell>
+              <TableCell>
+                <Checkbox
+                  onChange={(e) => {
+                    //setChiefId({variables:{id:row.id}});
+                    setVoteWeightedId({variables:{id:row.id}});
+                  }}
+                  checked={row.id === props.voteWeightedId}
+                  color="primary"
+                  inputProps={{ "aria-label": "secondary checkbox" }}
+                />
               </TableCell>
               <TableCell component="th" scope="row">
                 {row.id}

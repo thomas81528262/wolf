@@ -13,6 +13,7 @@ class WolfModel {
   static player = [];
   static isVoteFinish = true;
   static chiefId = -1;
+  static voteWeightedId = -1;
   static isDark = false;
 
   static get canStartVote() {
@@ -58,6 +59,14 @@ class WolfModel {
       this.chiefId = -1;
     } else {
       this.chiefId = id;
+    }
+  }
+
+  static setVoteWeightedId({ id }) {
+    if (this.voteWeightedId === id) {
+      this.voteWeightedId = -1;
+    } else {
+      this.voteWeightedId = id;
     }
   }
 
@@ -111,6 +120,11 @@ class WolfModel {
         }
       });
     }
+
+    if (id === this.voteWeightedId) {
+      votedNumber += 1;
+    }
+
 
     return votedNumber;
   }
