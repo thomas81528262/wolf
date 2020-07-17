@@ -30,6 +30,7 @@ class WolfModel {
     this.voteHistory = [];
     this.chiefVoteHistory = [];
     this.isDark = false;
+    this.voteWeightedId = -1;
     for (let id = 1; id < this.player.length; id += 1) {
       this.player[id].isDie = false;
     }
