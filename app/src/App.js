@@ -56,6 +56,9 @@ import LoginPage from "./Login";
 
 import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
 
+
+import { ThemeProvider } from '@material-ui/styles';
+import blue from '@material-ui/core/colors/blue';
 const client = new ApolloClient({
   cache: new InMemoryCache(),
   link: new HttpLink({
@@ -300,7 +303,7 @@ function LogoffButton() {
   );
 }
 
-function Game() {
+function Game(props) {
   const history = useHistory();
   const [getPlayer, { loading, error, data }] = useLazyQuery(GET_PLAYERS, {
     fetchPolicy: "network-only",
@@ -397,11 +400,11 @@ function Game() {
         <div style={{ marginTop: 100 }}>
           {playerId === 0 ? (
             <Container maxWidth={playerId === 0 ? "md" : "sm"}>
-            <God id={playerId} pass={""} name={""} />
+            <God id={playerId} pass={""} name={""} setDarkMode={props.setDarkMode} />
             </Container>
           ) : (
            
-            <Player id={playerId} pass={""} name={""} />
+            <Player id={playerId} pass={""} name={""} setDarkMode={props.setDarkMode}/>
             
           )}
         </div>
@@ -414,9 +417,45 @@ function Game() {
   );
 }
 
+/*
+const theme = createMuiTheme({
+  
+  palette: {
+    primary: {
+      main: '#82b1ff',
+    },
+    type: 'dark',
+  },
+  
+});
+*/
+
 function App() {
+
+
+  const [isDarkMode, setDarkMode] = React.useState(false);
+
+
+  const theme = React.useMemo(
+    () =>
+      createMuiTheme({
+        palette: {
+          type: isDarkMode ? 'dark' : 'light',
+          primary: isDarkMode ? {
+            main: '#82b1ff',
+          }:{
+            main: '#3f51b5',
+          },
+        },
+       
+      }),
+    [isDarkMode],
+  );
+
+
   return (
     <div className="App">
+      <ThemeProvider theme={theme}>
       <Router>
         <Switch>
           <Route exact path="/">
@@ -427,11 +466,12 @@ function App() {
 
           <Route exact path="/game">
             <ApolloProvider client={client}>
-              <Game />
+              <Game setDarkMode={setDarkMode}/>
             </ApolloProvider>
           </Route>
         </Switch>
       </Router>
+      </ThemeProvider>
     </div>
   );
 }

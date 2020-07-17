@@ -10,6 +10,7 @@ const Game = require("./game");
 const session = require("express-session");
 const MemoryStore = require("memorystore")(session);
 const authServer = require("./auth");
+const { context } = require("./auth");
 const typeDefs = gql`
   # Comments in GraphQL strings (such as this one) start with the hash (#) symbol.
 
@@ -68,6 +69,7 @@ const typeDefs = gql`
   type GameInfo {
     isVoteFinish: Boolean
     chiefId: Int
+    isDark: Boolean
   }
 
   input RoleOrder {
@@ -109,6 +111,7 @@ const typeDefs = gql`
     voteStart(targets: [Int]): String
     submitVote(target: Int): String
     setDieStatus(id: Int): String
+    setDarkDieStatus(targets:[Int]): String
     setChiefId(id: Int): String
     logoff: String
   }
@@ -129,8 +132,8 @@ const resolvers = {
       }
       const { id } = args;
       const isVoteFinish = WolfModel.getIsVoteFinish({ id });
-      const { chiefId } = WolfModel;
-      return { isVoteFinish, chiefId };
+      const { chiefId, isDark } = WolfModel;
+      return { isVoteFinish, chiefId , isDark};
     },
 
     darkInfo: (root, args, context) => {
@@ -234,6 +237,11 @@ const resolvers = {
       const { id } = args;
       WolfModel.setChiefId({ id });
       return "pass";
+    },
+    setDarkDieStatus: (root, args, context) => {
+      const {targets} = args;
+      WolfModel.setDarkDieStatus(targets)
+      return "pass"
     },
 
     setDieStatus: (root, args, context) => {

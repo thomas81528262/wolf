@@ -12,6 +12,7 @@ import { gql } from "apollo-boost";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import TextField from "@material-ui/core/TextField";
 import PlayerTable from "./PlayerTable";
+import DarkPlayerTable from "./DarkPlayerTable"
 import { RoleTable } from "./RoleTable";
 import Fab from "@material-ui/core/Fab";
 import AddIcon from "@material-ui/icons/Add";
@@ -61,6 +62,7 @@ const GET_ROLES = gql`
     gameInfo(id: 0) {
       isVoteFinish
       chiefId
+      isDark
     }
   }
 `;
@@ -120,6 +122,8 @@ const VOTE_START = gql`
     voteStart(targets: $targets)
   }
 `;
+
+
 
 const useStyles = makeStyles((theme) => ({
   margin: {
@@ -318,6 +322,13 @@ function Game(props) {
   const hasChief = props.chiefId !== -1;
 
   if (props.isPlayerMode) {
+
+    if (props.isDark) {
+      return <DarkPlayerTable data={props.players} chiefId={props.chiefId}/>
+    }
+
+
+
     return (
       <>
         <Dialog
@@ -443,8 +454,27 @@ export default function God(props) {
           history.push("/");
         }
       });
+
+
+      console.log('set dark')
+
+      if (data && data.gameInfo.isDark) {
+        
+        props.setDarkMode(true);
+      }
+
     }
-  }, [error, loading]);
+  }, [error, loading, data]);
+
+
+  React.useEffect(() => {
+    
+
+    if (data) {
+        
+      props.setDarkMode(data.gameInfo.isDark);
+    }
+  }, [ data]);
 
   if (!called || !data) {
     return <div>Loading</div>;
@@ -477,6 +507,7 @@ export default function God(props) {
           name={name}
           players={data.players}
           chiefId={data.gameInfo.chiefId}
+          isDark = {data.gameInfo.isDark}
           data={data}
           
         />

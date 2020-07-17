@@ -89,6 +89,7 @@ const GET_PLAYER_INFO = gql`
     gameInfo(id: $id) {
       isVoteFinish
       chiefId
+      isDark
     }
     darkInfo(id: $id) {
       isStart
@@ -374,6 +375,16 @@ function PlayerControl(props) {
     //audioEl.play()
   }, [value, error, loading]);
 
+
+  React.useEffect(() => {
+    
+
+    if (data) {
+        
+      props.setDarkMode(data.gameInfo.isDark);
+    }
+  }, [ data]);
+
   if (!playerCalled || !data) {
     return <div>Loading</div>;
   }
@@ -454,7 +465,7 @@ export default function Player(props) {
         <Tab label="模式" />
       </Tabs>
       <TabPanel value={value} index={0}>
-        <PlayerControl id={id} pass={pass} name={name} />
+        <PlayerControl id={id} pass={pass} name={name} setDarkMode={props.setDarkMode}/>
       </TabPanel>
       <TabPanel value={value} index={1}>
         <TemplateInfo />

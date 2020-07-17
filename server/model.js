@@ -13,6 +13,7 @@ class WolfModel {
   static player = [];
   static isVoteFinish = true;
   static chiefId = -1;
+  static isDark = false;
 
   static get canStartVote() {
     return (
@@ -27,7 +28,7 @@ class WolfModel {
     this.voteList = [];
     this.voteHistory = [];
     this.chiefVoteHistory = [];
-
+    this.isDark = false;
     for (let id = 1; id < this.player.length; id += 1) {
       this.player[id].isDie = false;
     }
@@ -37,7 +38,19 @@ class WolfModel {
     const p = this.player[id];
     if (p) {
       p.isDie = !p.isDie;
+
+      if (p.isDie) {
+        this.isDark = true;
+      }
     }
+  }
+  static setDarkDieStatus(targets) {
+    targets.forEach(id=>{
+      const p = this.player[id];
+      p.isDie = true;
+    })
+
+    this.isDark = false;
   }
 
   static setChiefId({ id }) {
@@ -237,6 +250,7 @@ class WolfModel {
               p.isDie = true;
             }
           });
+          this.isDark = true;
         }
 
 
