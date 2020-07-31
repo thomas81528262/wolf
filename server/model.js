@@ -574,23 +574,29 @@ class WolfModel {
       //22 is Thieves, 2 is Villagers
       const thieve = list.find((v) => v.id === 22);
       if (thieve) {
+        
         const villager = list.find((v) => v.id === 2);
-        const len = list.length;
-        shuffle(list);
 
+        
+        const len = list.length;
+        /*
+        shuffle(list);
+        
         list.forEach((r, idx) => {
           r.index = idx;
         });
+        */
 
         list.push({ ...villager, index: len }, { ...villager, index: len + 1 });
 
         shuffle(list);
-
+        /*
         const thieveCurIdx = list.findIndex((v) => v.id === 22);
         console.log(thieveCurIdx, thieve.index);
         const tmp = list[thieveCurIdx];
         list[thieveCurIdx] = list[thieve.index];
         list[thieve.index] = tmp;
+        */
       } else {
         shuffle(list);
       }
