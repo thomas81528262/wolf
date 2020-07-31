@@ -557,7 +557,7 @@ class WolfModel {
       const template = await Db.getEnabledTemplate();
       const { name } = template;
       const roles = await Db.getAllTemplateRole({ name });
-
+      
       const list = [];
       let lIdx = 0;
       roles.forEach((d, index) => {
@@ -599,7 +599,7 @@ class WolfModel {
       this.reset();
       const waitRoleList = [];
 
-      list.slice(0, roles.length).forEach((value, idx) => {
+      list.slice(0, lIdx).forEach((value, idx) => {
         const { id: roleId, functionName, camp } = value;
         Game.dark.assignDarkRole({
           id: idx + 1,
