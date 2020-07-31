@@ -32,25 +32,23 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const SET_DIE_STATUS = gql`
-   mutation SetDieStatus($id: Int!) {
+  mutation SetDieStatus($id: Int!) {
     setDieStatus(id: $id)
   }
-`
+`;
 const SET_CHIEF_ID = gql`
-mutation SetChiefId($id: Int!) {
-  setChiefId(id: $id)
-}
-`
+  mutation SetChiefId($id: Int!) {
+    setChiefId(id: $id)
+  }
+`;
 
 const SET_VOTE_WEIGHTED_ID = gql`
-mutation SetVoteWeightedId($id: Int!) {
-  setVoteWeightedId(id: $id)
-}
-`
-
+  mutation SetVoteWeightedId($id: Int!) {
+    setVoteWeightedId(id: $id)
+  }
+`;
 
 //voteWeightedId
-
 
 export default function PlayerTable(props) {
   const classes = useStyles();
@@ -78,31 +76,43 @@ export default function PlayerTable(props) {
         <TableBody>
           {props.data.map((row) => (
             <TableRow key={row.id}>
-               <TableCell>
-                <Checkbox
-                  onChange={(e) => {
-                    setChiefId({variables:{id:row.id}});
-                  }}
-                  checked={row.id === props.chiefId}
-                  color="primary"
-                  inputProps={{ "aria-label": "secondary checkbox" }}
-                />
+              <TableCell>
+                {(row.id === 0 ||
+                  props.chiefId >= 0 ||
+                  (row.chiefVoteState &&
+                    row.chiefVoteState.isCandidate &&
+                    !row.chiefVoteState.isDropedOut)) && (
+                  <Checkbox
+                    onChange={(e) => {
+                      setChiefId({ variables: { id: row.id } });
+                    }}
+                    checked={row.id === props.chiefId}
+                    color="primary"
+                    inputProps={{ "aria-label": "secondary checkbox" }}
+                  />
+                )}
+
+                {row.chiefVoteState && row.chiefVoteState.isCandidate && (
+                  <button>重置</button>
+                )}
               </TableCell>
               <TableCell>
-                {row.id ? <Checkbox
-                  onChange={(e) => {
-                    setDie({variables:{id:row.id}});
-                  }}
-                  checked={row.isDie}
-                  color="primary"
-                  inputProps={{ "aria-label": "secondary checkbox" }}
-                />: null}
+                {row.id ? (
+                  <Checkbox
+                    onChange={(e) => {
+                      setDie({ variables: { id: row.id } });
+                    }}
+                    checked={row.isDie}
+                    color="primary"
+                    inputProps={{ "aria-label": "secondary checkbox" }}
+                  />
+                ) : null}
               </TableCell>
               <TableCell>
                 <Checkbox
                   onChange={(e) => {
                     //setChiefId({variables:{id:row.id}});
-                    setVoteWeightedId({variables:{id:row.id}});
+                    setVoteWeightedId({ variables: { id: row.id } });
                   }}
                   checked={row.id === props.voteWeightedId}
                   color="primary"
@@ -120,7 +130,11 @@ export default function PlayerTable(props) {
               <TableCell align="right">
                 <span
                   style={{
-                    color: row.isEmpty ? "gray" : row.isVoteFinish? "lightgreen":"orange",
+                    color: row.isEmpty
+                      ? "gray"
+                      : row.isVoteFinish
+                      ? "lightgreen"
+                      : "orange",
                     transition: "all .3s ease",
                     fontSize: "24px",
                     marginRight: "10px",

@@ -12,7 +12,7 @@ import { gql } from "apollo-boost";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import TextField from "@material-ui/core/TextField";
 import PlayerTable from "./PlayerTable";
-import DarkPlayerTable from "./DarkPlayerTable"
+import DarkPlayerTable from "./DarkPlayerTable";
 import { RoleTable } from "./RoleTable";
 import Fab from "@material-ui/core/Fab";
 import AddIcon from "@material-ui/icons/Add";
@@ -34,7 +34,6 @@ import DialogActions from "@material-ui/core/DialogActions";
 import DialogContentText from "@material-ui/core/DialogContentText";
 const GET_ROLES = gql`
   {
-
     templates {
       isEnabled
       name
@@ -49,6 +48,7 @@ const GET_ROLES = gql`
       }
     }
     players {
+      isTarget
       id
       name
       roleName
@@ -58,31 +58,17 @@ const GET_ROLES = gql`
       isDie
       isVoteFinish
       votedNumber
+      chiefVoteState {
+        isDropedOut
+        isCandidate
+      }
     }
     gameInfo(id: 0) {
       isVoteFinish
       chiefId
       isDark
       voteWeightedId
-    }
-  }
-`;
-
-const GET_ENABLED_TEMPLATE = gql`
-  {
-    enabledTemplate {
-      name
-      description
-      roles {
-        name
-        id
-        number
-      }
-    }
-    players {
-      id
-      name
-      roleName
+      hasVoteTarget
     }
   }
 `;
@@ -112,19 +98,17 @@ const REMOVE_ALL_PLAYER = gql`
 `;
 //enableTemplate(name:"777")
 
-const DARK_START = gql`
-  mutation DarkStart {
-    darkStart
-  }
-`;
-
 const VOTE_START = gql`
-  mutation DarkStart($targets: [Int]) {
+  mutation VoteStart($targets: [Int]) {
     voteStart(targets: $targets)
   }
 `;
 
-
+const VOTE_CHIEF_START = gql`
+  mutation VoteChiefStart {
+    voteChiefStart
+  }
+`;
 
 const useStyles = makeStyles((theme) => ({
   margin: {
@@ -169,8 +153,6 @@ const parseData = (data) => {
     }
   });
 
- 
-
   const result = [];
 
   data.enabledTemplate.roles.forEach((r) => {
@@ -178,14 +160,11 @@ const parseData = (data) => {
     result.push({ ...r, players: playerGroup[name] });
   });
 
-  
-
   return result;
 };
 
 function TemplateRoleTable(props) {
-  return <RoleTable data={props.data}/>
-
+  return <RoleTable data={props.data} />;
 
   /*
   return (
@@ -228,12 +207,18 @@ function TemplateRoleTable(props) {
 
 function VoteAction(props) {
   const [targetList, setTargetList] = React.useState([]);
-  const [voteStart] = useMutation(VOTE_START, {
-    onCompleted: () => {
-      props.onClose();
-    },
-  });
+  const [voteStart] = useMutation(
+    props.hasChief  || props.hasVoteTarget?  VOTE_START : VOTE_CHIEF_START,
+    {
+      onCompleted: () => {
+        props.onClose();
+      },
+    }
+  );
   //const [submitVote, { called }] = useMutation(SUBMIT_VOTE);
+
+
+  const isLock = props.hasTarget || props.hasChief;
 
   return (
     <>
@@ -244,7 +229,19 @@ function VoteAction(props) {
           }, 目標必須多於一人, 投票人數也必須多於一人`}
         </DialogContentText>
         {props.players
-          .filter((p) => !p.isDie && p.id !== 0)
+          .filter((p) => {
+
+
+            if (props.hasVoteTarget) {
+              return p.isTarget;
+            }else if (!props.hasChief) {
+              return (
+                p.chiefVoteState.isCandidate && !p.chiefVoteState.isDropedOut
+              );
+            }
+
+            return !p.isDie && p.id !== 0;
+          })
           .map((player) => (
             <div key={player.id}>
               <Radio
@@ -269,7 +266,11 @@ function VoteAction(props) {
           name="radio-button-demo"
           inputProps={{ "aria-label": "B" }}
           onClick={() => {
-            setTargetList([]);
+
+            if (!isLock) {
+              setTargetList([]);
+            }
+            
           }}
         />
         {`所有人`}
@@ -323,12 +324,15 @@ function Game(props) {
   const hasChief = props.chiefId !== -1;
 
   if (props.isPlayerMode) {
-
     if (props.isDark) {
-      return <DarkPlayerTable data={props.players} chiefId={props.chiefId} voteWeightedId={props.voteWeightedId}/>
+      return (
+        <DarkPlayerTable
+          data={props.players}
+          chiefId={props.chiefId}
+          voteWeightedId={props.voteWeightedId}
+        />
+      );
     }
-
-
 
     return (
       <>
@@ -348,6 +352,7 @@ function Game(props) {
               setIsOpen(false);
             }}
             hasChief={hasChief}
+            hasVoteTarget={props.hasVoteTarget}
           />
         </Dialog>
         <Box display="flex">
@@ -393,7 +398,11 @@ function Game(props) {
             }}
           />
         </Box>
-        <PlayerTable data={props.players} chiefId={props.chiefId} voteWeightedId={props.voteWeightedId}/>
+        <PlayerTable
+          data={props.players}
+          chiefId={props.chiefId}
+          voteWeightedId={props.voteWeightedId}
+        />
       </>
     );
   }
@@ -411,7 +420,7 @@ function Game(props) {
           加入玩家
         </Button>
       </Box>
-      <EnabedTemplateInfo data={props.data}/>
+      <EnabedTemplateInfo data={props.data} />
     </div>
   );
 }
@@ -419,14 +428,12 @@ function Game(props) {
 export default function God(props) {
   const history = useHistory();
   const [value, setValue] = React.useState(0);
-  const [
-    getRole,
-    { loading, data,  error, called },
-  ] = useLazyQuery(GET_ROLES, { fetchPolicy: "network-only" });
+  const [getRole, { loading, data, error, called }] = useLazyQuery(GET_ROLES, {
+    fetchPolicy: "network-only",
+  });
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
- 
 
   let isMounted = true;
   useEffect(() => {
@@ -456,26 +463,19 @@ export default function God(props) {
         }
       });
 
-
-      console.log('set dark')
+      console.log("set dark");
 
       if (data && data.gameInfo.isDark) {
-        
         props.setDarkMode(true);
       }
-
     }
   }, [error, loading, data]);
 
-
   React.useEffect(() => {
-    
-
     if (data) {
-        
       props.setDarkMode(data.gameInfo.isDark);
     }
-  }, [ data]);
+  }, [data]);
 
   if (!called || !data) {
     return <div>Loading</div>;
@@ -484,49 +484,49 @@ export default function God(props) {
   const { id, pass, name } = props;
 
   const isPlayerMode = data.players.length > 1 ? true : false;
-  console.log(data)
+  console.log(data);
   return (
-    <Container maxWidth={isPlayerMode && value ===0? "lg" : "sm"}>
-    <Paper elevation={3}>
-      <Tabs
-        value={value}
-        indicatorColor="primary"
-        textColor="primary"
-        onChange={handleChange}
-        aria-label="disabled tabs example"
-        variant="fullWidth"
-      >
-        <Tab label="遊戲" />
-        <Tab label={isPlayerMode ? "黑夜視野" : "模式選擇"} />
-        {isPlayerMode && <Tab label="模式" />}
-      </Tabs>
-      <TabPanel value={value} index={0}>
-        <Game
-          isPlayerMode={isPlayerMode}
-          id={id}
-          pass={pass}
-          name={name}
-          players={data.players}
-          chiefId={data.gameInfo.chiefId}
-          isDark = {data.gameInfo.isDark}
-          voteWeightedId={data.gameInfo.voteWeightedId}
-          data={data}
-          
-        />
-      </TabPanel>
-      <TabPanel value={value} index={1}>
-     
-        {isPlayerMode ? <TemplateRoleTable data={parseData(data)}/> : <Admin data={parseData(data)} tData={data}/>}
-        
-      </TabPanel>
-     
-      {isPlayerMode && (
-        <TabPanel value={value} index={2}>
-          <EnabedTemplateInfo data={data}/>
+    <Container maxWidth={isPlayerMode && value === 0 ? "lg" : "sm"}>
+      <Paper elevation={3}>
+        <Tabs
+          value={value}
+          indicatorColor="primary"
+          textColor="primary"
+          onChange={handleChange}
+          aria-label="disabled tabs example"
+          variant="fullWidth"
+        >
+          <Tab label="遊戲" />
+          <Tab label={isPlayerMode ? "黑夜視野" : "模式選擇"} />
+          {isPlayerMode && <Tab label="模式" />}
+        </Tabs>
+        <TabPanel value={value} index={0}>
+          <Game
+            isPlayerMode={isPlayerMode}
+            id={id}
+            pass={pass}
+            name={name}
+            players={data.players}
+            chiefId={data.gameInfo.chiefId}
+            isDark={data.gameInfo.isDark}
+            voteWeightedId={data.gameInfo.voteWeightedId}
+            data={data}
+          />
         </TabPanel>
-      )}
-     
-    </Paper>
+        <TabPanel value={value} index={1}>
+          {isPlayerMode ? (
+            <TemplateRoleTable data={parseData(data)} />
+          ) : (
+            <Admin data={parseData(data)} tData={data} />
+          )}
+        </TabPanel>
+
+        {isPlayerMode && (
+          <TabPanel value={value} index={2}>
+            <EnabedTemplateInfo data={data} />
+          </TabPanel>
+        )}
+      </Paper>
     </Container>
   );
 }

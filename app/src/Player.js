@@ -90,6 +90,10 @@ const GET_PLAYER_INFO = gql`
       isVoteFinish
       chiefId
       isDark
+      chiefVoteState {
+        isDropedOut
+        isCandidate
+      }
     }
     darkInfo(id: $id) {
       isStart
@@ -119,6 +123,18 @@ const UPDATE_PLAYER_NAME = gql`
 const DARK_ACTION = gql`
   mutation DarkAction($targetId: Int!, $id: Int!) {
     exeDarkAction(targetId: $targetId, id: $id)
+  }
+`;
+
+const SUBMIT_CHIEF_CANDIDATE = gql`
+  mutation submitChiefCandidate {
+    setIsChiefCandidate
+  }
+`;
+
+const DROP_OUT_CHIEF_CANDIDATE = gql`
+  mutation dropOutChiefCandidate {
+    setIsChiefDropOut
   }
 `;
 
@@ -172,7 +188,9 @@ function PlayerTable(props) {
           {props.data.map((row) => (
             <TableRow key={row.id}>
               <TableCell component="th" scope="row">
-                {row.id === 0 ? `♾️` :row.isDie ? (
+                {row.id === 0 ? (
+                  `♾️`
+                ) : row.isDie ? (
                   <span aria-label="paw" style={{ fontSize: 30 }}>
                     🐾
                   </span>
@@ -329,6 +347,54 @@ function VoteAction(props) {
   );
 }
 
+function CandidateChiefDialog(props) {
+  const [submitChiefCandidate] = useMutation(SUBMIT_CHIEF_CANDIDATE, {
+    onCompleted: () => {
+      props.onClose();
+    },
+  });
+
+  const [dropOutChiefCandidate] = useMutation(DROP_OUT_CHIEF_CANDIDATE, {
+    onCompleted: () => {
+      props.onClose();
+    },
+  });
+
+  return (
+    <>
+      {props.isCandidate ? (
+        <DialogTitle id="form-dialog-title">是否退水？</DialogTitle>
+      ) : (
+        <DialogTitle id="form-dialog-title">是否競選警長？</DialogTitle>
+      )}
+      <DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              if (props.isCandidate) {
+                dropOutChiefCandidate();
+              } else {
+                submitChiefCandidate();
+              }
+            }}
+            color="primary"
+          >
+            確認
+          </Button>
+          <Button
+            onClick={() => {
+              props.onClose();
+            }}
+            color="secondary"
+          >
+            取消
+          </Button>
+        </DialogActions>
+      </DialogContent>
+    </>
+  );
+}
+
 function PlayerControl(props) {
   const classes = useStyles();
   const history = useHistory();
@@ -338,7 +404,7 @@ function PlayerControl(props) {
     { loading, error, data, called: playerCalled },
   ] = useLazyQuery(GET_PLAYER_INFO, { fetchPolicy: "network-only" });
 
-  const [open, setOpen] = React.useState(true);
+  const [openChiefCandidate, setOpenChiefCandidate] = React.useState(false);
   const [value, setValue] = useDebounce(props.name, 500);
   const [name, setName] = React.useState(props.name);
   const [updatePlayerName, { called }] = useMutation(UPDATE_PLAYER_NAME);
@@ -346,7 +412,7 @@ function PlayerControl(props) {
   let isMounted = true;
   useEffect(() => {
     if (isMounted) {
-      playerInfo({variables: { id: props.id, pass: props.pass }});
+      playerInfo({ variables: { id: props.id, pass: props.pass } });
     }
 
     const interval = setInterval(() => {
@@ -375,15 +441,11 @@ function PlayerControl(props) {
     //audioEl.play()
   }, [value, error, loading]);
 
-
   React.useEffect(() => {
-    
-
     if (data) {
-        
       props.setDarkMode(data.gameInfo.isDark);
     }
-  }, [ data]);
+  }, [data]);
 
   if (!playerCalled || !data) {
     return <div>Loading</div>;
@@ -403,6 +465,46 @@ function PlayerControl(props) {
         <VoteAction players={data.players} id={id} />
       </Dialog>
 
+      {!hasChief && <Box display="flex">
+        {data.gameInfo.chiefVoteState ? (
+          <>
+            <Dialog
+              aria-labelledby="simple-dialog-title"
+              open={openChiefCandidate}
+              
+            >
+              <CandidateChiefDialog
+                onClose={() => {
+                  setOpenChiefCandidate(false);
+                }}
+                isCandidate={data.gameInfo.chiefVoteState.isCandidate}
+              />
+            </Dialog>
+            {data.gameInfo.chiefVoteState.isCandidate ? (
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => {
+                  setOpenChiefCandidate(true);
+                }}
+                disabled={data.gameInfo.chiefVoteState.isDropedOut}
+              >
+                退水
+              </Button>
+            ) : (
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => {
+                  setOpenChiefCandidate(true);
+                }}
+              >
+                上警
+              </Button>
+            )}
+          </>
+        ) : null}
+      </Box>}
       <Box display="flex">
         <TextField
           id="standard-basic"
@@ -439,7 +541,7 @@ function TemplateInfo() {
     return <div>Loading</div>;
   }
 
-  return <EnabedTemplateInfo data={data}/>
+  return <EnabedTemplateInfo data={data} />;
 }
 
 export default function Player(props) {
@@ -452,25 +554,30 @@ export default function Player(props) {
 
   return (
     <Container maxWidth={"sm"}>
-    <Paper elevation={3}>
-      <Tabs
-        value={value}
-        indicatorColor="primary"
-        textColor="primary"
-        onChange={handleChange}
-        aria-label="disabled tabs example"
-        variant="fullWidth"
-      >
-        <Tab label="玩家" />
-        <Tab label="模式" />
-      </Tabs>
-      <TabPanel value={value} index={0}>
-        <PlayerControl id={id} pass={pass} name={name} setDarkMode={props.setDarkMode}/>
-      </TabPanel>
-      <TabPanel value={value} index={1}>
-        <TemplateInfo />
-      </TabPanel>
-    </Paper>
+      <Paper elevation={3}>
+        <Tabs
+          value={value}
+          indicatorColor="primary"
+          textColor="primary"
+          onChange={handleChange}
+          aria-label="disabled tabs example"
+          variant="fullWidth"
+        >
+          <Tab label="玩家" />
+          <Tab label="模式" />
+        </Tabs>
+        <TabPanel value={value} index={0}>
+          <PlayerControl
+            id={id}
+            pass={pass}
+            name={name}
+            setDarkMode={props.setDarkMode}
+          />
+        </TabPanel>
+        <TabPanel value={value} index={1}>
+          <TemplateInfo />
+        </TabPanel>
+      </Paper>
     </Container>
   );
 }

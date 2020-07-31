@@ -27,6 +27,8 @@ const typeDefs = gql`
     isValidCandidate: Boolean
     isVoteFinish: Boolean
     votedNumber: Float
+    chiefVoteState:ChiefVoteState
+    isTarget:Boolean
   }
 
   type Role {
@@ -66,11 +68,19 @@ const typeDefs = gql`
     darkDay: Int
   }
 
+  type ChiefVoteState {
+    isCandidate: Boolean
+    isDropedOut: Boolean
+  }
+
   type GameInfo {
     isVoteFinish: Boolean
     chiefId: Int
     isDark: Boolean
     voteWeightedId: Int
+    hasChief: Boolean
+    chiefVoteState:ChiefVoteState
+    hasVoteTarget: Boolean
   }
 
   input RoleOrder {
@@ -110,11 +120,16 @@ const typeDefs = gql`
     enableTemplate(name: String): String
     darkStart: String
     voteStart(targets: [Int]): String
+    voteChiefStart:String
     submitVote(target: Int): String
     setDieStatus(id: Int): String
     setDarkDieStatus(targets:[Int]): String
     setChiefId(id: Int): String
     setVoteWeightedId(id:Int): String
+
+    setIsChiefCandidate:String
+    setIsChiefDropOut: String
+
     logoff: String
   }
 `;
@@ -134,8 +149,9 @@ const resolvers = {
       }
       const { id } = args;
       const isVoteFinish = WolfModel.getIsVoteFinish({ id });
-      const { chiefId, isDark, voteWeightedId } = WolfModel;
-      return { isVoteFinish, chiefId , isDark, voteWeightedId};
+      const {chiefVoteState} = WolfModel.getPlayerStatus({id});
+      const { chiefId, isDark, voteWeightedId, hasChief ,hasVoteTarget} = WolfModel;
+      return { isVoteFinish, chiefId , isDark, voteWeightedId, hasChief, chiefVoteState,hasVoteTarget};
     },
 
     darkInfo: (root, args, context) => {
@@ -231,6 +247,23 @@ const resolvers = {
     },
   },
   Mutation: {
+
+
+    setIsChiefCandidate:(root, args, context) =>{
+      if (context.session.playerId === undefined) {
+        throw new AuthenticationError("No Access!");
+      }
+      const { playerId } = context.session;
+      WolfModel.updateChiefCandidate({id:playerId, isLockSet:true});
+    },
+    setIsChiefDropOut: (root, args, context) =>{
+      if (context.session.playerId === undefined) {
+        throw new AuthenticationError("No Access!");
+      }
+      const { playerId } = context.session;
+      WolfModel.updateChiefCandidateDropOut({id:playerId, isLockSet:true})
+    },
+
     logoff: (root, args, context) => {
       context.session.destroy();
       return "pass";
@@ -267,6 +300,11 @@ const resolvers = {
     voteStart: async (root, args, context) => {
       const { targets } = args;
       await WolfModel.startVote(targets);
+      return "pass";
+    },
+
+    voteChiefStart: async(root, args, context) =>{
+      await WolfModel.startVoteChief();
       return "pass";
     },
     submitVote: (root, args, context) => {

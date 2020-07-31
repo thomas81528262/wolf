@@ -36,6 +36,10 @@ class WolfModel {
     }
   }
 
+  get hasChief() {
+    return chiefId !== -1;
+  }
+
   static setPlayerDieStatus({ id }) {
     const p = this.player[id];
     if (p) {
@@ -45,12 +49,16 @@ class WolfModel {
         this.isDark = true;
       }
     }
+
+    this.player.forEach((p) => {
+      p.isTarget = false;
+    });
   }
   static setDarkDieStatus(targets) {
-    targets.forEach(id=>{
+    targets.forEach((id) => {
       const p = this.player[id];
       p.isDie = true;
-    })
+    });
 
     this.isDark = false;
   }
@@ -61,6 +69,10 @@ class WolfModel {
     } else {
       this.chiefId = id;
     }
+
+    this.player.forEach((p) => {
+      p.isTarget = false;
+    });
   }
 
   static setVoteWeightedId({ id }) {
@@ -87,20 +99,68 @@ class WolfModel {
       }
 
       if (!this.player[id].isDie) {
-        if (list.length === 0) {
-          this.isValidCandidate.add(id);
-          this.voteList[id] = 0;
-        } else if (list.includes(id)) {
-          this.voteList[id] = "T";
-          this.isValidCandidate.add(id);
+        if (this.hasTarget) {
+          if (p.isTarget) {
+            this.voteList[id] = "T";
+            this.isValidCandidate.add(id);
+          } else {
+            this.voteList[id] = 0;
+          }
         } else {
-          this.voteList[id] = 0;
+          if (list.length === 0) {
+            this.isValidCandidate.add(id);
+            this.voteList[id] = 0;
+          } else if (list.includes(id)) {
+            this.voteList[id] = "T";
+            this.isValidCandidate.add(id);
+          } else {
+            this.voteList[id] = 0;
+          }
         }
       } else {
         this.isValidCandidate.delete(id);
         this.voteList[id] = "D";
       }
     }
+  }
+
+  static async startVoteChief() {
+    if (!this.isVoteFinish || !this.canStartVote) {
+      return;
+    }
+
+    this.isVoteFinish = false;
+    this.isValidCandidate.clear();
+
+    const result = await Db.getAllPlayer();
+    for (let i = 0; i < result.length; i += 1) {
+      const { id } = result[i];
+      if (!id) {
+        continue;
+      }
+
+      if (this.player[id].chiefVoteState.isCandidate) {
+        if (this.player[id].chiefVoteState.isDropedOut) {
+          this.voteList[id] = "X";
+        } else {
+          this.isValidCandidate.add(id);
+          this.voteList[id] = "T";
+        }
+      } else {
+        this.voteList[id] = 0;
+      }
+    }
+  }
+
+  static get hasVoteTarget() {
+    let hasTarget = false;
+
+    this.player.forEach((p) => {
+      if (p.isTarget) {
+        hasTarget = true;
+      }
+    });
+    return hasTarget;
   }
 
   static getVotedNumber({ id }) {
@@ -125,7 +185,6 @@ class WolfModel {
     if (id === this.voteWeightedId) {
       votedNumber += 1;
     }
-
 
     return votedNumber;
   }
@@ -170,8 +229,7 @@ class WolfModel {
     }
     */
 
-   const votedNumber = this.player[id] ? this.player[id].votedNumber: 0;
-  
+    const votedNumber = this.player[id] ? this.player[id].votedNumber : 0;
 
     return {
       isValidCandidate,
@@ -188,6 +246,11 @@ class WolfModel {
     if (!p) {
       return {};
     }
+
+    if (!p.chiefVoteState) {
+      p.chiefVoteState = {};
+    }
+
     return p;
   }
 
@@ -201,6 +264,18 @@ class WolfModel {
     }
 
     return this.voteList[id] !== 0;
+  }
+
+  static getPlayerInfo({ id }) {
+    const p = this.player[id];
+
+    if (!p) {
+      return {};
+    }
+
+    const { chiefVoteState } = p;
+
+    return { chiefVoteState };
   }
 
   static getVoteResult({ id }) {
@@ -249,34 +324,41 @@ class WolfModel {
         p.votedNumber = this.getVotedNumber({ id });
       });
 
-      if (this.chiefId === -1) {
+      /*if (this.chiefId === -1) {
+      } else {*/
+      let maxVote = -1;
 
-      }else {
-        let maxVote = -1;
+      this.player.forEach((p, id) => {
+        maxVote = Math.max(p.votedNumber, maxVote);
+      });
 
-        this.player.forEach((p, id)=>{
-          maxVote = Math.max(p.votedNumber, maxVote);
+      const pNum = this.player.filter((p) => p.votedNumber === maxVote).length;
+      if (pNum === 1) {
+        this.player.forEach((p, id) => {
+          p.isTarget = false;
+          if (p.votedNumber === maxVote) {
+            if (this.hasChief) {
+              p.isDie = true;
+            } else {
+              this.chiefId = id;
+            }
+          }
         });
 
-        const pNum = this.player.filter(p=>p.votedNumber === maxVote).length;
-        if (pNum === 1) {
-          this.player.forEach((p, id) => {
-            if (p.votedNumber === maxVote) {
-              p.isDie = true;
-            }
-          });
+        if (this.hasChief) {
           this.isDark = true;
         }
 
-
-
-
-
-
-
+        /*}*/
+      } else if (pNum > 1) {
+        this.player.forEach((p, id) => {
+          if (p.votedNumber === maxVote) {
+            p.isTarget = true;
+          } else {
+            p.isTarget = false;
+          }
+        });
       }
-
-
     }
   }
 
@@ -344,13 +426,13 @@ class WolfModel {
     return "pass";
   }
 
-  static async getPlayerIdInfo({ id}) {
-    const result = await Db.getPlayerIdInfo({ id});
+  static async getPlayerIdInfo({ id }) {
+    const result = await Db.getPlayerIdInfo({ id });
     if (result.length === 1) {
       return result[0];
     }
     return {};
-  } 
+  }
 
   static async getPlayerInfo({ id, pass }) {
     const result = await Db.getPlayerInfo({ id, pass });
@@ -380,6 +462,39 @@ class WolfModel {
     return result;
   }
 
+  static updateChiefCandidate({ id, isLockSet }) {
+    const p = this.player[id];
+
+    if (p) {
+      if (isLockSet) {
+        p.chiefVoteState.isCandidate = true;
+      } else {
+        p.chiefVoteState.isCandidate = !p.chiefVoteState.isCandidate;
+      }
+
+      if (!p.chiefVoteState.isCandidate) {
+        p.chiefVoteState.isDropedOut = false;
+      }
+    }
+  }
+
+  static updateChiefCandidateDropOut({ id, isLockSet }) {
+    const p = this.player[id];
+    if (p) {
+      if (!isLockSet) {
+        p.chiefVoteState.isCandidate = !p.chiefVoteState.isCandidate;
+      }
+
+      if (p.chiefVoteState.isCandidate) {
+        if (isLockSet) {
+          p.chiefVoteState.isDropedOut = true;
+        } else {
+          p.chiefVoteState.isDropedOut = !p.chiefVoteState.isDropedOut;
+        }
+      }
+    }
+  }
+
   static async createPlayer({ totalNumber }) {
     await Db.removeAllPlayer();
 
@@ -388,7 +503,13 @@ class WolfModel {
     this.player = [{ isJoin: true, isDie: false }];
     for (let i = 0; i < totalNumber; i += 1) {
       await Db.addPlayer({ id: i + 1 });
-      this.player.push({ isJoin: false, isDie: false, votedNumber: 0 });
+      this.player.push({
+        isTarget: false,
+        isJoin: false,
+        isDie: false,
+        votedNumber: 0,
+        chiefVoteState: { isCandidate: false, isDropedOut: false },
+      });
     }
   }
   static async removeAllPlayer({ store }) {
@@ -435,26 +556,50 @@ class WolfModel {
     try {
       const template = await Db.getEnabledTemplate();
       const { name } = template;
-      const result = await Db.getAllTemplateRole({ name });
+      const roles = await Db.getAllTemplateRole({ name });
 
       const list = [];
-      result.forEach((d) => {
+      let lIdx = 0;
+      roles.forEach((d, index) => {
         const { number, id, functionName, camp } = d;
 
         if (number) {
           for (let i = 0; i < number; i += 1) {
-            list.push({ id, functionName, camp });
+            list.push({ id, functionName, camp, index: lIdx });
+            lIdx += 1;
           }
         }
       });
 
-      shuffle(list);
+      //22 is Thieves, 2 is Villagers
+      const thieve = list.find((v) => v.id === 22);
+      if (thieve) {
+        const villager = list.find((v) => v.id === 2);
+        const len = list.length;
+        shuffle(list);
 
-      Game.dark.reset();
+        list.forEach((r, idx) => {
+          r.index = idx;
+        });
+
+        list.push({ ...villager, index: len }, { ...villager, index: len + 1 });
+
+        shuffle(list);
+
+        const thieveCurIdx = list.findIndex((v) => v.id === 22);
+        console.log(thieveCurIdx, thieve.index);
+        const tmp = list[thieveCurIdx];
+        list[thieveCurIdx] = list[thieve.index];
+        list[thieve.index] = tmp;
+      } else {
+        shuffle(list);
+      }
+
+      //Game.dark.reset();
       this.reset();
       const waitRoleList = [];
 
-      list.forEach((value, idx) => {
+      list.slice(0, roles.length).forEach((value, idx) => {
         const { id: roleId, functionName, camp } = value;
         Game.dark.assignDarkRole({
           id: idx + 1,
