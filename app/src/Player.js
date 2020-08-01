@@ -87,6 +87,7 @@ const GET_PLAYER_INFO = gql`
       isKill
     }
     gameInfo(id: $id) {
+      
       isVoteFinish
       chiefId
       isDark

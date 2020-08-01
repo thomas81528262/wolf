@@ -69,6 +69,7 @@ const GET_ROLES = gql`
       isDark
       voteWeightedId
       hasVoteTarget
+      hasChief
     }
   }
 `;

@@ -36,8 +36,8 @@ class WolfModel {
     }
   }
 
-  get hasChief() {
-    return chiefId !== -1;
+  static get hasChief() {
+    return this.chiefId !== -1;
   }
 
   static setPlayerDieStatus({ id }) {
