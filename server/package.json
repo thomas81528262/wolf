@@ -18,7 +18,8 @@
     "graphql": "^15.0.0",
     "memorystore": "^1.6.2",
     "pg": "^8.0.3",
-    "shuffle-array": "^1.0.1"
+    "shuffle-array": "^1.0.1",
+    "uuid": "^8.3.0"
   },
   "devDependencies": {
     "jest": "^26.0.1"

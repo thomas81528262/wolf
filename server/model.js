@@ -3,8 +3,8 @@ const shuffle = require("shuffle-array");
 const Game = require("./game");
 const { withTimeout, Mutex } = require("async-mutex");
 const mutexWithTimeout = withTimeout(new Mutex(), 1000, new Error("timeout"));
+const { v1: uuidv1 } = require('uuid');
 
-const timeout = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 class WolfModel {
   static voteList = [];
   static voteHistory = [];
@@ -15,6 +15,8 @@ class WolfModel {
   static chiefId = -1;
   static voteWeightedId = -1;
   static isDark = false;
+  static uuid = uuidv1();
+
 
   static get canStartVote() {
     return (
@@ -141,7 +143,7 @@ class WolfModel {
 
       if (this.player[id].chiefVoteState.isCandidate) {
         if (this.player[id].chiefVoteState.isDropedOut) {
-          this.voteList[id] = "X";
+          this.voteList[id] = "DO";
         } else {
           this.isValidCandidate.add(id);
           this.voteList[id] = "T";
@@ -339,15 +341,14 @@ class WolfModel {
           if (p.votedNumber === maxVote) {
             if (this.hasChief) {
               p.isDie = true;
+              this.isDark = true;
             } else {
               this.chiefId = id;
             }
           }
         });
 
-        if (this.hasChief) {
-          this.isDark = true;
-        }
+        
 
         /*}*/
       } else if (pNum > 1) {
@@ -469,7 +470,7 @@ class WolfModel {
       if (isLockSet) {
         p.chiefVoteState.isCandidate = true;
       } else {
-        p.chiefVoteState.isCandidate = !p.chiefVoteState.isCandidate;
+        p.chiefVoteState.isCandidate = false;
       }
 
       if (!p.chiefVoteState.isCandidate) {
@@ -616,6 +617,7 @@ class WolfModel {
       });
 
       await Promise.all(waitRoleList);
+      this.uuid = uuidv1()
     } finally {
       mutexWithTimeout.release();
     }
@@ -651,7 +653,7 @@ class WolfModel {
     });
 
     this.createPlayer({ totalNumber });
-
+   
     return "pass";
   }
 

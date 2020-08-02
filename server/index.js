@@ -81,6 +81,7 @@ const typeDefs = gql`
     hasChief: Boolean
     chiefVoteState:ChiefVoteState
     hasVoteTarget: Boolean
+    uuid: String
   }
 
   input RoleOrder {
@@ -129,7 +130,7 @@ const typeDefs = gql`
 
     setIsChiefCandidate:String
     setIsChiefDropOut: String
-
+    resetChiefCaniddate(id:Int): String
     logoff: String
   }
 `;
@@ -150,8 +151,8 @@ const resolvers = {
       const { id } = args;
       const isVoteFinish = WolfModel.getIsVoteFinish({ id });
       const {chiefVoteState} = WolfModel.getPlayerStatus({id});
-      const { chiefId, isDark, voteWeightedId, hasChief ,hasVoteTarget} = WolfModel;
-      return { isVoteFinish, chiefId , isDark, voteWeightedId, hasChief, chiefVoteState,hasVoteTarget};
+      const { chiefId, isDark, voteWeightedId, hasChief ,hasVoteTarget, uuid} = WolfModel;
+      return { isVoteFinish, chiefId , isDark, voteWeightedId, hasChief, chiefVoteState,hasVoteTarget, uuid};
     },
 
     darkInfo: (root, args, context) => {
@@ -247,6 +248,18 @@ const resolvers = {
     },
   },
   Mutation: {
+
+
+    resetChiefCaniddate:(root, args, context)=>{
+      if (context.session.playerId === undefined) {
+        throw new AuthenticationError("No Access!");
+      }
+      const { playerId } = context.session;
+
+      const { id } = args;
+
+      WolfModel.updateChiefCandidate({id});
+    },
 
 
     setIsChiefCandidate:(root, args, context) =>{

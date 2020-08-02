@@ -9,7 +9,7 @@ import Fab from "@material-ui/core/Fab";
 import AddIcon from "@material-ui/icons/Add";
 import { gql } from "apollo-boost";
 import { useQuery, useMutation, useLazyQuery } from "@apollo/client";
-
+import ReactCardFlip from "react-card-flip";
 import Table from "@material-ui/core/Table";
 import TableBody from "@material-ui/core/TableBody";
 import TableCell from "@material-ui/core/TableCell";
@@ -87,7 +87,7 @@ const GET_PLAYER_INFO = gql`
       isKill
     }
     gameInfo(id: $id) {
-      
+      uuid
       isVoteFinish
       chiefId
       isDark
@@ -448,12 +448,32 @@ function PlayerControl(props) {
     }
   }, [data]);
 
+  const [roleName, setRoleName] = React.useState("");
+  const uuid = data ? data.gameInfo.uuid : "";
+  const dataRoleName = data ? data.player.roleName: "";
+  React.useEffect(() => {
+    setRoleName("");
+
+    if (data) {
+
+      console.log(data)
+      setTimeout(() => {
+        setRoleName(data.player.roleName);
+      }, 1000);
+    }
+
+    return () => {
+      
+      setRoleName("");
+    };
+  }, [uuid,dataRoleName ]);
+
   if (!playerCalled || !data) {
     return <div>Loading</div>;
   }
 
   const hasChief = data.gameInfo.chiefId !== -1;
-  const { id, name: playerName, roleName } = data.player;
+  const { id, name: playerName } = data.player;
   return (
     <>
       <Dialog
@@ -466,46 +486,47 @@ function PlayerControl(props) {
         <VoteAction players={data.players} id={id} />
       </Dialog>
 
-      {!hasChief && <Box display="flex">
-        {data.gameInfo.chiefVoteState ? (
-          <>
-            <Dialog
-              aria-labelledby="simple-dialog-title"
-              open={openChiefCandidate}
-              
-            >
-              <CandidateChiefDialog
-                onClose={() => {
-                  setOpenChiefCandidate(false);
-                }}
-                isCandidate={data.gameInfo.chiefVoteState.isCandidate}
-              />
-            </Dialog>
-            {data.gameInfo.chiefVoteState.isCandidate ? (
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={() => {
-                  setOpenChiefCandidate(true);
-                }}
-                disabled={data.gameInfo.chiefVoteState.isDropedOut}
+      {!hasChief && (
+        <Box display="flex">
+          {data.gameInfo.chiefVoteState ? (
+            <>
+              <Dialog
+                aria-labelledby="simple-dialog-title"
+                open={openChiefCandidate}
               >
-                退水
-              </Button>
-            ) : (
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={() => {
-                  setOpenChiefCandidate(true);
-                }}
-              >
-                上警
-              </Button>
-            )}
-          </>
-        ) : null}
-      </Box>}
+                <CandidateChiefDialog
+                  onClose={() => {
+                    setOpenChiefCandidate(false);
+                  }}
+                  isCandidate={data.gameInfo.chiefVoteState.isCandidate}
+                />
+              </Dialog>
+              {data.gameInfo.chiefVoteState.isCandidate ? (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => {
+                    setOpenChiefCandidate(true);
+                  }}
+                  disabled={data.gameInfo.chiefVoteState.isDropedOut}
+                >
+                  退水
+                </Button>
+              ) : (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => {
+                    setOpenChiefCandidate(true);
+                  }}
+                >
+                  上警
+                </Button>
+              )}
+            </>
+          ) : null}
+        </Box>
+      )}
       <Box display="flex">
         <TextField
           id="standard-basic"
@@ -522,9 +543,18 @@ function PlayerControl(props) {
       </Box>
       <Card className={classes.root}>
         <CardContent>
-          <Typography variant="h1" component="h1">
-            {roleName}
-          </Typography>
+          <ReactCardFlip
+            isFlipped={roleName ? true : false}
+            flipDirection="vertical"
+          >
+            <Typography variant="h1" component="h1">
+              {" "}
+              {"❔"}
+            </Typography>
+            <Typography variant="h1" component="h1">
+              {roleName || "❔"}
+            </Typography>
+          </ReactCardFlip>
         </CardContent>
       </Card>
 

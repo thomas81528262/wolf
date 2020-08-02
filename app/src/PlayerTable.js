@@ -48,6 +48,12 @@ const SET_VOTE_WEIGHTED_ID = gql`
   }
 `;
 
+const RESET_CHIEF_CANDIDATE = gql`
+  mutation ResetChiefCandidate($id: Int!){
+    resetChiefCaniddate(id: $id)
+  }
+`;
+
 //voteWeightedId
 
 export default function PlayerTable(props) {
@@ -55,6 +61,7 @@ export default function PlayerTable(props) {
   const [setDie] = useMutation(SET_DIE_STATUS);
   const [setChiefId] = useMutation(SET_CHIEF_ID);
   const [setVoteWeightedId] = useMutation(SET_VOTE_WEIGHTED_ID);
+  const [resetChiefCandidate] = useMutation(RESET_CHIEF_CANDIDATE);
   return (
     <TableContainer component={Paper}>
       <Table className={classes.table} aria-label="simple table" size="small">
@@ -93,7 +100,9 @@ export default function PlayerTable(props) {
                 )}
 
                 {row.chiefVoteState && row.chiefVoteState.isCandidate && (
-                  <button>重置</button>
+                  <button onClick={()=>{
+                    resetChiefCandidate({ variables: { id: row.id } });
+                  }}>重置</button>
                 )}
               </TableCell>
               <TableCell>
