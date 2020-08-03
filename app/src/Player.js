@@ -548,10 +548,9 @@ function PlayerControl(props) {
             flipDirection="vertical"
           >
             <Typography variant="h1" component="h1">
-              {" "}
               {"❔"}
             </Typography>
-            <Typography variant="h1" component="h1">
+            <Typography variant="h2" component="h2">
               {roleName || "❔"}
             </Typography>
           </ReactCardFlip>
