@@ -61,6 +61,7 @@ const GET_ROLES = gql`
       chiefVoteState {
         isDropedOut
         isCandidate
+        type
       }
     }
     gameInfo(id: 0) {

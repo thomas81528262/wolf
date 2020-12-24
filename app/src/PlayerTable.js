@@ -99,10 +99,10 @@ export default function PlayerTable(props) {
                   />
                 )}
 
-                {row.chiefVoteState && row.chiefVoteState.isCandidate && (
+                {row.chiefVoteState.type && (
                   <button onClick={()=>{
                     resetChiefCandidate({ variables: { id: row.id } });
-                  }}>重置</button>
+                  }}>重置 {`(${row.chiefVoteState.type})`}</button>
                 )}
               </TableCell>
               <TableCell>

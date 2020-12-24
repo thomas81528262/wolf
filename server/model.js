@@ -3,7 +3,7 @@ const shuffle = require("shuffle-array");
 const Game = require("./game");
 const { withTimeout, Mutex } = require("async-mutex");
 const mutexWithTimeout = withTimeout(new Mutex(), 1000, new Error("timeout"));
-const { v1: uuidv1 } = require('uuid');
+const { v1: uuidv1 } = require("uuid");
 
 class WolfModel {
   static voteList = [];
@@ -16,7 +16,6 @@ class WolfModel {
   static voteWeightedId = -1;
   static isDark = false;
   static uuid = uuidv1();
-
 
   static get canStartVote() {
     return (
@@ -211,26 +210,6 @@ class WolfModel {
       isVoteFinish = this.voteList[id] !== 0 || this.isVoteFinish;
     }
 
-    /*
-    let votedNumber = 0;
-
-    const voteList =
-      this.chiefId === -1 ? this.chiefVoteHistory : this.voteHistory;
-
-    if (voteList.length > 0) {
-      const lastIdx = voteList.length - 1;
-      voteList[lastIdx].forEach((tId, idx) => {
-        if (tId === id) {
-          votedNumber += 1;
-
-          if (idx === this.chiefId) {
-            votedNumber += 0.5;
-          }
-        }
-      });
-    }
-    */
-
     const votedNumber = this.player[id] ? this.player[id].votedNumber : 0;
 
     return {
@@ -242,15 +221,42 @@ class WolfModel {
     };
   }
 
-  static getPlayerStatus({ id }) {
-    const p = this.player[id];
+  static isChiefCandidateConfirmed() {
+    let isConfirmed = true;
+    console.log(this.player);
+    this.player.forEach((p, idx) => {
+      if (!isConfirmed || !idx) {
+        return;
+      }
 
+      if (!p.chiefVoteState) {
+        isConfirmed = false;
+        return;
+      }
+
+      if (!p.chiefVoteState.type) {
+        isConfirmed = false;
+        return;
+      }
+    });
+
+    return isConfirmed;
+  }
+
+  static getPlayerStatus({ id, playerId, isChiefCandidateConfirmed }) {
+    const p = { ...this.player[id] };
+    console.log(isChiefCandidateConfirmed);
     if (!p) {
       return {};
     }
 
     if (!p.chiefVoteState) {
       p.chiefVoteState = {};
+    }
+
+    p.chiefVoteState = { ...p.chiefVoteState };
+    if (playerId !== 0 && !isChiefCandidateConfirmed) {
+      p.chiefVoteState.type = null;
     }
 
     return p;
@@ -347,8 +353,6 @@ class WolfModel {
             }
           }
         });
-
-        
 
         /*}*/
       } else if (pNum > 1) {
@@ -469,12 +473,24 @@ class WolfModel {
     if (p) {
       if (isLockSet) {
         p.chiefVoteState.isCandidate = true;
+        p.chiefVoteState.type = "chief";
       } else {
         p.chiefVoteState.isCandidate = false;
+        p.chiefVoteState.type = null;
       }
 
       if (!p.chiefVoteState.isCandidate) {
         p.chiefVoteState.isDropedOut = false;
+      }
+    }
+  }
+
+  static updateVoterCandidate({ id, isLockSet }) {
+    const p = this.player[id];
+
+    if (p) {
+      if (isLockSet) {
+        p.chiefVoteState.type = "voter";
       }
     }
   }
@@ -489,6 +505,7 @@ class WolfModel {
       if (p.chiefVoteState.isCandidate) {
         if (isLockSet) {
           p.chiefVoteState.isDropedOut = true;
+          p.chiefVoteState.type = "drop";
         } else {
           p.chiefVoteState.isDropedOut = !p.chiefVoteState.isDropedOut;
         }
@@ -509,7 +526,7 @@ class WolfModel {
         isJoin: false,
         isDie: false,
         votedNumber: 0,
-        chiefVoteState: { isCandidate: false, isDropedOut: false },
+        chiefVoteState: { isCandidate: false, isDropedOut: false, type: null },
       });
     }
   }
@@ -558,7 +575,7 @@ class WolfModel {
       const template = await Db.getEnabledTemplate();
       const { name } = template;
       const roles = await Db.getAllTemplateRole({ name });
-      
+
       const list = [];
       let lIdx = 0;
       roles.forEach((d, index) => {
@@ -575,10 +592,8 @@ class WolfModel {
       //22 is Thieves, 2 is Villagers
       const thieve = list.find((v) => v.id === 22);
       if (thieve) {
-        
         const villager = list.find((v) => v.id === 2);
 
-        
         const len = list.length;
         /*
         shuffle(list);
@@ -617,7 +632,7 @@ class WolfModel {
       });
 
       await Promise.all(waitRoleList);
-      this.uuid = uuidv1()
+      this.uuid = uuidv1();
     } finally {
       mutexWithTimeout.release();
     }
@@ -653,7 +668,7 @@ class WolfModel {
     });
 
     this.createPlayer({ totalNumber });
-   
+
     return "pass";
   }
 

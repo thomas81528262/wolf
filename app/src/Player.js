@@ -81,6 +81,9 @@ const GET_PLAYER_INFO = gql`
       chiefVote
       isValidCandidate
       isVoteFinish
+      chiefVoteState {
+        type
+      }
     }
     wolfKillList(id: $id) {
       id
@@ -94,6 +97,7 @@ const GET_PLAYER_INFO = gql`
       chiefVoteState {
         isDropedOut
         isCandidate
+        type
       }
     }
     darkInfo(id: $id) {
@@ -130,6 +134,12 @@ const DARK_ACTION = gql`
 const SUBMIT_CHIEF_CANDIDATE = gql`
   mutation submitChiefCandidate {
     setIsChiefCandidate
+  }
+`;
+
+const SET_IS_VOTER = gql`
+  mutation setIsVoter {
+    setIsVoter
   }
 `;
 
@@ -171,7 +181,7 @@ function TabPanel(props) {
 
 function PlayerTable(props) {
   const classes = useStyles();
-
+  console.log(props.data);
   return (
     <TableContainer component={Paper}>
       <Table className={classes.table} aria-label="simple table" size="small">
@@ -190,19 +200,45 @@ function PlayerTable(props) {
             <TableRow key={row.id}>
               <TableCell component="th" scope="row">
                 {row.id === 0 ? (
-                  `♾️`
+                  <span aria-label="paw" style={{ fontSize: 30 }}>
+                    ♾️
+                  </span>
                 ) : row.isDie ? (
                   <span aria-label="paw" style={{ fontSize: 30 }}>
                     🐾
                   </span>
                 ) : (
-                  row.id
+                  <span aria-label="paw" style={{ fontSize: 30 }}>
+                    {row.id}
+                  </span>
                 )}
                 {row.id === props.chiefId && row.id !== 0 && (
                   <span aria-label="paw" style={{ fontSize: 30 }}>
                     🌟
                   </span>
                 )}
+                {row.chiefVoteState &&
+                  row.chiefVoteState.type &&
+                  row.chiefVoteState.type == "chief" && (
+                    <span
+                      span
+                      aria-label="paw"
+                      style={{ fontSize: 30, marginLeft: 5 }}
+                    >
+                      😃
+                    </span>
+                  )}
+                {row.chiefVoteState &&
+                  row.chiefVoteState.type &&
+                  row.chiefVoteState.type == "drop" && (
+                    <span
+                      span
+                      aria-label="paw"
+                      style={{ fontSize: 30, marginLeft: 5 }}
+                    >
+                      😂
+                    </span>
+                  )}
               </TableCell>
               <TableCell align="center">{row.name}</TableCell>
               <TableCell align="right">{row.chiefVote.toString()}</TableCell>
@@ -349,6 +385,12 @@ function VoteAction(props) {
 }
 
 function CandidateChiefDialog(props) {
+
+
+  const [setIsVoter] = useMutation(SET_IS_VOTER, { onCompleted: () => {
+    props.onClose();
+  },})
+
   const [submitChiefCandidate] = useMutation(SUBMIT_CHIEF_CANDIDATE, {
     onCompleted: () => {
       props.onClose();
@@ -382,6 +424,14 @@ function CandidateChiefDialog(props) {
           >
             確認
           </Button>
+          {!props.isCandidate && <Button
+            onClick={() => {
+              setIsVoter();
+            }}
+            style={{color:'DarkOrange'}}
+          >
+            不要!
+          </Button>}
           <Button
             onClick={() => {
               props.onClose();
@@ -450,23 +500,21 @@ function PlayerControl(props) {
 
   const [roleName, setRoleName] = React.useState("");
   const uuid = data ? data.gameInfo.uuid : "";
-  const dataRoleName = data ? data.player.roleName: "";
+  const dataRoleName = data ? data.player.roleName : "";
   React.useEffect(() => {
     setRoleName("");
 
     if (data) {
-
-      console.log(data)
+      console.log(data);
       setTimeout(() => {
         setRoleName(data.player.roleName);
       }, 1000);
     }
 
     return () => {
-      
       setRoleName("");
     };
-  }, [uuid,dataRoleName ]);
+  }, [uuid, dataRoleName]);
 
   if (!playerCalled || !data) {
     return <div>Loading</div>;
@@ -519,6 +567,7 @@ function PlayerControl(props) {
                   onClick={() => {
                     setOpenChiefCandidate(true);
                   }}
+                  disabled={data.gameInfo.chiefVoteState.type !== null}
                 >
                   上警
                 </Button>
