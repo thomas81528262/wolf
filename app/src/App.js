@@ -442,9 +442,9 @@ function App() {
         palette: {
           type: isDarkMode ? 'dark' : 'light',
           primary: isDarkMode ? {
-            main: '#82b1ff',
+            main: '#F8A9A0',
           }:{
-            main: '#3f51b5',
+            main: '#F8A9A0',
           },
         },
        

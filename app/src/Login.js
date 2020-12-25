@@ -115,71 +115,73 @@ export default function Login() {
   return (
     <Container component="main" maxWidth="xs">
       <CssBaseline />
-      <div style={{ marginTop: "20%" }}>
-        <Avatar round={true} src="wolf-login.png" />
-        <Autocomplete
-          fullWidth
-          id="combo-box-demo"
-          className={classes.margin}
-          options={data.players}
-          getOptionLabel={(option) => `玩家 ${option.id}`}
-          renderOption={(option) => (
-            <React.Fragment>
-              <span
-                style={{
-                  color: option.isEmpty ? "gray" : "lightgreen",
-                  transition: "all .3s ease",
-                  fontSize: "24px",
-                  marginRight: "10px",
-                }}
-              >
-                &#x25cf;
-              </span>
-              {` 玩家 ${option.id}`}
-            </React.Fragment>
-          )}
-          onChange={(event, newValue) => {
-            setPlayerId(newValue.id);
-          }}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label="玩家"
-              variant="outlined"
-              margin="dense"
-            />
-          )}
-        />
+      <div style={{ marginTop: "20%",  }}>
+        <Avatar src="test-3.png" size="300" />
+        <div style={{ width:300, margin:"auto"}}>
+          <Autocomplete
+            fullWidth
+            id="combo-box-demo"
+            className={classes.margin}
+            options={data.players}
+            getOptionLabel={(option) => `玩家 ${option.id}`}
+            renderOption={(option) => (
+              <React.Fragment>
+                <span
+                  style={{
+                    color: option.isEmpty ? "gray" : "lightgreen",
+                    transition: "all .3s ease",
+                    fontSize: "24px",
+                    marginRight: "10px",
+                  }}
+                >
+                  &#x25cf;
+                </span>
+                {` 玩家 ${option.id}`}
+              </React.Fragment>
+            )}
+            onChange={(event, newValue) => {
+              setPlayerId(newValue.id);
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="玩家"
+                variant="outlined"
+                margin="dense"
+              />
+            )}
+          />
 
-        <TextField
-          fullWidth
-          id="standard-basic"
-          label="密碼"
-          variant="outlined"
-          className={classes.margin}
-          margin="dense"
-          onChange={(e) => setPlayerPass(e.target.value)}
-          value={playerPass}
-        />
-        <Button
-          type="submit"
-          fullWidth
-          variant="contained"
-          color="primary"
-          className={classes.submit}
-          onClick={() => {
-            updatePlayerPass({
-              variables: { id: playerId, pass: playerPass },
-            });
-          }}
-        >
-          登入
-        </Button>
+          <TextField
+            fullWidth
+            id="standard-basic"
+            label="密碼"
+            variant="outlined"
+            className={classes.margin}
+            margin="dense"
+            onChange={(e) => setPlayerPass(e.target.value)}
+            value={playerPass}
+          />
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            color="primary"
+            className={classes.submit}
+            onClick={() => {
+              updatePlayerPass({
+                variables: { id: playerId, pass: playerPass },
+              });
+            }}
+          >
+            登入
+          </Button>
+        </div>
       </div>
 
-      <Box mt={8}>
+      {/*<Box mt={8}>
         <Copyright />
-      </Box>
+        </Box>*/}
     </Container>
   );
 }
