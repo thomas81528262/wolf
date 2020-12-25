@@ -15,6 +15,7 @@ import Box from "@material-ui/core/Box";
 import Container from "@material-ui/core/Container";
 import Typography from "@material-ui/core/Typography";
 import Avatar from "react-avatar";
+import { mdiPaw } from "@mdi/js";
 import {
   fade,
   withStyles,
@@ -74,6 +75,14 @@ function Copyright() {
   );
 }
 
+function Icon(props) {
+  return (
+    <svg viewBox="0 0 24 24" style={{ width: "1.5rem" , fill:'white'}}>
+      <path d={props.path} />
+    </svg>
+  );
+}
+
 export default function Login() {
   const history = useHistory();
   const classes = useStyles();
@@ -88,7 +97,7 @@ export default function Login() {
       //fetchPolicy: "network-only",
     }
   );
-
+  console.log(mdiPaw);
   const [
     updatePlayerPass,
     { loading: passLoading, data: passData },
@@ -113,70 +122,70 @@ export default function Login() {
   }
 
   return (
-    <Container component="main" maxWidth="xs">
-      <CssBaseline />
-      <div style={{ marginTop: "20%",  }}>
-        <Avatar src="test-3.png" size="300" />
-        <div style={{ width:300, margin:"auto"}}>
-          <Autocomplete
-            fullWidth
-            id="combo-box-demo"
-            className={classes.margin}
-            options={data.players}
-            getOptionLabel={(option) => `玩家 ${option.id}`}
-            renderOption={(option) => (
-              <React.Fragment>
-                <span
-                  style={{
-                    color: option.isEmpty ? "gray" : "lightgreen",
-                    transition: "all .3s ease",
-                    fontSize: "24px",
-                    marginRight: "10px",
-                  }}
-                >
-                  &#x25cf;
-                </span>
-                {` 玩家 ${option.id}`}
-              </React.Fragment>
-            )}
-            onChange={(event, newValue) => {
-              setPlayerId(newValue.id);
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="玩家"
-                variant="outlined"
-                margin="dense"
-              />
-            )}
-          />
+    <Container component="main" >
+     
+     <div style={{ marginTop:"10%" }}>
+          <Avatar src="test-3.png" size="350" />
+       </div>
+        <div style={{ width: 300, margin: "auto" }}>
+        <Autocomplete
+          fullWidth
+          id="combo-box-demo"
+          className={classes.margin}
+          options={data.players}
+          getOptionLabel={(option) => `玩家 ${option.id}`}
+          renderOption={(option) => (
+            <React.Fragment>
+              <span
+                style={{
+                  color: option.isEmpty ? "gray" : "lightgreen",
+                  transition: "all .3s ease",
+                  fontSize: "24px",
+                  marginRight: "10px",
+                }}
+              >
+                &#x25cf;
+              </span>
+              {` 玩家 ${option.id}`}
+            </React.Fragment>
+          )}
+          onChange={(event, newValue) => {
+            setPlayerId(newValue.id);
+          }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="玩家"
+              variant="outlined"
+              margin="dense"
+            />
+          )}
+        />
 
-          <TextField
-            fullWidth
-            id="standard-basic"
-            label="密碼"
-            variant="outlined"
-            className={classes.margin}
-            margin="dense"
-            onChange={(e) => setPlayerPass(e.target.value)}
-            value={playerPass}
-          />
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            color="primary"
-            className={classes.submit}
-            onClick={() => {
-              updatePlayerPass({
-                variables: { id: playerId, pass: playerPass },
-              });
-            }}
-          >
-            登入
-          </Button>
-        </div>
+        <TextField
+          fullWidth
+          id="standard-basic"
+          label="密碼"
+          variant="outlined"
+          className={classes.margin}
+          margin="dense"
+          onChange={(e) => setPlayerPass(e.target.value)}
+          value={playerPass}
+        />
+        <Button
+          type="submit"
+          fullWidth
+          variant="contained"
+          color="primary"
+          className={classes.submit}
+          onClick={() => {
+            updatePlayerPass({
+              variables: { id: playerId, pass: playerPass },
+            });
+          }}
+        >
+          <Icon path={mdiPaw} />
+        </Button>
       </div>
 
       {/*<Box mt={8}>
