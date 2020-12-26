@@ -9,7 +9,7 @@ import Fab from "@material-ui/core/Fab";
 import AddIcon from "@material-ui/icons/Add";
 import { gql } from "apollo-boost";
 import { useQuery, useMutation } from "@apollo/client";
-
+import { ReactSVG } from 'react-svg'
 import CssBaseline from "@material-ui/core/CssBaseline";
 import Box from "@material-ui/core/Box";
 import Container from "@material-ui/core/Container";

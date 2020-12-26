@@ -39,6 +39,7 @@ import Box from "@material-ui/core/Box";
 import Container from "@material-ui/core/Container";
 import { useHistory } from "react-router-dom";
 import Avatar from "react-avatar";
+import { ReactSVG } from 'react-svg'
 import {
   fade,
   withStyles,
@@ -291,7 +292,7 @@ function LogoffButton() {
 
   return (
     <Button
-      variant="contained"
+      variant="outlined"
       color="secondary"
       onClick={() => {
         logoff();
@@ -391,7 +392,9 @@ function Game(props) {
               <MenuIcon />
             </IconButton>
             <Typography variant="h6" className={classes.title}>
-              小狼狼
+              <div style={{width:50, margin:'auto', marginTop:10}}>
+            <ReactSVG src="wolf.svg" />
+            </div>
             </Typography>
             <LogoffButton />
           </Toolbar>

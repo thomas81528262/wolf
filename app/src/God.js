@@ -364,22 +364,26 @@ function Game(props) {
         </Dialog>
         <Box display="flex">
           <Button
-            variant="contained"
+            variant="outlined"
             color="primary"
             onClick={() => {
               generateRole();
             }}
           >
+            <div style={{fontWeight:800}}>
             產生角色
+            </div>
           </Button>
           <Button
-            variant="contained"
+            variant="outlined"
             color="secondary"
             onClick={() => {
               removeAllPlayer();
             }}
           >
+            <div style={{fontWeight:800}}>
             刪除玩家
+            </div>
           </Button>
           <Button
             variant="contained"

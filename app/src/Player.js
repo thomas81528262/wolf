@@ -562,14 +562,16 @@ function PlayerControl(props) {
                 </Button>
               ) : (
                 <Button
-                  variant="contained"
+                  variant="outlined"
                   color="primary"
                   onClick={() => {
                     setOpenChiefCandidate(true);
                   }}
                   disabled={data.gameInfo.chiefVoteState.type !== null}
                 >
+                   <div style={{fontWeight:800}}>
                   上警
+                  </div>
                 </Button>
               )}
             </>
