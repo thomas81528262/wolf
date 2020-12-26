@@ -77,7 +77,7 @@ function Copyright() {
 
 function Icon(props) {
   return (
-    <svg viewBox="0 0 24 24" style={{ width: "1.5rem" , fill:'white'}}>
+    <svg viewBox="0 0 24 24" style={{ width: "1.5rem", fill: "white" }}>
       <path d={props.path} />
     </svg>
   );
@@ -122,12 +122,9 @@ export default function Login() {
   }
 
   return (
-    <Container component="main" >
-     
-     <div style={{ marginTop:"10%" }}>
-          <Avatar src="test-3.png" size="350" />
-       </div>
-        <div style={{ width: 300, margin: "auto" }}>
+    <Container component="main">
+      <div style={{ width: 350, position:'fixed', top:'50%', left:'50%', transform:"translate(-50%, -50%)" }}>
+        <Avatar src="test-3.png" size="350" />
         <Autocomplete
           fullWidth
           id="combo-box-demo"
