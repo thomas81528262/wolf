@@ -41,7 +41,7 @@ import { useDebounce, useDebounceCallback } from "@react-hook/debounce";
 
 import EnabedTemplateInfo from "./EnabledTemplateInfo";
 import { useHistory } from "react-router-dom";
-
+import { ReactSVG } from 'react-svg'
 const useStyles = makeStyles((theme) => ({
   margin: {
     //margin: theme.spacing(1),
@@ -200,9 +200,9 @@ function PlayerTable(props) {
             <TableRow key={row.id}>
               <TableCell component="th" scope="row">
                 {row.id === 0 ? (
-                  <span aria-label="paw" style={{ fontSize: 30 }}>
-                    ♾️
-                  </span>
+                  <div style={{width:30}}>
+                  <ReactSVG src="infinity.svg" />
+                  </div>
                 ) : row.isDie ? (
                   <span aria-label="paw" style={{ fontSize: 30 }}>
                     🐾
@@ -562,16 +562,18 @@ function PlayerControl(props) {
                 </Button>
               ) : (
                 <Button
+                  
                   variant="outlined"
                   color="primary"
                   onClick={() => {
                     setOpenChiefCandidate(true);
                   }}
                   disabled={data.gameInfo.chiefVoteState.type !== null}
+                  style={{ border: '2px solid' , fontWeight:800}}
                 >
-                   <div style={{fontWeight:800}}>
+                  
                   上警
-                  </div>
+                  
                 </Button>
               )}
             </>

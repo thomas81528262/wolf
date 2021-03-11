@@ -115,7 +115,7 @@ const typeDefs = gql`
     addNewTemplate(name: String): String
     deleteTemplate(name: String): String
     generateTemplatePlayer: String
-    generateTemplateRole: String
+    generateTemplateRole(isCovertWolfToHuman:Boolean): String
     updateTemplateDescription(name: String, description: String): String
     updateTemplateRole(name: String, roleId: Int, number: Int): String
     updateTemplateRolePriority(ids: [Int], name: String): String
@@ -396,7 +396,8 @@ const resolvers = {
       return "pass";
     },
     generateTemplateRole: async (root, args, context) => {
-      await WolfModel.generateTemplateRole();
+      const {isCovertWolfToHuman} = args;
+      await WolfModel.generateTemplateRole({isCovertWolfToHuman});
       return "pass";
     },
     generatePlayer: async (root, args, context) => {

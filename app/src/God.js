@@ -5,6 +5,8 @@ import {
   makeStyles,
   createMuiTheme,
 } from "@material-ui/core/styles";
+import Checkbox from "@material-ui/core/Checkbox";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
 import { useHistory } from "react-router-dom";
 import Button from "@material-ui/core/Button";
 import { useQuery, useMutation, useLazyQuery } from "@apollo/client";
@@ -82,8 +84,8 @@ const UPDATE_PLAYER_NAME = gql`
 `;
 
 const GENERATE_TEMPLATE_ROLE = gql`
-  mutation GenerateTemplateRole {
-    generateTemplateRole
+  mutation GenerateTemplateRole($isCovertWolfToHuman: Boolean!) {
+    generateTemplateRole(isCovertWolfToHuman: $isCovertWolfToHuman)
   }
 `;
 
@@ -111,11 +113,6 @@ const VOTE_CHIEF_START = gql`
     voteChiefStart
   }
 `;
-
-
-
-
-
 
 const useStyles = makeStyles((theme) => ({
   margin: {
@@ -215,7 +212,7 @@ function TemplateRoleTable(props) {
 function VoteAction(props) {
   const [targetList, setTargetList] = React.useState([]);
   const [voteStart] = useMutation(
-    props.hasChief  || props.hasVoteTarget?  VOTE_START : VOTE_CHIEF_START,
+    props.hasChief || props.hasVoteTarget ? VOTE_START : VOTE_CHIEF_START,
     {
       onCompleted: () => {
         props.onClose();
@@ -223,7 +220,6 @@ function VoteAction(props) {
     }
   );
   //const [submitVote, { called }] = useMutation(SUBMIT_VOTE);
-
 
   const isLock = props.hasTarget || props.hasChief;
 
@@ -237,11 +233,9 @@ function VoteAction(props) {
         </DialogContentText>
         {props.players
           .filter((p) => {
-
-
             if (props.hasVoteTarget) {
               return p.isTarget;
-            }else if (!props.hasChief) {
+            } else if (!props.hasChief) {
               return (
                 p.chiefVoteState.isCandidate && !p.chiefVoteState.isDropedOut
               );
@@ -273,11 +267,9 @@ function VoteAction(props) {
           name="radio-button-demo"
           inputProps={{ "aria-label": "B" }}
           onClick={() => {
-
             if (!isLock) {
               setTargetList([]);
             }
-            
           }}
         />
         {`所有人`}
@@ -314,7 +306,12 @@ function Game(props) {
   const [value, setValue] = useDebounce(props.name, 500);
   const [name, setName] = React.useState(props.name || "");
   const [updatePlayerName, { called }] = useMutation(UPDATE_PLAYER_NAME);
-
+  const [state, setState] = React.useState({
+    isCovertWolfToHuman: false,
+  });
+  const handleChange = (event) => {
+    setState({ ...state, [event.target.name]: event.target.checked });
+  };
   React.useEffect(() => {
     if (value && (value !== props.name || called)) {
       updatePlayerName({
@@ -367,13 +364,14 @@ function Game(props) {
             variant="outlined"
             color="primary"
             onClick={() => {
-              generateRole();
+              generateRole({
+                variables: { isCovertWolfToHuman: state.isCovertWolfToHuman },
+              });
             }}
           >
-            <div style={{fontWeight:800}}>
-            產生角色
-            </div>
+            <div style={{ fontWeight: 800 }}>產生角色</div>
           </Button>
+
           <Button
             variant="outlined"
             color="secondary"
@@ -381,9 +379,7 @@ function Game(props) {
               removeAllPlayer();
             }}
           >
-            <div style={{fontWeight:800}}>
-            刪除玩家
-            </div>
+            <div style={{ fontWeight: 800 }}>刪除玩家</div>
           </Button>
           <Button
             variant="contained"
@@ -395,6 +391,18 @@ function Game(props) {
           >
             {hasChief ? `放逐` : `警長`}
           </Button>
+        </Box>
+        <Box display="flex">
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={state.isCovertWolfToHuman}
+                onChange={handleChange}
+                name="isCovertWolfToHuman"
+              />
+            }
+            label="轉化狼人變成人類"
+          />
         </Box>
         <Box display="flex">
           <TextField
@@ -431,6 +439,7 @@ function Game(props) {
           加入玩家
         </Button>
       </Box>
+
       <EnabedTemplateInfo data={props.data} />
     </div>
   );

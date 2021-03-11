@@ -565,7 +565,7 @@ class WolfModel {
     });
   }
 
-  static async generateTemplateRole() {
+  static async generateTemplateRole({isCovertWolfToHuman}) {
     if (mutexWithTimeout.isLocked()) {
       return;
     }
@@ -622,7 +622,14 @@ class WolfModel {
       const waitRoleList = [];
 
       list.slice(0, lIdx).forEach((value, idx) => {
-        const { id: roleId, functionName, camp } = value;
+        const { id, functionName, camp } = value;
+        let roleId = value.id
+
+        if (isCovertWolfToHuman && roleId === 1) {
+          roleId = 2;
+        }
+
+
         Game.dark.assignDarkRole({
           id: idx + 1,
           roleFunctionName: functionName,
