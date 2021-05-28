@@ -1,6 +1,5 @@
 const Db = require("./db");
 const shuffle = require("shuffle-array");
-const Game = require("./game");
 const { withTimeout, Mutex } = require("async-mutex");
 const mutexWithTimeout = withTimeout(new Mutex(), 1000, new Error("timeout"));
 const { v1: uuidv1 } = require("uuid");
@@ -223,7 +222,7 @@ class WolfModel {
 
   static isChiefCandidateConfirmed() {
     let isConfirmed = true;
-    console.log(this.player);
+    
     this.player.forEach((p, idx) => {
       if (!isConfirmed || !idx) {
         return;
@@ -245,7 +244,7 @@ class WolfModel {
 
   static getPlayerStatus({ id, playerId, isChiefCandidateConfirmed }) {
     const p = { ...this.player[id] };
-    console.log(isChiefCandidateConfirmed);
+    
     if (!p) {
       return {};
     }
@@ -447,10 +446,19 @@ class WolfModel {
     return {};
   }
 
+
+  static async updatePass({id, pass}) {
+    await Db.updatePass({ id, pass });
+  }
+
   static async updatePlayerPass({ id, pass, session }) {
     const info = await this.getPlayerInfo({ id, pass });
 
+    //if db already have the data, set the session
     if (info.id !== null && info.id !== undefined) {
+      if (info.adminPass === pass && info.id === 0) {
+        session.isAdmin = true;
+      }
       session.playerId = id;
       session.isValid = true;
       return { isValid: true, ...info };
@@ -538,7 +546,7 @@ class WolfModel {
           store.destroy(k);
         }
 
-        //console.log(k, sessions[k].playerId)
+       
       });
     });
 
@@ -565,7 +573,7 @@ class WolfModel {
     });
   }
 
-  static async generateTemplateRole({isCovertWolfToHuman}) {
+  static async generateTemplateRole({ isCovertWolfToHuman }) {
     if (mutexWithTimeout.isLocked()) {
       return;
     }
@@ -622,19 +630,12 @@ class WolfModel {
       const waitRoleList = [];
 
       list.slice(0, lIdx).forEach((value, idx) => {
-        const { id, functionName, camp } = value;
-        let roleId = value.id
+        let roleId = value.id;
 
         if (isCovertWolfToHuman && roleId === 1) {
           roleId = 2;
         }
 
-
-        Game.dark.assignDarkRole({
-          id: idx + 1,
-          roleFunctionName: functionName,
-          camp,
-        });
         waitRoleList.push(Db.updatePlayerRole({ id: idx + 1, roleId }));
       });
 

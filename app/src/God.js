@@ -50,6 +50,7 @@ const GET_ROLES = gql`
       }
     }
     players {
+      pass
       isTarget
       id
       name

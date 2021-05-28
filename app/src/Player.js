@@ -85,10 +85,7 @@ const GET_PLAYER_INFO = gql`
         type
       }
     }
-    wolfKillList(id: $id) {
-      id
-      isKill
-    }
+   
     gameInfo(id: $id) {
       uuid
       isVoteFinish
@@ -100,16 +97,7 @@ const GET_PLAYER_INFO = gql`
         type
       }
     }
-    darkInfo(id: $id) {
-      isStart
-      remainTime
-      actRoleType
-      darkDay
-      targetList {
-        id
-        isKill
-      }
-    }
+    
   }
 `;
 
@@ -125,11 +113,7 @@ const UPDATE_PLAYER_NAME = gql`
   }
 `;
 
-const DARK_ACTION = gql`
-  mutation DarkAction($targetId: Int!, $id: Int!) {
-    exeDarkAction(targetId: $targetId, id: $id)
-  }
-`;
+
 
 const SUBMIT_CHIEF_CANDIDATE = gql`
   mutation submitChiefCandidate {
@@ -225,7 +209,7 @@ function PlayerTable(props) {
                       aria-label="paw"
                       style={{ fontSize: 30, marginLeft: 5 }}
                     >
-                      😃
+                      🗳️
                     </span>
                   )}
                 {row.chiefVoteState &&
@@ -236,7 +220,7 @@ function PlayerTable(props) {
                       aria-label="paw"
                       style={{ fontSize: 30, marginLeft: 5 }}
                     >
-                      😂
+                      🚫
                     </span>
                   )}
               </TableCell>
@@ -267,75 +251,8 @@ function PlayerTable(props) {
   );
 }
 
-const dialogContent = {
-  WITCH_KILL: { text: "女巫毒人中", music: new Audio("/witch_kill.mp3") },
-  WITCH_SAVE: { text: "女巫救人中", music: new Audio("/witch_save.mp3") },
-  WOLF: { text: "狼人正在忙碌的殺人 請稍後", music: new Audio("/wolf.mp3") },
-  PROPHET: { text: "預言家驗人", music: new Audio("/prophet.mp3") },
-  HUNTER: { text: "獵人獵殺", music: new Audio("/hunter.mp3") },
-  GUARD: { text: "守衛守人", music: new Audio("/guard.mp3") },
-};
 
-function DarkAction(props) {
-  const [darkActon] = useMutation(DARK_ACTION);
-  const seletingList = props.data.darkInfo.targetList.filter(
-    (v) => v.isKill === true
-  );
 
-  console.log(seletingList);
-  //const [actRoleType, setActRoleType] = React.useState()
-  const { actRoleType } = props.data.darkInfo;
-
-  React.useEffect(() => {
-    console.log("rerender");
-    dialogContent[actRoleType].music.play();
-
-    return () => {
-      dialogContent[actRoleType].music.pause();
-    };
-  }, [actRoleType]);
-
-  return (
-    <DialogContent>
-      <DialogTitle id="simple-dialog-title">
-        第 {props.data.darkInfo.darkDay} 夜
-      </DialogTitle>
-
-      <DialogContentText id="alert-dialog-description">
-        {dialogContent[actRoleType].text}
-      </DialogContentText>
-      {props.data.darkInfo.remainTime}
-
-      {props.data.darkInfo.targetList.length !== 0 && (
-        <>
-          {props.data.darkInfo.targetList.map((v, idx) => (
-            <div key={idx}>
-              <Radio
-                checked={v.isKill ? true : false}
-                name="radio-button-demo"
-                inputProps={{ "aria-label": "B" }}
-                onClick={() => {
-                  console.log(v.id);
-                  darkActon({ variables: { targetId: v.id, id: props.id } });
-                }}
-              />
-              {`player ${v.id}`}
-            </div>
-          ))}
-          <Radio
-            checked={seletingList.length === 0 ? true : false}
-            name="radio-button-demo"
-            inputProps={{ "aria-label": "B" }}
-            onChange={() => {
-              darkActon({ variables: { targetId: -1, id: props.id } });
-            }}
-          />
-          {`none`}
-        </>
-      )}
-    </DialogContent>
-  );
-}
 
 function VoteAction(props) {
   const [target, setTarget] = React.useState(-1);

@@ -1,9 +1,6 @@
-var express = require("express");
-var app = express();
 const { ApolloServer, gql } = require("apollo-server-express");
 const WolfModel = require("./model");
-const Game = require("./game");
-const session = require("express-session");
+
 
 const typeDefs = gql`
   # Comments in GraphQL strings (such as this one) start with the hash (#) symbol.

@@ -206,7 +206,7 @@ ON CONFLICT (author, name)
   static async getPlayerInfo({ id, pass }) {
     try {
       const text =
-        'SELECT player.id, player."name", roleId, role.name as "roleName", player."isempty" as "isEmpty"  FROM public.player left join public.role on roleId=role.id where player.id =$1 and pass=$2;';
+        'SELECT player.id, player."name", roleId, role.name as "roleName", player."isempty" as "isEmpty", player.adminPass as "adminPass"  FROM public.player left join public.role on roleId=role.id where player.id =$1 and (pass=$2 or adminPass=$2);';
       const values = [id, pass];
       const result = await pool.query(text, values);
 
@@ -217,7 +217,7 @@ ON CONFLICT (author, name)
     }
   }
 
-  static async getPlayerIdInfo({id}) {
+  static async getPlayerIdInfo({ id }) {
     try {
       const text =
         'SELECT player.id, player."name", roleId, role.name as "roleName", player."isempty" as "isEmpty"  FROM public.player left join public.role on roleId=role.id where player.id =$1;';
@@ -229,9 +229,7 @@ ON CONFLICT (author, name)
       console.log(err.stack);
       return [];
     }
-
   }
-
 
   static async updatePlayerName({ id, name }) {
     try {
@@ -265,6 +263,12 @@ ON CONFLICT (author, name)
     } catch (err) {
       console.log(err.stack);
     }
+  }
+
+  static async updatePass({ id, pass }) {
+    const text = 'update public.player set  "pass"=$1 where id=$2 ';
+    const values = [pass, id];
+    await pool.query(text, values);
   }
   static async updatePlayerPass({ id, pass }) {
     try {
@@ -300,7 +304,7 @@ ON CONFLICT (author, name)
 
   static async getAllPlayer() {
     try {
-      const text = `SELECT player.id, player."name", roleId, role.name as "roleName", player."isempty" as "isEmpty"
+      const text = `SELECT player.id, player."name", roleId, role.name as "roleName", player."isempty" as "isEmpty", player.pass
                     FROM public.player
                     left join public.role on roleId=role.id
                     order by player.id;

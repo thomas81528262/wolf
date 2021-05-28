@@ -7,6 +7,7 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
 	"name" varchar NULL,
 	roleid int4 NULL,
 	pass varchar NULL,
+	adminPass varchar NULL,
 	isempty bool NULL,
 	CONSTRAINT player_pk PRIMARY KEY (id),
 	CONSTRAINT player_un UNIQUE ("name")
@@ -48,6 +49,9 @@ INSERT INTO public.player (id,"name",roleid,pass,isempty) VALUES
 ,(5,'Chang Liu',2,'test',false)
 ,(9,'chengyi',14,'a811206',false)
 ;
+
+UPDATE public.player set adminPass='1237' where id = 0;
+
 INSERT INTO public.player (id,"name",roleid,pass,isempty) VALUES 
 (8,'Herman',15,'888888',false)
 ,(7,'Jayden',1,'yaocute',false)

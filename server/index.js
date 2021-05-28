@@ -6,15 +6,14 @@ const {
   AuthenticationError,
 } = require("apollo-server-express");
 const WolfModel = require("./model");
-const Game = require("./game");
 const session = require("express-session");
 const MemoryStore = require("memorystore")(session);
 const authServer = require("./auth");
-const { context } = require("./auth");
 const typeDefs = gql`
   # Comments in GraphQL strings (such as this one) start with the hash (#) symbol.
 
   type Player {
+    pass:String
     name: String
     id: Int
     roleName: String
@@ -60,18 +59,10 @@ const typeDefs = gql`
     GUARD
   }
 
-  type DarkInfo {
-    isStart: Boolean
-    remainTime: Int
-    targetList: [Player]
-    actRoleType: ActRoleType
-    darkDay: Int
-  }
-
   type ChiefVoteState {
     isCandidate: Boolean
     isDropedOut: Boolean
-    type:String
+    type: String
   }
 
   type GameInfo {
@@ -99,13 +90,11 @@ const typeDefs = gql`
     players(id: Int): [Player]
     roles: [Role]
     player(id: Int, pass: String): Player
-    wolfKillList(id: Int): [Player]
-    darkInfo(id: Int): DarkInfo
     gameInfo(id: Int): GameInfo
     login: PlayerStatus
   }
   type Mutation {
-    exeDarkAction(id: Int, targetId: Int): String
+    updatePass(id: Int, pass: String): String
     updateRoleNumber(id: Int, number: Int): String
     updatePlayerPass(id: Int, pass: String): PlayerStatus
     updatePlayerName(id: Int, name: String): String
@@ -115,12 +104,11 @@ const typeDefs = gql`
     addNewTemplate(name: String): String
     deleteTemplate(name: String): String
     generateTemplatePlayer: String
-    generateTemplateRole(isCovertWolfToHuman:Boolean): String
+    generateTemplateRole(isCovertWolfToHuman: Boolean): String
     updateTemplateDescription(name: String, description: String): String
     updateTemplateRole(name: String, roleId: Int, number: Int): String
     updateTemplateRolePriority(ids: [Int], name: String): String
     enableTemplate(name: String): String
-    darkStart: String
     voteStart(targets: [Int]): String
     voteChiefStart: String
     submitVote(target: Int): String
@@ -128,7 +116,7 @@ const typeDefs = gql`
     setDarkDieStatus(targets: [Int]): String
     setChiefId(id: Int): String
     setVoteWeightedId(id: Int): String
-    setIsVoter:String
+    setIsVoter: String
     setIsChiefCandidate: String
     setIsChiefDropOut: String
     resetChiefCaniddate(id: Int): String
@@ -136,7 +124,6 @@ const typeDefs = gql`
   }
 `;
 
-const timeout = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const resolvers = {
   Query: {
@@ -151,15 +138,12 @@ const resolvers = {
       }
       const { id } = args;
       const isVoteFinish = WolfModel.getIsVoteFinish({ id });
-      const { chiefVoteState } = WolfModel.getPlayerStatus({ id , isChiefCandidateConfirmed:true});
-      const {
-        chiefId,
-        isDark,
-        voteWeightedId,
-        hasChief,
-        hasVoteTarget,
-        uuid,
-      } = WolfModel;
+      const { chiefVoteState } = WolfModel.getPlayerStatus({
+        id,
+        isChiefCandidateConfirmed: true,
+      });
+      const { chiefId, isDark, voteWeightedId, hasChief, hasVoteTarget, uuid } =
+        WolfModel;
       return {
         isVoteFinish,
         chiefId,
@@ -172,30 +156,6 @@ const resolvers = {
       };
     },
 
-    darkInfo: (root, args, context) => {
-      const { id } = args;
-      const actionResult = Game.dark.resultFunction({ id });
-      const { isStart, remainTime, actRoleType, darkDay } = Game.dark;
-      return {
-        isStart,
-        remainTime,
-        targetList: actionResult,
-        actRoleType,
-        darkDay,
-      };
-    },
-    wolfKillList: (root, args, context) => {
-      const { id } = args;
-      const result = Game.dark.wolfKillingList({ id });
-      return result;
-    },
-    /*
-    whichKillList: (root, args, context) => {
-      const {id} = args;
-      const result = Game.dark.witchKillingList({id});
-      return result;
-    },
-    */
     enabledTemplate: async (root, args, context) => {
       const result = await WolfModel.getEnabledTemplate();
       return result;
@@ -214,17 +174,28 @@ const resolvers = {
       if (context.session.playerId === undefined) {
         throw new AuthenticationError("No Access!");
       }
-      console.log(context.session.playerId)
+      
       const { id } = args;
 
       const result = await WolfModel.getPlayerList();
       const isChiefCandidateConfirmed = WolfModel.isChiefCandidateConfirmed();
-      
-      result.forEach((role, idx) => {
-        const voteStatus = WolfModel.getVoteStatus({ id: idx });
-        const playerStatus = WolfModel.getPlayerStatus({ id: idx, isChiefCandidateConfirmed, playerId:context.session.playerId });
 
-        result[idx] = { ...result[idx], ...voteStatus, ...playerStatus };
+      result.forEach((role, idx) => {
+        let roleName = '';
+        let pass = '';
+        const voteStatus = WolfModel.getVoteStatus({ id: idx });
+        const playerStatus = WolfModel.getPlayerStatus({
+          id: idx,
+          isChiefCandidateConfirmed,
+          playerId: context.session.playerId,
+        });
+
+        if (id === 0) {
+          roleName = result[idx].roleName;
+          pass = result[idx].pass;
+        }
+
+        result[idx] = { ...result[idx], ...voteStatus, ...playerStatus , roleName};
       });
 
       return result;
@@ -244,6 +215,26 @@ const resolvers = {
     },
   },
   Mutation: {
+    updatePass:async(root, args, context) => {
+      if (context.session.playerId !== 0) {
+        throw new AuthenticationError("No Access!");
+      }
+
+     
+
+      const { id, pass } = args;
+
+
+      if (id === 0 && !context.session.isAdmin) {
+        throw new AuthenticationError("No Access!");
+      }
+
+      
+      await WolfModel.updatePass({id, pass});
+
+      return "pass"
+      
+    },
     resetChiefCaniddate: (root, args, context) => {
       if (context.session.playerId !== 0) {
         throw new AuthenticationError("No Access!");
@@ -255,7 +246,7 @@ const resolvers = {
       WolfModel.updateChiefCandidate({ id });
     },
 
-    setIsVoter:(root, args, context)=>{
+    setIsVoter: (root, args, context) => {
       if (context.session.playerId === undefined) {
         throw new AuthenticationError("No Access!");
       }
@@ -304,13 +295,6 @@ const resolvers = {
       return "pass";
     },
 
-    exeDarkAction: async (root, args, context) => {
-      const { targetId, id } = args;
-      Game.dark.actionFunction({ playerId: targetId, id });
-
-      return "pass";
-    },
-
     voteStart: async (root, args, context) => {
       const { targets } = args;
       await WolfModel.startVote(targets);
@@ -330,19 +314,21 @@ const resolvers = {
       WolfModel.submitVote({ id: playerId, target });
       return "pass";
     },
-    darkStart: async () => {
-      Game.dark.start();
-
-      return "pass";
-    },
+   
 
     enableTemplate: async (root, args, context) => {
+      if (context.session.playerId !== 0) {
+        throw new AuthenticationError("No Access!");
+      }
       const { name } = args;
 
       await WolfModel.enableTemplate({ name });
       return "pass";
     },
     updateTemplateRolePriority: async (root, args, context) => {
+      if (!context.session.isAdmin) {
+        throw new AuthenticationError("No Access!");
+      }
       const { ids, name } = args;
 
       await WolfModel.updateTemplateRolePriority({ name, ids });
@@ -350,18 +336,27 @@ const resolvers = {
     },
 
     updateTemplateRole: async (root, args, context) => {
+      if (!context.session.isAdmin) {
+        throw new AuthenticationError("No Access!");
+      }
       const { name, roleId, number } = args;
 
       await WolfModel.updateTemplateRole({ name, roleId, number });
       return "pass";
     },
     addNewTemplate: async (root, args, context) => {
+      if (!context.session.isAdmin) {
+        throw new AuthenticationError("No Access!");
+      }
       const { name, description } = args;
 
       await WolfModel.addNewTemplate({ name });
       return "pass";
     },
     deleteTemplate: async (root, args, context) => {
+      if (!context.session.isAdmin) {
+        throw new AuthenticationError("No Access!");
+      }
       const { name, description } = args;
 
       await WolfModel.deleteTemplate({ name });
@@ -369,15 +364,23 @@ const resolvers = {
     },
 
     updateTemplateDescription: async (root, args, context) => {
+      if (!context.session.isAdmin) {
+        throw new AuthenticationError("No Access!");
+      }
       const { name, description } = args;
 
       await WolfModel.updateTemplateDescription({ name, description });
       return "pass";
     },
     updateRoleNumber: async (root, args, context) => {
+      /*
+      if (!context.session.isAdmin) {
+        throw new AuthenticationError("No Access!");
+      }
       const { id, number } = args;
 
       await WolfModel.updateRoleNumber({ id, number });
+      */
       return "pass";
     },
     updatePlayerPass: async (root, args, context) => {
@@ -388,38 +391,51 @@ const resolvers = {
     },
     updatePlayerName: async (root, args, context) => {
       const { id, name } = args;
+      if (context.session.playerId !== id) {
+        throw new AuthenticationError("No Access!");
+      }
+      
       await WolfModel.updatePlayerName({ id, name });
       return "pass";
     },
     generateTemplatePlayer: async (root, args, context) => {
+      if (context.session.playerId !== 0) {
+        throw new AuthenticationError("No Access!");
+      }
       await WolfModel.generateTemplatePlayer();
       return "pass";
     },
     generateTemplateRole: async (root, args, context) => {
-      const {isCovertWolfToHuman} = args;
-      await WolfModel.generateTemplateRole({isCovertWolfToHuman});
+      if (context.session.playerId !== 0) {
+        throw new AuthenticationError("No Access!");
+      }
+      const { isCovertWolfToHuman } = args;
+      await WolfModel.generateTemplateRole({ isCovertWolfToHuman });
       return "pass";
     },
     generatePlayer: async (root, args, context) => {
+      if (context.session.playerId !== 0) {
+        throw new AuthenticationError("No Access!");
+      }
       await WolfModel.generatePlayer();
       return "pass";
     },
     generateRole: async (root, args, context) => {
+      if (context.session.playerId !== 0) {
+        throw new AuthenticationError("No Access!");
+      }
       await WolfModel.generateRole();
       return "pass";
     },
     removeAllPlayer: async (root, args, context) => {
+      if (context.session.playerId !== 0) {
+        throw new AuthenticationError("No Access!");
+      }
       await WolfModel.removeAllPlayer({ store });
       return "pass";
     },
   },
 };
-
-/*
-app.get('/', function (req, res) {
-  res.send('Hello World!');
-});
-*/
 
 const webPath = "/web";
 

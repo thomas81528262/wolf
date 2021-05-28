@@ -9,6 +9,20 @@ import Paper from "@material-ui/core/Paper";
 import Checkbox from "@material-ui/core/Checkbox";
 import { gql } from "apollo-boost";
 import { useQuery, useMutation } from "@apollo/client";
+import IconButton from "@material-ui/core/IconButton";
+import KeyboardArrowDownIcon from "@material-ui/icons/KeyboardArrowDown";
+import KeyboardArrowUpIcon from "@material-ui/icons/KeyboardArrowUp";
+import Collapse from "@material-ui/core/Collapse";
+import Box from "@material-ui/core/Box";
+import Typography from "@material-ui/core/Typography";
+
+import Button from "@material-ui/core/Button";
+import TextField from "@material-ui/core/TextField";
+import Dialog from "@material-ui/core/Dialog";
+import DialogActions from "@material-ui/core/DialogActions";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogContentText from "@material-ui/core/DialogContentText";
+import DialogTitle from "@material-ui/core/DialogTitle";
 import {
   fade,
   withStyles,
@@ -49,24 +63,217 @@ const SET_VOTE_WEIGHTED_ID = gql`
 `;
 
 const RESET_CHIEF_CANDIDATE = gql`
-  mutation ResetChiefCandidate($id: Int!){
+  mutation ResetChiefCandidate($id: Int!) {
     resetChiefCaniddate(id: $id)
+  }
+`;
+
+const UPDATE_PASS = gql`
+  mutation UpdatePass($id: Int!, $pass: String!) {
+    updatePass(id: $id, pass: $pass)
   }
 `;
 
 //voteWeightedId
 
-export default function PlayerTable(props) {
-  const classes = useStyles();
+
+
+
+function FormDialog(props) {
+  const [errMsg, setErrorMsg] = React.useState("");
+  const [updatePass] = useMutation(UPDATE_PASS, { onError: () => {
+    setErrorMsg("Access Error!")
+
+    console.log('error')
+  } , onCompleted:()=>{
+    setOpen(false);
+  }});
+  const [open, setOpen] = React.useState(false);
+  const [pass, setPass] = React.useState("");
+  
+
+  const handleClickOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+
+  const handleChange = (event) => {
+    setPass(event.target.value);
+  };
+
+  return (
+    <div>
+      <Button
+        variant="outlined"
+        color="primary"
+        onClick={handleClickOpen}
+        color={"secondary"}
+        size="small"
+      >
+        Update
+      </Button>
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        aria-labelledby="form-dialog-title"
+      >
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            id="name"
+            label="PWD"
+            type="email"
+            fullWidth
+            onChange={handleChange}
+            helperText={errMsg}
+            error={errMsg !== ""}
+            onClick={()=>{
+              setErrorMsg("");
+            }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose} color="primary" size="small">
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              updatePass({ variables: { id: props.id, pass } });
+             
+            }}
+            color="secondary"
+            size="small"
+          >
+            Submit
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </div>
+  );
+}
+
+function CollapseSell(props) {
   const [setDie] = useMutation(SET_DIE_STATUS);
   const [setChiefId] = useMutation(SET_CHIEF_ID);
   const [setVoteWeightedId] = useMutation(SET_VOTE_WEIGHTED_ID);
   const [resetChiefCandidate] = useMutation(RESET_CHIEF_CANDIDATE);
+  const row = props.row;
+  const [openDetail, setOpenDetail] = React.useState(false);
+ 
+  
+  return (
+    <React.Fragment>
+      
+      <TableRow>
+        <TableCell>
+          <IconButton
+            aria-label="expand row"
+            size="small"
+            onClick={() => setOpenDetail(!openDetail)}
+          >
+            {openDetail ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+          </IconButton>
+        </TableCell>
+        <TableCell>
+          {(row.id === 0 ||
+            props.chiefId >= 0 ||
+            (row.chiefVoteState &&
+              row.chiefVoteState.isCandidate &&
+              !row.chiefVoteState.isDropedOut)) && (
+            <Checkbox
+              onChange={(e) => {
+                setChiefId({ variables: { id: row.id } });
+              }}
+              checked={row.id === props.chiefId}
+              color="primary"
+              inputProps={{ "aria-label": "secondary checkbox" }}
+            />
+          )}
+
+          {row.chiefVoteState.type && (
+            <button
+              onClick={() => {
+                resetChiefCandidate({ variables: { id: row.id } });
+              }}
+            >
+              重置 {`(${row.chiefVoteState.type})`}
+            </button>
+          )}
+        </TableCell>
+        <TableCell>
+          {row.id ? (
+            <Checkbox
+              onChange={(e) => {
+                setDie({ variables: { id: row.id } });
+              }}
+              checked={row.isDie}
+              color="primary"
+              inputProps={{ "aria-label": "secondary checkbox" }}
+            />
+          ) : null}
+        </TableCell>
+        <TableCell>
+          <Checkbox
+            onChange={(e) => {
+              //setChiefId({variables:{id:row.id}});
+              setVoteWeightedId({ variables: { id: row.id } });
+            }}
+            checked={row.id === props.voteWeightedId}
+            color="primary"
+            inputProps={{ "aria-label": "secondary checkbox" }}
+          />
+        </TableCell>
+        <TableCell component="th" scope="row">
+          {row.id}
+        </TableCell>
+        <TableCell align="right">{row.name}</TableCell>
+        <TableCell align="right">{row.roleName}</TableCell>
+        <TableCell align="right">{row.votedNumber}</TableCell>
+        <TableCell align="right">{row.chiefVote.toString()}</TableCell>
+        <TableCell align="right">{row.vote.toString()}</TableCell>
+        <TableCell align="right">
+          <span
+            style={{
+              color: row.isEmpty
+                ? "gray"
+                : row.isVoteFinish
+                ? "lightgreen"
+                : "orange",
+              transition: "all .3s ease",
+              fontSize: "24px",
+              marginRight: "10px",
+            }}
+          >
+            &#x25cf;
+          </span>
+        </TableCell>
+      </TableRow>
+      <TableRow>
+        <Collapse in={openDetail} timeout="auto" unmountOnExit>
+          <Box margin={1}>
+            <div style={{ textAlign: "left" }}> PWD : {row.pass || ""}</div>
+
+            <FormDialog id={row.id} />
+          </Box>
+        </Collapse>
+      </TableRow>
+    </React.Fragment>
+  );
+}
+
+export default function PlayerTable(props) {
+  const classes = useStyles();
+
   return (
     <TableContainer component={Paper}>
       <Table className={classes.table} aria-label="simple table" size="small">
         <TableHead>
           <TableRow>
+            <TableCell></TableCell>
             <TableCell>警長</TableCell>
             <TableCell>死亡</TableCell>
             <TableCell>放逐加權</TableCell>
@@ -82,77 +289,7 @@ export default function PlayerTable(props) {
         </TableHead>
         <TableBody>
           {props.data.map((row) => (
-            <TableRow key={row.id}>
-              <TableCell>
-                {(row.id === 0 ||
-                  props.chiefId >= 0 ||
-                  (row.chiefVoteState &&
-                    row.chiefVoteState.isCandidate &&
-                    !row.chiefVoteState.isDropedOut)) && (
-                  <Checkbox
-                    onChange={(e) => {
-                      setChiefId({ variables: { id: row.id } });
-                    }}
-                    checked={row.id === props.chiefId}
-                    color="primary"
-                    inputProps={{ "aria-label": "secondary checkbox" }}
-                  />
-                )}
-
-                {row.chiefVoteState.type && (
-                  <button onClick={()=>{
-                    resetChiefCandidate({ variables: { id: row.id } });
-                  }}>重置 {`(${row.chiefVoteState.type})`}</button>
-                )}
-              </TableCell>
-              <TableCell>
-                {row.id ? (
-                  <Checkbox
-                    onChange={(e) => {
-                      setDie({ variables: { id: row.id } });
-                    }}
-                    checked={row.isDie}
-                    color="primary"
-                    inputProps={{ "aria-label": "secondary checkbox" }}
-                  />
-                ) : null}
-              </TableCell>
-              <TableCell>
-                <Checkbox
-                  onChange={(e) => {
-                    //setChiefId({variables:{id:row.id}});
-                    setVoteWeightedId({ variables: { id: row.id } });
-                  }}
-                  checked={row.id === props.voteWeightedId}
-                  color="primary"
-                  inputProps={{ "aria-label": "secondary checkbox" }}
-                />
-              </TableCell>
-              <TableCell component="th" scope="row">
-                {row.id}
-              </TableCell>
-              <TableCell align="right">{row.name}</TableCell>
-              <TableCell align="right">{row.roleName}</TableCell>
-              <TableCell align="right">{row.votedNumber}</TableCell>
-              <TableCell align="right">{row.chiefVote.toString()}</TableCell>
-              <TableCell align="right">{row.vote.toString()}</TableCell>
-              <TableCell align="right">
-                <span
-                  style={{
-                    color: row.isEmpty
-                      ? "gray"
-                      : row.isVoteFinish
-                      ? "lightgreen"
-                      : "orange",
-                    transition: "all .3s ease",
-                    fontSize: "24px",
-                    marginRight: "10px",
-                  }}
-                >
-                  &#x25cf;
-                </span>
-              </TableCell>
-            </TableRow>
+            <CollapseSell {...props} row={row} key={row.id} />
           ))}
         </TableBody>
       </Table>
