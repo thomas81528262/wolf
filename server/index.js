@@ -87,7 +87,7 @@ const typeDefs = gql`
     enabledTemplate: Template
     template(name: String): Template
     templates: [Template]
-    players(id: Int): [Player]
+    players: [Player]
     roles: [Role]
     player(id: Int, pass: String): Player
     gameInfo(id: Int): GameInfo
@@ -175,7 +175,7 @@ const resolvers = {
         throw new AuthenticationError("No Access!");
       }
       
-      const { id } = args;
+      const {playerId} = context.session;
 
       const result = await WolfModel.getPlayerList();
       const isChiefCandidateConfirmed = WolfModel.isChiefCandidateConfirmed();
@@ -190,7 +190,7 @@ const resolvers = {
           playerId: context.session.playerId,
         });
 
-        if (id === 0) {
+        if (playerId === 0) {
           roleName = result[idx].roleName;
           pass = result[idx].pass;
         }
