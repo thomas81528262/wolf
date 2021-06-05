@@ -5,6 +5,7 @@ import {
   makeStyles,
   createMuiTheme,
 } from "@material-ui/core/styles";
+import Avatar from "@material-ui/core/Avatar";
 import Checkbox from "@material-ui/core/Checkbox";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import { useHistory } from "react-router-dom";
@@ -61,8 +62,9 @@ const GET_ROLES = gql`
       isDie
       isVoteFinish
       votedNumber
+      isChief
       chiefVoteState {
-        isDropedOut
+        isDropout
         isCandidate
         type
       }
@@ -74,6 +76,8 @@ const GET_ROLES = gql`
       voteWeightedId
       hasVoteTarget
       hasChief
+      isChiefCandidateConfirmed
+      repeatTimes
     }
   }
 `;
@@ -127,6 +131,10 @@ const useStyles = makeStyles((theme) => ({
   },
   menuButton: {
     marginRight: theme.spacing(2),
+  },
+  repeatTimes: {
+    width: theme.spacing(3),
+    height: theme.spacing(3),
   },
 }));
 
@@ -238,7 +246,7 @@ function VoteAction(props) {
               return p.isTarget;
             } else if (!props.hasChief) {
               return (
-                p.chiefVoteState.isCandidate && !p.chiefVoteState.isDropedOut
+                p.chiefVoteState.isCandidate && !p.chiefVoteState.isDropout
               );
             }
 
@@ -293,6 +301,7 @@ function VoteAction(props) {
 }
 
 function Game(props) {
+  const { gameInfo } = props;
   const classes = useStyles();
 
   //const [updateRoleNumber] = useMutation(UPDATE_ROLE_NUMBER);
@@ -389,6 +398,12 @@ function Game(props) {
               //voteStart();
               setIsOpen(true);
             }}
+            disabled={gameInfo.isChiefCandidateConfirmed === false}
+            endIcon={
+              <Avatar className={classes.repeatTimes}>
+                {gameInfo.repeatTimes + 1}
+              </Avatar>
+            }
           >
             {hasChief ? `放逐` : `警長`}
           </Button>
@@ -531,6 +546,7 @@ export default function God(props) {
             chiefId={data.gameInfo.chiefId}
             isDark={data.gameInfo.isDark}
             voteWeightedId={data.gameInfo.voteWeightedId}
+            gameInfo={data.gameInfo}
             data={data}
           />
         </TabPanel>

@@ -9,8 +9,12 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
 	pass varchar NULL,
 	adminPass varchar NULL,
 	isempty bool NULL,
-	CONSTRAINT player_pk PRIMARY KEY (id),
-	CONSTRAINT player_un UNIQUE ("name")
+	ischiefcandidate bool NULL,
+	ischiefdropout bool NULL,
+	votetarget varchar NULL,
+	ischief bool NULL,
+	isjoin bool NULL,
+	CONSTRAINT player_pk PRIMARY KEY (id)
 );
 
 CREATE TABLE "role" (
@@ -19,6 +23,21 @@ CREATE TABLE "role" (
 	"number" int4 NULL,
 	functionname varchar NULL,
 	camp varchar NULL
+);
+
+CREATE TABLE game_event (
+	"type" varchar NOT NULL,
+	repeat_times int4 NOT NULL,
+	"name" varchar NULL,
+	is_busy bool NOT NULL,
+	CONSTRAINT game_event_pk PRIMARY KEY (type)
+);
+
+CREATE TABLE vote_history (
+	id int4 NOT NULL,
+	"name" varchar NOT NULL,
+	history_id SERIAL PRIMARY KEY,
+	target varchar NULL
 );
 
 CREATE TABLE template_header (
@@ -36,6 +55,8 @@ CREATE TABLE template_role (
 	CONSTRAINT template_role_pk PRIMARY KEY (roleid,"name"),
 	CONSTRAINT template_role_fk FOREIGN KEY ("name") REFERENCES template_header("name") ON DELETE CASCADE
 );
+
+
 
 INSERT INTO public.player (id,"name",roleid,pass,isempty) VALUES 
 (0,'Peggy',0,'123',NULL)

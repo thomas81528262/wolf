@@ -383,14 +383,7 @@ function Game(props) {
       
         <AppBar position="absolute">
           <Toolbar>
-            <IconButton
-              edge="start"
-              className={classes.menuButton}
-              color="inherit"
-              aria-label="menu"
-            >
-              <MenuIcon />
-            </IconButton>
+            
             <Typography variant="h6" className={classes.title}>
               <div style={{width:50, margin:'auto', marginTop:10}}>
             <ReactSVG src="wolf.svg" />

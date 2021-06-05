@@ -76,21 +76,20 @@ const UPDATE_PASS = gql`
 
 //voteWeightedId
 
-
-
-
 function FormDialog(props) {
   const [errMsg, setErrorMsg] = React.useState("");
-  const [updatePass] = useMutation(UPDATE_PASS, { onError: () => {
-    setErrorMsg("Access Error!")
+  const [updatePass] = useMutation(UPDATE_PASS, {
+    onError: () => {
+      setErrorMsg("Access Error!");
 
-    console.log('error')
-  } , onCompleted:()=>{
-    setOpen(false);
-  }});
+      console.log("error");
+    },
+    onCompleted: () => {
+      setOpen(false);
+    },
+  });
   const [open, setOpen] = React.useState(false);
   const [pass, setPass] = React.useState("");
-  
 
   const handleClickOpen = () => {
     setOpen(true);
@@ -113,7 +112,7 @@ function FormDialog(props) {
         color={"secondary"}
         size="small"
       >
-        Update
+        重置
       </Button>
       <Dialog
         open={open}
@@ -131,7 +130,7 @@ function FormDialog(props) {
             onChange={handleChange}
             helperText={errMsg}
             error={errMsg !== ""}
-            onClick={()=>{
+            onClick={() => {
               setErrorMsg("");
             }}
           />
@@ -143,7 +142,6 @@ function FormDialog(props) {
           <Button
             onClick={() => {
               updatePass({ variables: { id: props.id, pass } });
-             
             }}
             color="secondary"
             size="small"
@@ -156,6 +154,31 @@ function FormDialog(props) {
   );
 }
 
+function VoteStatus(props) {
+  const { isCandidate, isDropout } = props;
+
+  return (
+    <>
+      {isCandidate === true && isDropout === false && (
+        <span span aria-label="paw" style={{ fontSize: 30, marginLeft: 5 }}>
+          🗳️
+        </span>
+      )}
+      {isCandidate === true && isDropout === true && (
+        <span span aria-label="paw" style={{ fontSize: 30, marginLeft: 5 }}>
+          🚫
+        </span>
+      )}
+
+      {isCandidate === null && (
+        <span span aria-label="paw" style={{ fontSize: 30, marginLeft: 5 }}>
+          🤔
+        </span>
+      )}
+    </>
+  );
+}
+
 function CollapseSell(props) {
   const [setDie] = useMutation(SET_DIE_STATUS);
   const [setChiefId] = useMutation(SET_CHIEF_ID);
@@ -163,11 +186,9 @@ function CollapseSell(props) {
   const [resetChiefCandidate] = useMutation(RESET_CHIEF_CANDIDATE);
   const row = props.row;
   const [openDetail, setOpenDetail] = React.useState(false);
- 
-  
+
   return (
     <React.Fragment>
-      
       <TableRow>
         <TableCell>
           <IconButton
@@ -179,30 +200,25 @@ function CollapseSell(props) {
           </IconButton>
         </TableCell>
         <TableCell>
-          {(row.id === 0 ||
-            props.chiefId >= 0 ||
-            (row.chiefVoteState &&
-              row.chiefVoteState.isCandidate &&
-              !row.chiefVoteState.isDropedOut)) && (
+          {row.id === 0 || props.chiefId >= 0 ? (
             <Checkbox
               onChange={(e) => {
                 setChiefId({ variables: { id: row.id } });
               }}
-              checked={row.id === props.chiefId}
+              checked={row.isChief}
               color="primary"
               inputProps={{ "aria-label": "secondary checkbox" }}
             />
+          ) : (
+            row.chiefVoteState && (
+              <VoteStatus
+                isCandidate={row.chiefVoteState.isCandidate}
+                isDropout={row.chiefVoteState.isDropout}
+              />
+            )
           )}
 
-          {row.chiefVoteState.type && (
-            <button
-              onClick={() => {
-                resetChiefCandidate({ variables: { id: row.id } });
-              }}
-            >
-              重置 {`(${row.chiefVoteState.type})`}
-            </button>
-          )}
+      
         </TableCell>
         <TableCell>
           {row.id ? (
@@ -255,9 +271,49 @@ function CollapseSell(props) {
       <TableRow>
         <Collapse in={openDetail} timeout="auto" unmountOnExit>
           <Box margin={1}>
-            <div style={{ textAlign: "left" }}> PWD : {row.pass || ""}</div>
+            <Typography variant="h6" gutterBottom component="div">
+              進階
+            </Typography>
 
-            <FormDialog id={row.id} />
+            <Table size="small" aria-label="purchases">
+              <TableHead>
+                <TableRow>
+                  <TableCell align="center">密碼 </TableCell>
+                  <TableCell align="center">上警 </TableCell>
+                  <TableCell align="center">退水 </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                <TableRow>
+                  <TableCell align="center">{row.pass || ""}</TableCell>
+                  <TableCell align="center">
+                    {row.chiefVoteState.isCandidate ? "Y" : "N"}
+                  </TableCell>
+                  <TableCell align="center">
+                    {row.chiefVoteState.isDropout ? "Y" : "N"}
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell align="center">
+                    <FormDialog id={row.id} />
+                  </TableCell>
+
+                  <TableCell align="center" colSpan={2}>
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      onClick={() => {
+                        resetChiefCandidate({ variables: { id: row.id } });
+                      }}
+                      color={"secondary"}
+                      size="small"
+                    >
+                      重置
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
           </Box>
         </Collapse>
       </TableRow>

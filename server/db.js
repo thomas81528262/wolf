@@ -203,10 +203,381 @@ ON CONFLICT (author, name)
     }
   }
 
+  static async getChiefVoteHistory() {
+    const result = await pool.query(`
+    
+    SELECT id, "name", history_id, target
+    FROM public.vote_history where "name"='CHIEF_VOTE' order by history_id;
+    
+    `);
+    return result.rows;
+  }
+
+  static async endVoteEvent({ target, id }) {
+    const client = await pool.connect();
+
+    try {
+      await client.query("BEGIN");
+      let repeatTimes = 0;
+      const currentEvent = await client.query(
+        `select name, repeat_times as "repeatTimes" from game_event where type='VOTE'`
+      );
+
+      if (currentEvent.length === 0) {
+        throw Error("No Vote Event!");
+      }
+
+      const eventName = currentEvent.rows[0].name;
+      repeatTimes = currentEvent.rows[0].repeatTimes;
+      const playersResult = await client.query(`
+    select
+      id,
+      "name",
+      roleid,
+      pass,
+      adminpass,
+      isempty,
+      ischiefcandidate,
+      ischiefdropout,
+      isdie,
+      votetarget as "voteTarget"
+    from
+      public.player
+    order by id  
+      ;
+      
+      `);
+
+      const players = playersResult.rows;
+
+      const idCountMap = new Map();
+
+      let isVoteComplete = true;
+
+      for (let i = 0; i < players.length; i += 1) {
+        if (i == 0) {
+          continue;
+        }
+
+        const player = players[i];
+
+        const targetId = parseInt(target);
+
+        if (player.id === id) {
+          const updateResult = !isNaN(targetId) && targetId > 0 ? target : "X";
+          await client.query(
+            `update public.player set  "votetarget"=$1 where id =$2 and votetarget is NULL`,
+            [updateResult, player.id]
+          );
+
+          player.voteTarget = updateResult;
+        }
+
+        if (player.voteTarget === null) {
+          isVoteComplete = false;
+        }
+
+        if (!isNaN(targetId) && targetId > 0) {
+          /*
+          if (updateResult.rowCount === 1) {
+           
+          }
+          */
+
+          if (idCountMap.has(targetId) && targetId > 0) {
+            idCountMap.set(targetId, idCountMap.get(targetId) + 1);
+          } else {
+            idCountMap.set(targetId, 1);
+          }
+        }
+      }
+
+      if (isVoteComplete) {
+        let maxNumber = -1;
+
+        idCountMap.forEach((value, id) => {
+          if (value > maxNumber) {
+            maxNumber = value;
+          }
+        });
+
+        let maxNumberCount = 0;
+        let targetId = -1;
+        let targetList = [];
+        idCountMap.forEach((value, id) => {
+          if (value === maxNumber) {
+            maxNumberCount += 1;
+            targetId = id;
+            targetList.push(id);
+          }
+        });
+
+        if (eventName === "CHIEF_VOTE" && repeatTimes === 2) {
+          targetList = [0];
+          targetId = 0;
+        }
+
+        if (targetList.length === 1) {
+          if (eventName === "EXILE_VOTE") {
+            await client.query(
+              `update public.player set  "isdie"=true where id =$1`,
+              [targetId]
+            );
+          } else if (eventName === "CHIEF_VOTE") {
+            await client.query(`update public.player set  "ischief"=false `);
+            await client.query(
+              `update public.player set  "ischief"=true where id =$1`,
+              [targetId]
+            );
+          }
+          await client.query(`update public.player set  "votetarget"=null`);
+          await client.query(
+            `
+            UPDATE game_event
+            SET repeat_times=0, "name"= null, is_busy=false
+            WHERE "type"='VOTE';
+            `
+          );
+        } else {
+          /*
+          for (let i = 0; i < players.length; i += 1) {
+            if (i == 0) {
+              continue;
+            }
+  
+            if (targetList.includes(i)) {
+              await client.query(
+                `update public.player set  "votetarget"='T' where id =$1`,
+                [i]
+              );
+            } else {
+              await client.query(
+                `update public.player set  "votetarget"=null where id =$1`,
+                [i]
+              );
+            }
+  
+          }
+          */
+          await client.query(
+            `
+            UPDATE game_event
+            SET repeat_times=repeat_times+1, is_busy =false
+            WHERE name=$1
+            `,
+            [eventName]
+          );
+        }
+
+        for (let i = 0; i < players.length; i += 1) {
+          const player = players[i];
+          if (player.id === 0) {
+            continue;
+          }
+
+          await client.query(
+            `
+            insert
+            into
+            vote_history (id,
+            "name",
+            target)
+          values($1,
+          $2,
+          $3);
+            `,
+            [player.id, eventName, player.voteTarget]
+          );
+        }
+      }
+
+      await client.query("COMMIT");
+    } catch (e) {
+      console.log(e);
+      await client.query("ROLLBACK");
+      throw e;
+    } finally {
+      client.release();
+    }
+  }
+
+  static async startChiefVote() {
+    const eventName = "CHIEF_VOTE";
+    const type = "VOTE";
+
+    if (!eventName || !type) {
+      throw Error("The event name or type is Empty!!!");
+    }
+
+    const client = await pool.connect();
+
+    try {
+      await client.query("BEGIN");
+
+      const updateResult = await client.query(
+        `
+        UPDATE game_event
+        SET repeat_times=0, "name"=$1, is_busy=true
+        WHERE "type"='VOTE' and name is NULL;
+        `,
+        [eventName]
+      );
+
+      if (updateResult.rowCount === 0) {
+        const updateBusyResult = await client.query(
+          `
+          UPDATE game_event
+          SET is_busy = true
+          WHERE "type"='VOTE' and name = $1 and is_busy = false;
+          `,
+          [eventName]
+        );
+
+        if (updateBusyResult.rowCount !== 1) {
+          throw new Error("The Event is busy!");
+        }
+      } else {
+        await client.query(`update public.player set  "votetarget"=null`);
+      }
+
+      const evnetResult = await client.query(`
+      SELECT "type", repeat_times as "repeatTimes", "name", is_busy 
+FROM public.game_event where name='CHIEF_VOTE';
+        
+        `);
+
+      if (evnetResult.length === 0) {
+        throw new Error("can not find event");
+      }
+
+      const { repeatTimes } = evnetResult.rows[0];
+
+      const playersResult = await client.query(`
+      select
+        id,
+        "name",
+        roleid,
+        pass,
+        adminpass,
+        isempty,
+        ischiefcandidate as "isChiefCandidate",
+        ischiefdropout as "isChiefDropout",
+        isdie,
+        votetarget as "voteTarget"
+      from
+        public.player
+      order by id;
+        `);
+
+      let hasNotValidCandidate = false;
+
+      for (let i = 0; i < playersResult.rows.length; i += 1) {
+        if (i === 0) {
+          continue;
+        }
+
+        const player = playersResult.rows[i];
+        const { isChiefCandidate, isChiefDropout } = player;
+
+        if (isChiefCandidate === null) {
+          hasNotValidCandidate = true;
+        }
+
+        if (isChiefCandidate === true && isChiefDropout === true) {
+          if (repeatTimes === 0) {
+            const updateResult = await client.query(
+              `update public.player set  "votetarget"=$1 where id =$2`,
+              ["DO", i]
+            );
+
+            /*
+            if (updateResult.rowCount === 1) {
+              await client.query(
+                `
+                insert
+                into
+                vote_history (id,
+                "name",
+                target)
+              values($1,
+              $2,
+              $3);
+                `,
+                [i, eventName, "Do"]
+              );
+            }
+            */
+          } else {
+            await client.query(
+              `update public.player set  "votetarget"=$1 where id =$2`,
+              [null, i]
+            );
+          }
+        } else if (isChiefCandidate && isChiefDropout === false) {
+          const updateResult = await client.query(
+            `update public.player set  "votetarget"=$1 where id =$2`,
+            ["T", i]
+          );
+          /*
+          if (updateResult.rowCount === 1) {
+            await client.query(
+              `
+              insert
+              into
+              vote_history (id,
+              "name",
+              target)
+            values($1,
+            $2,
+            $3);
+              `,
+              [i, eventName, "T"]
+            );
+          }
+          */
+        } else if (isChiefCandidate === false) {
+          await client.query(
+            `update public.player set  "votetarget"=$1 where id =$2`,
+            [null, i]
+          );
+        }
+      }
+
+      if (hasNotValidCandidate) {
+        throw new Error("Not all player is ready!");
+      }
+
+      await client.query("COMMIT");
+    } catch (e) {
+      console.log(e);
+      await client.query("ROLLBACK");
+      throw e;
+    } finally {
+      client.release();
+    }
+  }
+
+  static async getVoteEvent() {
+    const text = `select
+        "type",
+        repeat_times as "repeatTimes",
+        "name"
+      from
+        public.game_event where "type"='VOTE';`;
+
+    const result = await pool.query(text);
+
+    return result.rows;
+  }
+
   static async getPlayerInfo({ id, pass }) {
     try {
-      const text =
-        'SELECT player.id, player."name", roleId, role.name as "roleName", player."isempty" as "isEmpty", player.adminPass as "adminPass"  FROM public.player left join public.role on roleId=role.id where player.id =$1 and (pass=$2 or adminPass=$2);';
+      const text = `SELECT 
+          player.id, player."name", roleId, role.name as "roleName", player."isempty" as "isEmpty", player.adminPass as "adminPass"  
+        FROM 
+          public.player left join public.role on roleId=role.id 
+        where 
+          player.id =$1 and (pass=$2 or adminPass=$2);`;
       const values = [id, pass];
       const result = await pool.query(text, values);
 
@@ -243,6 +614,12 @@ ON CONFLICT (author, name)
     }
   }
 
+  static async togglePlayerDieStatus({ id }) {
+    const text = 'update public.player set  "isdie"=not "isdie" where id=$1';
+    const values = [id];
+    await pool.query(text, values);
+  }
+
   static async updatePlayerRole({ id, roleId }) {
     try {
       const text = 'update public.player set  "roleid"=$1 where id=$2';
@@ -265,6 +642,75 @@ ON CONFLICT (author, name)
     }
   }
 
+  static async updateCheifCandidate({ isCandidate, isDropout, id }) {
+    let pId = 1;
+    const qValues = [];
+    const values = [];
+
+    if (isCandidate !== undefined) {
+      qValues.push(`"ischiefcandidate"=$${pId}`);
+      values.push(isCandidate);
+      pId += 1;
+    }
+
+    if (isCandidate !== undefined) {
+      qValues.push(`"ischiefdropout"=$${pId}`);
+      values.push(isDropout);
+      pId += 1;
+    }
+
+    values.push(id);
+
+    const text = `update public.player set ${qValues.join(
+      ","
+    )}  where id=$${pId};`;
+
+    await pool.query(text, values);
+  }
+
+  //only update the column if the value is null
+  static async updateIsCheifCandidate({ isCandidate, id }) {
+    let pId = 1;
+    const qValues = [];
+    const values = [];
+
+    if (isCandidate !== undefined) {
+      qValues.push(`"ischiefcandidate"=$${pId}`);
+      values.push(isCandidate);
+      pId += 1;
+    }
+
+    qValues.push(`"ischiefdropout"=$${pId}`);
+    values.push(false);
+    pId += 1;
+
+    values.push(id);
+
+    const text = `update public.player set ${qValues.join(
+      ","
+    )}  where id=$${pId} and ischiefcandidate IS NULL;`;
+
+    await pool.query(text, values);
+  }
+
+  static async updateIsCheifCandidateDropout({ id, isDropout }) {
+    let pId = 1;
+    const qValues = [];
+    const values = [];
+
+    qValues.push(`"ischiefdropout"=$${pId}`);
+    values.push(isDropout);
+    pId += 1;
+
+    values.push(id);
+
+    const text = `update public.player set ${qValues.join(
+      ","
+    )}  where id=$${pId} and ischiefcandidate=true;`;
+
+    await pool.query(text, values);
+  }
+
   static async updatePass({ id, pass }) {
     const text = 'update public.player set  "pass"=$1 where id=$2 ';
     const values = [pass, id];
@@ -273,13 +719,39 @@ ON CONFLICT (author, name)
   static async updatePlayerPass({ id, pass }) {
     try {
       const text =
-        'update public.player set  "pass"=$1, isempty=false where id=$2 and isempty=true';
+        'update public.player set  "pass"=$1, isempty=false, isJoin=true where id=$2 and isempty=true';
       const values = [pass, id];
       const result = await pool.query(text, values);
       return { isValid: result.rowCount > 0 ? true : false };
     } catch (err) {
       console.log(err.stack);
       return { isValid: false };
+    }
+  }
+
+  static async updateIsChief({ id }) {
+    const client = await pool.connect();
+
+    try {
+      await client.query("BEGIN");
+
+      await client.query(
+        "update public.player set  ischief= false where id <> $1",
+        [id]
+      );
+
+      await client.query(
+        "update public.player set  ischief= not ischief where id=$1;",
+        [id]
+      );
+
+      await client.query("COMMIT");
+    } catch (e) {
+      console.log(e);
+      await client.query("ROLLBACK");
+      throw e;
+    } finally {
+      client.release();
     }
   }
 
@@ -293,29 +765,50 @@ ON CONFLICT (author, name)
   }
 
   static async addPlayer({ id }) {
+    const client = await pool.connect();
+
     try {
-      const text = "insert into public.player (id, isempty) values($1,true)";
       const values = [id];
-      await pool.query(text, values);
-    } catch (err) {
-      console.log(err.stack);
+      await client.query("BEGIN");
+      await pool.query(
+        `insert into public.player (id, isempty, isdie) values($1,true,false)`,
+        values
+      );
+
+      await client.query("COMMIT");
+    } catch (e) {
+      console.log(e);
+      await client.query("ROLLBACK");
+      throw e;
+    } finally {
+      client.release();
     }
   }
 
   static async getAllPlayer() {
-    try {
-      const text = `SELECT player.id, player."name", roleId, role.name as "roleName", player."isempty" as "isEmpty", player.pass
-                    FROM public.player
-                    left join public.role on roleId=role.id
-                    order by player.id;
+    const text = `
+select
+  player.votetarget as "voteTarget",
+  player.pass,
+	player.id,
+	player."name",
+	roleId,
+	role.name as "roleName",
+	player."isempty" as "isEmpty",
+	player.adminPass as "adminPass",
+  player.ischiefcandidate as "isChiefCandidate", 
+  player.ischiefdropout as "isChiefDropout",
+  player.isdie as "isDie",
+  player.ischief as "isChief" 
+from
+	public.player
+left join public.role on
+	roleId = role.id
+order by player.id;                 
                     `;
 
-      const result = await pool.query(text);
-      return result.rows;
-    } catch (err) {
-      console.log(err.stack);
-      return [];
-    }
+    const result = await pool.query(text);
+    return result.rows;
   }
 
   static async getAllRole() {

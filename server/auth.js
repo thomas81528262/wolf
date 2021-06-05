@@ -84,7 +84,7 @@ const resolvers = {
     players: async (root, args, context) => {
       const { id } = args;
 
-      const result = await WolfModel.getPlayerList();
+      const {players:result} = await WolfModel.getPlayerList();
 
       result.forEach((role, idx) => {
         const voteStatus = WolfModel.getVoteStatus({ id: idx });

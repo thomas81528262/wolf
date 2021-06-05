@@ -71,18 +71,20 @@ const GET_PLAYER_INFO = gql`
       name
       roleName
     }
-    players(id: $id) {
+    players {
       id
       name
       isEmpty
       revealedRole
+      isChief
       isDie
       vote
       chiefVote
       isValidCandidate
       isVoteFinish
       chiefVoteState {
-        type
+        isDropout
+        isCandidate
       }
     }
    
@@ -91,10 +93,10 @@ const GET_PLAYER_INFO = gql`
       isVoteFinish
       chiefId
       isDark
+      isChiefCandidateConfirmed
       chiefVoteState {
-        isDropedOut
+        isDropout
         isCandidate
-        type
       }
     }
     
@@ -202,8 +204,8 @@ function PlayerTable(props) {
                   </span>
                 )}
                 {row.chiefVoteState &&
-                  row.chiefVoteState.type &&
-                  row.chiefVoteState.type == "chief" && (
+                  row.chiefVoteState.isCandidate === true &&
+                  row.chiefVoteState.isDropout === false && (
                     <span
                       span
                       aria-label="paw"
@@ -213,8 +215,8 @@ function PlayerTable(props) {
                     </span>
                   )}
                 {row.chiefVoteState &&
-                  row.chiefVoteState.type &&
-                  row.chiefVoteState.type == "drop" && (
+                  row.chiefVoteState.isCandidate === true &&
+                  row.chiefVoteState.isDropout === true && (
                     <span
                       span
                       aria-label="paw"
@@ -466,14 +468,14 @@ function PlayerControl(props) {
                   isCandidate={data.gameInfo.chiefVoteState.isCandidate}
                 />
               </Dialog>
-              {data.gameInfo.chiefVoteState.isCandidate ? (
+              {data.gameInfo.chiefVoteState.isCandidate === true ? (
                 <Button
                   variant="contained"
                   color="primary"
                   onClick={() => {
                     setOpenChiefCandidate(true);
                   }}
-                  disabled={data.gameInfo.chiefVoteState.isDropedOut}
+                  disabled={data.gameInfo.chiefVoteState.isDropout}
                 >
                   退水
                 </Button>
@@ -485,7 +487,7 @@ function PlayerControl(props) {
                   onClick={() => {
                     setOpenChiefCandidate(true);
                   }}
-                  disabled={data.gameInfo.chiefVoteState.type !== null}
+                  disabled={data.gameInfo.chiefVoteState.isCandidate !== null}
                   style={{ border: '2px solid' , fontWeight:800}}
                 >
                   
