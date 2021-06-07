@@ -38,8 +38,9 @@ import CssBaseline from "@material-ui/core/CssBaseline";
 import Box from "@material-ui/core/Box";
 import Container from "@material-ui/core/Container";
 import { useHistory } from "react-router-dom";
-import Avatar from "react-avatar";
-import { ReactSVG } from 'react-svg'
+
+import { ReactSVG } from "react-svg";
+import Avatar from "@material-ui/core/Avatar";
 import {
   fade,
   withStyles,
@@ -56,10 +57,9 @@ import Player from "./Player";
 import LoginPage from "./Login";
 
 import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
-
-
-import { ThemeProvider } from '@material-ui/styles';
-import blue from '@material-ui/core/colors/blue';
+import ExitToAppIcon from "@material-ui/icons/ExitToApp";
+import { ThemeProvider } from "@material-ui/styles";
+import blue from "@material-ui/core/colors/blue";
 const client = new ApolloClient({
   cache: new InMemoryCache(),
   link: new HttpLink({
@@ -291,7 +291,7 @@ function LogoffButton() {
   });
 
   return (
-    <Button
+    /* <Button
       variant="outlined"
       color="secondary"
       onClick={() => {
@@ -300,7 +300,17 @@ function LogoffButton() {
       }}
     >
       退出
-    </Button>
+    </Button>*/
+    <IconButton
+      aria-label="delete"
+      size="large"
+      onClick={() => {
+        logoff();
+        //setIsValidPlayerStatus(false);
+      }}
+    >
+      <ExitToAppIcon fontSize="large" />
+    </IconButton>
   );
 }
 
@@ -327,7 +337,7 @@ function Game(props) {
       error.graphQLErrors.forEach((e) => {
         const { extensions } = e;
         if (extensions.code === "UNAUTHENTICATED") {
-          history.push("/")
+          history.push("/");
           //setIsLogoff(true);
         }
       });
@@ -374,41 +384,63 @@ function Game(props) {
   }
   */
 
-  console.log(data, loading)
+  console.log(data, loading);
 
   const playerId = data.login.id;
   return (
     <React.Fragment>
       <CssBaseline />
-      
-        <AppBar position="absolute">
-          <Toolbar>
-            
-            <Typography variant="h6" className={classes.title}>
-              <div style={{width:50, margin:'auto', marginTop:10}}>
-            <ReactSVG src="wolf.svg" />
+
+      <AppBar position="absolute">
+        <Toolbar>
+          <Typography variant="h6" className={classes.title}>
+            <div
+              style={{
+                width: 70,
+                margin: "auto",
+                borderRadius: "50%",
+                backgroundColor: "#D1ECB7",
+              }}
+            >
+              <div style={{ margin: 2, width: 50 }}>
+                <div style={{ marginLeft: 6, width: 55 }}>
+                  <ReactSVG
+                    src="wolf.svg"
+                    beforeInjection={(svg) => {
+                      svg.setAttribute("style", "margin-top: 10px");
+                    }}
+                  />
+                </div>
+              </div>
             </div>
-            </Typography>
-            <LogoffButton />
-          </Toolbar>
-        </AppBar>
+          </Typography>
+          <LogoffButton />
+        </Toolbar>
+      </AppBar>
 
-        <div style={{ marginTop: 100 }}>
-          {playerId === 0 ? (
-            <Container maxWidth={playerId === 0 ? "md" : "sm"}>
-            <God id={playerId} pass={""} name={""} setDarkMode={props.setDarkMode} />
-            </Container>
-          ) : (
-           
-            <Player id={playerId} pass={""} name={""} setDarkMode={props.setDarkMode}/>
-            
-          )}
-        </div>
+      <div style={{ marginTop: 100 }}>
+        {playerId === 0 ? (
+          <Container maxWidth={playerId === 0 ? "md" : "sm"}>
+            <God
+              id={playerId}
+              pass={""}
+              name={""}
+              setDarkMode={props.setDarkMode}
+            />
+          </Container>
+        ) : (
+          <Player
+            id={playerId}
+            pass={""}
+            name={""}
+            setDarkMode={props.setDarkMode}
+          />
+        )}
+      </div>
 
-        <Box pt={4}>
-          <Copyright />
-        </Box>
-     
+      <Box pt={4}>
+        <Copyright />
+      </Box>
     </React.Fragment>
   );
 }
@@ -427,46 +459,44 @@ const theme = createMuiTheme({
 */
 
 function App() {
-
-
   const [isDarkMode, setDarkMode] = React.useState(false);
-
 
   const theme = React.useMemo(
     () =>
       createMuiTheme({
         palette: {
-          type: isDarkMode ? 'dark' : 'light',
-          primary: isDarkMode ? {
-            main: '#F8A9A0',
-          }:{
-            main: '#F8A9A0',
-          },
+          type: isDarkMode ? "dark" : "light",
+          secondary: { main: "#E66692" },
+          primary: isDarkMode
+            ? {
+                main: "#F3BEBD",
+              }
+            : {
+                main: "#F3BEBD",
+              },
         },
-       
       }),
-    [isDarkMode],
+    [isDarkMode]
   );
-
 
   return (
     <div className="App">
       <ThemeProvider theme={theme}>
-      <Router>
-        <Switch>
-          <Route exact path="/">
-            <ApolloProvider client={auth}>
-              <LoginPage />
-            </ApolloProvider>
-          </Route>
+        <Router>
+          <Switch>
+            <Route exact path="/">
+              <ApolloProvider client={auth}>
+                <LoginPage />
+              </ApolloProvider>
+            </Route>
 
-          <Route exact path="/game">
-            <ApolloProvider client={client}>
-              <Game setDarkMode={setDarkMode}/>
-            </ApolloProvider>
-          </Route>
-        </Switch>
-      </Router>
+            <Route exact path="/game">
+              <ApolloProvider client={client}>
+                <Game setDarkMode={setDarkMode} />
+              </ApolloProvider>
+            </Route>
+          </Switch>
+        </Router>
       </ThemeProvider>
     </div>
   );

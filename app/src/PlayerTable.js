@@ -23,6 +23,7 @@ import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogContentText from "@material-ui/core/DialogContentText";
 import DialogTitle from "@material-ui/core/DialogTitle";
+import voteLogo from './ballot-box-with-ballot.png'
 import {
   fade,
   withStyles,
@@ -160,9 +161,7 @@ function VoteStatus(props) {
   return (
     <>
       {isCandidate === true && isDropout === false && (
-        <span span aria-label="paw" style={{ fontSize: 30, marginLeft: 5 }}>
-          🗳️
-        </span>
+         <img  src={voteLogo} style={{height:30, width:30}}/>
       )}
       {isCandidate === true && isDropout === true && (
         <span span aria-label="paw" style={{ fontSize: 30, marginLeft: 5 }}>

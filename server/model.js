@@ -40,7 +40,10 @@ class WolfModel {
     return this.chiefId !== -1;
   }
 
-  static setPlayerDieStatus({ id }) {
+  static async setPlayerDieStatus({ id }) {
+
+    await Db.updateIsDie({id});
+    /*
     const p = this.player[id];
     if (p) {
       p.isDie = !p.isDie;
@@ -53,6 +56,7 @@ class WolfModel {
     this.player.forEach((p) => {
       p.isTarget = false;
     });
+    */
   }
   static setDarkDieStatus(targets) {
     targets.forEach((id) => {
@@ -267,7 +271,7 @@ class WolfModel {
       }
 
       const { isChiefCandidate } = d;
-      if (isChiefCandidate === null && d.id !== 0) {
+      if (isChiefCandidate === null && d.id !== 0 && !d.isDie) {
         isChiefCandidateConfirmed = false;
       }
     });
@@ -305,21 +309,28 @@ class WolfModel {
     */
   }
 
-  static async getIsEventFinish() {
 
-    let isVoteFinish = false;
+  static async resetEvent() {
+    await Db.resetEvent();
+  }
+
+  static async getIsEventInfo() {
+
+    let isEventFinish = false;
+    let isBusy = false;
     const voteEvent = await Db.getVoteEvent();
     let repeatTimes = 0;
     if (voteEvent.length > 0) {
       if (voteEvent[0].name === null) {
-        isVoteFinish = true;
+        isEventFinish = true;
       } else {
         repeatTimes = voteEvent[0].repeatTimes;
+        isBusy = voteEvent[0].isBusy;
       }
     }
    
 
-    return {isVoteFinish , repeatTimes};
+    return {isEventFinish , repeatTimes,   isBusy};
   }
 
   static async getChiefHistory() {

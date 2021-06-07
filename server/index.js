@@ -77,6 +77,7 @@ const typeDefs = gql`
     isChiefCandidateConfirmed:Boolean
     uuid: String
     repeatTimes:Int
+    isEventBusy:Boolean
   }
 
   input RoleOrder {
@@ -97,6 +98,7 @@ const typeDefs = gql`
     login: PlayerStatus
   }
   type Mutation {
+    resetEvent: String
     updatePass(id: Int, pass: String): String
     updateRoleNumber(id: Int, number: Int): String
     updatePlayerPass(id: Int, pass: String): PlayerStatus
@@ -139,7 +141,7 @@ const resolvers = {
         throw new AuthenticationError("No Access!");
       }
       const { id } = args;
-      const {isEventFinish, repeatTimes} = await WolfModel.getIsEventFinish({ id });
+      const {isEventFinish, repeatTimes, isBusy: isEventBusy} = await WolfModel.getIsEventInfo({ id });
       const { chiefVoteState , isChiefCandidateConfirmed, isVoteFinish, chiefId} = await WolfModel.getPlayerStatus({
         id
       });
@@ -155,7 +157,8 @@ const resolvers = {
         hasVoteTarget,
         uuid,
         isChiefCandidateConfirmed,
-        repeatTimes
+        repeatTimes,
+        isEventBusy
       };
     },
 
@@ -180,7 +183,7 @@ const resolvers = {
 
       const { playerId } = context.session;
 
-      const {isEventFinish} = await WolfModel.getIsEventFinish();
+      const {isEventFinish} = await WolfModel.getIsEventInfo();
       const {players:  playersData}= await WolfModel.getPlayerList();
       
       const chiefVoteHistory = await WolfModel.getChiefHistory();
@@ -241,7 +244,7 @@ const resolvers = {
         player.ischiefdropout as "isChiefDropout",
         player.isdie as "isDie"
         */
-        let isValidCandidate = false;
+        const isValidCandidate = player.voteTarget === 'T';
         let chiefVoteState = { isCandidate: null, isDropout: null };
         const { isChiefCandidate, isChiefDropout } = player;
         if (playerId === 0) {
@@ -256,8 +259,7 @@ const resolvers = {
             isDropout: isChiefDropout,
           };
 
-          isValidCandidate = isChiefCandidate === true && isChiefDropout === false;
-
+          
         }
 
         const isVoteFinish = isEventFinish || player.voteTarget !== null || player.id === 0;
@@ -283,6 +285,18 @@ const resolvers = {
     },
   },
   Mutation: {
+
+    resetEvent: async (root, args, context) => {
+      if (context.session.playerId !== 0) {
+        throw new AuthenticationError("No Access!");
+      }
+
+      
+
+      await WolfModel.resetEvent();
+      return "pass";
+    },
+
     updatePass: async (root, args, context) => {
       if (context.session.playerId !== 0) {
         throw new AuthenticationError("No Access!");

@@ -99,7 +99,6 @@ const resolvers = {
   Mutation: {
     updatePlayerPass: async (root, args, context) => {
       const { session } = context;
-      console.log(session)
       if (session.isValid) {
           return {isValid:true, id:session.playerId};
       }

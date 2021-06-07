@@ -9,13 +9,14 @@ import Fab from "@material-ui/core/Fab";
 import AddIcon from "@material-ui/icons/Add";
 import { gql } from "apollo-boost";
 import { useQuery, useMutation } from "@apollo/client";
-import { ReactSVG } from 'react-svg'
+import { ReactSVG } from "react-svg";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import Box from "@material-ui/core/Box";
 import Container from "@material-ui/core/Container";
 import Typography from "@material-ui/core/Typography";
 import Avatar from "react-avatar";
 import { mdiPaw } from "@mdi/js";
+import ExitToAppIcon from '@material-ui/icons/ExitToApp';
 import {
   fade,
   withStyles,
@@ -26,10 +27,9 @@ import {
 import { useHistory } from "react-router-dom";
 
 const useStyles = makeStyles((theme) => ({
-  margin: {
-    //margin: theme.spacing(1),
-  },
+  margin: {},
   table: {
+    
     minWidth: 450,
   },
   title: {
@@ -39,7 +39,8 @@ const useStyles = makeStyles((theme) => ({
     marginRight: theme.spacing(2),
   },
   submit: {
-    margin: theme.spacing(3, 0, 2),
+    
+   marginTop:5
   },
   container: {
     paddingTop: theme.spacing(4),
@@ -98,16 +99,14 @@ export default function Login() {
     }
   );
   console.log(mdiPaw);
-  const [
-    updatePlayerPass,
-    { loading: passLoading, data: passData },
-  ] = useMutation(UPDATE_PLAYER_PASS, {
-    onCompleted: (data) => {
-      if (data.updatePlayerPass.isValid) {
-        history.push("/game");
-      }
-    },
-  });
+  const [updatePlayerPass, { loading: passLoading, data: passData }] =
+    useMutation(UPDATE_PLAYER_PASS, {
+      onCompleted: (data) => {
+        if (data.updatePlayerPass.isValid) {
+          history.push("/game");
+        }
+      },
+    });
 
   React.useEffect(() => {
     startPolling(500);
@@ -123,12 +122,24 @@ export default function Login() {
 
   return (
     <Container component="main">
-      <div style={{ width: 350, position:'fixed', top:'50%', left:'50%', transform:"translate(-50%, -50%)" }}>
-        <Avatar src="test-3.png" size="350" />
+      <div
+        style={{
+          width: 350,
+          position: "fixed",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+        }}
+      >
+       
+        <Avatar src="wolf-girl.png" size="350" />
+       
+        <div style={{marginLeft:15, marginRight:10}}>
         <Autocomplete
+          
           fullWidth
           id="combo-box-demo"
-          className={classes.margin}
+          
           options={data.players}
           getOptionLabel={(option) => `玩家 ${option.id}`}
           renderOption={(option) => (
@@ -152,13 +163,16 @@ export default function Login() {
           renderInput={(params) => (
             <TextField
               {...params}
+              color="secondary"
               label="玩家"
               variant="outlined"
               margin="dense"
+              className={classes.margin}
             />
           )}
-        />
-
+        />  
+        
+       
         <TextField
           fullWidth
           id="standard-basic"
@@ -168,7 +182,10 @@ export default function Login() {
           margin="dense"
           onChange={(e) => setPlayerPass(e.target.value)}
           value={playerPass}
+          color="secondary"
+          autoComplete="off"
         />
+       
         <Button
           type="submit"
           fullWidth
@@ -183,7 +200,8 @@ export default function Login() {
         >
           <Icon path={mdiPaw} />
         </Button>
-      </div>
+        </div>
+        </div>
 
       {/*<Box mt={8}>
         <Copyright />
