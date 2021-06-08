@@ -7,14 +7,16 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
 	"name" varchar NULL,
 	roleid int4 NULL,
 	pass varchar NULL,
-	adminPass varchar NULL,
+	adminpass varchar NULL,
 	isempty bool NULL,
 	ischiefcandidate bool NULL,
 	ischiefdropout bool NULL,
+	isdie bool NULL,
 	votetarget varchar NULL,
 	ischief bool NULL,
 	isjoin bool NULL,
-	CONSTRAINT player_pk PRIMARY KEY (id)
+	CONSTRAINT player_pk PRIMARY KEY (id),
+	CONSTRAINT player_un UNIQUE (name)
 );
 
 CREATE TABLE "role" (
@@ -30,15 +32,16 @@ CREATE TABLE game_event (
 	repeat_times int4 NOT NULL,
 	"name" varchar NULL,
 	is_busy bool NOT NULL,
-	is_dark bool NOT NULL,
+	is_dark bool NULL,
 	CONSTRAINT game_event_pk PRIMARY KEY (type)
 );
 
 CREATE TABLE vote_history (
 	id int4 NOT NULL,
 	"name" varchar NOT NULL,
-	history_id SERIAL PRIMARY KEY,
-	target varchar NULL
+	history_id serial NOT NULL,
+	target varchar NULL,
+	CONSTRAINT vote_history_pkey PRIMARY KEY (history_id)
 );
 
 CREATE TABLE template_header (
@@ -57,7 +60,9 @@ CREATE TABLE template_role (
 	CONSTRAINT template_role_fk FOREIGN KEY ("name") REFERENCES template_header("name") ON DELETE CASCADE
 );
 
-
+INSERT INTO game_event
+("type", repeat_times, "name", is_busy, is_dark)
+VALUES('VOTE', 0, NULL, false, false);
 
 INSERT INTO public.player (id,"name",roleid,pass,isempty) VALUES 
 (0,'Peggy',0,'123',NULL)

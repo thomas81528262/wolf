@@ -158,7 +158,7 @@ const resolvers = {
       const { isDark, voteWeightedId, hasChief, hasVoteTarget, uuid } =
         WolfModel;
       return {
-        isVoteFinish: !isEventBusy,
+        isVoteFinish: isVoteFinish || !isEventBusy,
         chiefId,
         isDark:isEventDark,
         voteWeightedId,
