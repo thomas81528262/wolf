@@ -205,8 +205,9 @@ function CollapseSell(props) {
                 setChiefId({ variables: { id: row.id } });
               }}
               checked={row.isChief}
-              color="primary"
+              color="secondary"
               inputProps={{ "aria-label": "secondary checkbox" }}
+              
             />
           ) : (
             row.chiefVoteState && (
@@ -226,7 +227,7 @@ function CollapseSell(props) {
                 setDie({ variables: { id: row.id } });
               }}
               checked={row.isDie}
-              color="primary"
+              color="secondary"
               inputProps={{ "aria-label": "secondary checkbox" }}
             />
           ) : null}

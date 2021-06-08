@@ -46,6 +46,7 @@ import ContactMailIcon from "@material-ui/icons/ContactMail";
 import UndoIcon from "@material-ui/icons/Undo";
 import PeopleAltIcon from "@material-ui/icons/PeopleAlt";
 import HowToVoteIcon from "@material-ui/icons/HowToVote";
+import PersonAddIcon from '@material-ui/icons/PersonAdd';
 const GET_ROLES = gql`
   {
     templates {
@@ -549,7 +550,18 @@ function Game(props) {
   return (
     <div style={{}}>
       <Box display="flex">
-        <Button
+
+      <Tooltip title="加入玩家" placement="top">
+              <IconButton aria-label="delete" onClick={() => {
+                  //voteStart();
+                  generatePlayer();
+                }}>
+                <PersonAddIcon fontSize="large" />
+              </IconButton>
+            </Tooltip>
+
+
+        {/*<Button
           variant="contained"
           color="primary"
           onClick={() => {
@@ -557,7 +569,7 @@ function Game(props) {
           }}
         >
           加入玩家
-        </Button>
+        </Button>*/}
       </Box>
 
       <EnabedTemplateInfo data={props.data} />

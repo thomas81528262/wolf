@@ -158,7 +158,7 @@ const resolvers = {
       const { isDark, voteWeightedId, hasChief, hasVoteTarget, uuid } =
         WolfModel;
       return {
-        isVoteFinish: isEventFinish || isVoteFinish,
+        isVoteFinish: !isEventBusy,
         chiefId,
         isDark:isEventDark,
         voteWeightedId,
@@ -193,7 +193,7 @@ const resolvers = {
 
       const { playerId } = context.session;
 
-      const { isEventFinish, name: eventName } =
+      const { isEventFinish, name: eventName, isBusy } =
         await WolfModel.getIsEventInfo();
       const { players: playersData } = await WolfModel.getPlayerList();
 
@@ -274,7 +274,7 @@ const resolvers = {
         }
 
         const isVoteFinish =
-          isEventFinish || player.voteTarget !== null || player.id === 0;
+          !isBusy || player.voteTarget !== null || player.id === 0;
 
         result.push({
           ...player,
