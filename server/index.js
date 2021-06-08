@@ -28,7 +28,7 @@ const typeDefs = gql`
     votedNumber: Float
     chiefVoteState: ChiefVoteState
     isTarget: Boolean
-    isChief:Boolean
+    isChief: Boolean
   }
 
   type Role {
@@ -74,10 +74,10 @@ const typeDefs = gql`
     hasChief: Boolean
     chiefVoteState: ChiefVoteState
     hasVoteTarget: Boolean
-    isChiefCandidateConfirmed:Boolean
+    isChiefCandidateConfirmed: Boolean
     uuid: String
-    repeatTimes:Int
-    isEventBusy:Boolean
+    repeatTimes: Int
+    isEventBusy: Boolean
   }
 
   input RoleOrder {
@@ -141,16 +141,26 @@ const resolvers = {
         throw new AuthenticationError("No Access!");
       }
       const { id } = args;
-      const {isEventFinish, repeatTimes, isBusy: isEventBusy} = await WolfModel.getIsEventInfo({ id });
-      const { chiefVoteState , isChiefCandidateConfirmed, isVoteFinish, chiefId} = await WolfModel.getPlayerStatus({
-        id
+      const {
+        isEventFinish,
+        repeatTimes,
+        isBusy: isEventBusy,
+        isDark: isEventDark
+      } = await WolfModel.getIsEventInfo({ id });
+      const {
+        chiefVoteState,
+        isChiefCandidateConfirmed,
+        isVoteFinish,
+        chiefId,
+      } = await WolfModel.getPlayerStatus({
+        id,
       });
-      const {  isDark, voteWeightedId, hasChief, hasVoteTarget, uuid } =
+      const { isDark, voteWeightedId, hasChief, hasVoteTarget, uuid } =
         WolfModel;
       return {
         isVoteFinish: isEventFinish || isVoteFinish,
         chiefId,
-        isDark,
+        isDark:isEventDark,
         voteWeightedId,
         hasChief,
         chiefVoteState,
@@ -158,7 +168,7 @@ const resolvers = {
         uuid,
         isChiefCandidateConfirmed,
         repeatTimes,
-        isEventBusy
+        isEventBusy,
       };
     },
 
@@ -183,51 +193,53 @@ const resolvers = {
 
       const { playerId } = context.session;
 
-      const {isEventFinish} = await WolfModel.getIsEventInfo();
-      const {players:  playersData}= await WolfModel.getPlayerList();
-      
-      const chiefVoteHistory = await WolfModel.getChiefHistory();
+      const { isEventFinish, name: eventName } =
+        await WolfModel.getIsEventInfo();
+      const { players: playersData } = await WolfModel.getPlayerList();
 
-      
+      const voteHistory = await WolfModel.getVoteHistory();
+
+     
 
       //const isChiefCandidateConfirmed = WolfModel.isChiefCandidateConfirmed();
 
       const result = [];
 
-     // const chiefVoteHistory = await 
+      // const chiefVoteHistory = await
 
       let isChiefCandidateConfirmed = true;
 
-
-      playersData.forEach(player=>{
-
-        if (player.id  === 0) {
+      playersData.forEach((player) => {
+        if (player.id === 0) {
           return;
         }
 
         const { isChiefCandidate } = player;
-        if (isChiefCandidate  === null) {
+        if (isChiefCandidate === null) {
           isChiefCandidateConfirmed = false;
         }
-      })
-
-
+      });
 
       playersData.forEach((player) => {
         let roleName = "";
         let pass = "";
         const chiefVote = [];
 
-        chiefVoteHistory.forEach(d=>{
-          if (d.id === player.id) {
+        voteHistory.forEach((d) => {
+          if (d.id === player.id && d.name ==="CHIEF_VOTE") {
             chiefVote.push(d.target);
           }
-        })
+        });
+
+        const vote = [];
+
+        voteHistory.forEach((d) => {
+          if (d.id === player.id && d.name ==="EXILE_VOTE") {
+            vote.push(d.target);
+          }
+        });
 
         //const tmp = WolfModel.getVoteStatus({ id: idx });
-
-       
-
 
         /*
         const playerStatus = WolfModel.getPlayerStatus({
@@ -244,13 +256,14 @@ const resolvers = {
         player.ischiefdropout as "isChiefDropout",
         player.isdie as "isDie"
         */
-        const isValidCandidate = player.voteTarget === 'T';
+        const isValidCandidate =
+          (player.voteTarget === "T" && eventName === "CHIEF_VOTE") ||
+          (player.isDie === false && eventName === "EXILE_VOTE");
         let chiefVoteState = { isCandidate: null, isDropout: null };
         const { isChiefCandidate, isChiefDropout } = player;
         if (playerId === 0) {
           roleName = player.roleName;
           pass = player.pass;
-          
         }
 
         if (playerId === 0 || isChiefCandidateConfirmed) {
@@ -258,14 +271,19 @@ const resolvers = {
             isCandidate: isChiefCandidate,
             isDropout: isChiefDropout,
           };
-
-          
         }
 
-        const isVoteFinish = isEventFinish || player.voteTarget !== null || player.id === 0;
+        const isVoteFinish =
+          isEventFinish || player.voteTarget !== null || player.id === 0;
 
-        result.push({ ...player,isVoteFinish ,chiefVoteState,isValidCandidate, chiefVote, vote:[]});
-       
+        result.push({
+          ...player,
+          isVoteFinish,
+          chiefVoteState,
+          isValidCandidate,
+          chiefVote,
+          vote,
+        });
       });
 
       return result;
@@ -285,13 +303,10 @@ const resolvers = {
     },
   },
   Mutation: {
-
     resetEvent: async (root, args, context) => {
       if (context.session.playerId !== 0) {
         throw new AuthenticationError("No Access!");
       }
-
-      
 
       await WolfModel.resetEvent();
       return "pass";
@@ -316,11 +331,10 @@ const resolvers = {
       if (context.session.playerId !== 0) {
         throw new AuthenticationError("No Access!");
       }
-      
 
       const { id } = args;
 
-      await WolfModel.resetChiefCandidate({id})
+      await WolfModel.resetChiefCandidate({ id });
     },
 
     setIsVoter: (root, args, context) => {

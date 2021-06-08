@@ -23,7 +23,10 @@ class WolfModel {
     );
   }
 
-  static reset() {
+  static async reset() {
+
+    await Db.resetGame();
+    /*
     this.isVoteFinish = true;
     this.chiefId = -1;
     this.voteList = [];
@@ -34,6 +37,7 @@ class WolfModel {
     for (let id = 1; id < this.player.length; id += 1) {
       this.player[id].isDie = false;
     }
+    */
   }
 
   static get hasChief() {
@@ -58,13 +62,16 @@ class WolfModel {
     });
     */
   }
-  static setDarkDieStatus(targets) {
+  static async setDarkDieStatus(targets) {
+    await Db.setDarkDieStatus({targets});
+    /*
     targets.forEach((id) => {
       const p = this.player[id];
       p.isDie = true;
     });
 
     this.isDark = false;
+    */
   }
 
   static async setChiefId({ id }) {
@@ -92,6 +99,9 @@ class WolfModel {
   }
 
   static async startVote(list) {
+
+    await Db.startExileVote();
+    /*
     if (!this.isVoteFinish || !this.canStartVote) {
       return;
     }
@@ -130,6 +140,7 @@ class WolfModel {
         this.voteList[id] = "D";
       }
     }
+    */
   }
 
   static async startVoteChief() {
@@ -318,23 +329,28 @@ class WolfModel {
 
     let isEventFinish = false;
     let isBusy = false;
+    let name = null;
+    let isDark = false;
     const voteEvent = await Db.getVoteEvent();
     let repeatTimes = 0;
     if (voteEvent.length > 0) {
       if (voteEvent[0].name === null) {
         isEventFinish = true;
+        isDark = voteEvent[0].isDark;
       } else {
         repeatTimes = voteEvent[0].repeatTimes;
         isBusy = voteEvent[0].isBusy;
+        name = voteEvent[0].name;
+        isDark = voteEvent[0].isDark;
       }
     }
    
 
-    return {isEventFinish , repeatTimes,   isBusy};
+    return {isEventFinish , repeatTimes,   isBusy, name, isDark};
   }
 
-  static async getChiefHistory() {
-    const result = await Db.getChiefVoteHistory();
+  static async getVoteHistory() {
+    const result = await Db.getVoteHistory();
     return result;
   }
 
@@ -635,7 +651,7 @@ class WolfModel {
       });
     });
 
-    this.reset();
+    await this.reset();
   }
 
   static async generateRole() {
@@ -697,7 +713,7 @@ class WolfModel {
       }
 
       //Game.dark.reset();
-      this.reset();
+      await this.reset();
       const waitRoleList = [];
 
       list.slice(0, lIdx).forEach((value, idx) => {

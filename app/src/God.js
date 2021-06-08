@@ -389,49 +389,67 @@ function Game(props) {
         </Dialog>
         <Box display="flex">
           <Tooltip title="產生角色" placement="top">
-            <IconButton aria-label="delete"  onClick={() => {
-              generateRole({
-                variables: { isCovertWolfToHuman: state.isCovertWolfToHuman },
-              });
-            }}>
+            <IconButton
+              aria-label="delete"
+              onClick={() => {
+                generateRole({
+                  variables: { isCovertWolfToHuman: state.isCovertWolfToHuman },
+                });
+              }}
+            >
               <PeopleAltIcon fontSize="large" />
             </IconButton>
           </Tooltip>
           <Tooltip title="刪除玩家" placement="top">
-            <IconButton aria-label="delete" onClick={() => {
-              removeAllPlayer();
-            }}>
+            <IconButton
+              aria-label="delete"
+              onClick={() => {
+                removeAllPlayer();
+              }}
+            >
               <PersonAddDisabledIcon fontSize="large" />
             </IconButton>
           </Tooltip>
-
-          
+          {hasChief ? (
+            <Tooltip title="放逐投票" placement="top">
+              <IconButton aria-label="delete" onClick={() => {
+                  //voteStart();
+                  setIsOpen(true);
+                }}>
+                <HowToVoteIcon fontSize="large" />
+              </IconButton>
+            </Tooltip>
+          ) : (
             <Tooltip title="警長選舉" placement="top">
-
-              <IconButton aria-label="delete"  onClick={() => {
-              //voteStart();
-              setIsOpen(true);
-            }}>
-              <Badge
-            badgeContent={
-              gameInfo.repeatTimes + 1 === 1 ? 0 : gameInfo.repeatTimes + 1
-            }
-            color="primary"
-          >
-                <ContactMailIcon fontSize="large" />
+              <IconButton
+                aria-label="delete"
+                onClick={() => {
+                  //voteStart();
+                  setIsOpen(true);
+                }}
+              >
+                <Badge
+                  badgeContent={
+                    gameInfo.repeatTimes + 1 === 1
+                      ? 0
+                      : gameInfo.repeatTimes + 1
+                  }
+                  color="primary"
+                >
+                  <ContactMailIcon fontSize="large" />
                 </Badge>
               </IconButton>
             </Tooltip>
-         
-          <Tooltip title="放逐投票" placement="top">
-            <IconButton aria-label="delete" >
-              <HowToVoteIcon fontSize="large" />
-            </IconButton>
-          </Tooltip>
+          )}
+
           <Tooltip title="重置選舉" placement="top">
-            <IconButton aria-label="delete"  onClick={() => {
-              resetEvent();
-            }}>
+            <IconButton
+             disabled={gameInfo.repeatTimes === 0 && !gameInfo.isEventBusy}
+              aria-label="delete"
+              onClick={() => {
+                resetEvent();
+              }}
+            >
               <UndoIcon fontSize="large" />
             </IconButton>
           </Tooltip>
@@ -506,8 +524,8 @@ function Game(props) {
         </Box>
         <Box display="flex">
           <TextField
-          autoComplete='off'
-          color="secondary"
+            autoComplete="off"
+            color="secondary"
             id="standard-basic"
             label="姓名"
             variant="outlined"

@@ -30,6 +30,7 @@ CREATE TABLE game_event (
 	repeat_times int4 NOT NULL,
 	"name" varchar NULL,
 	is_busy bool NOT NULL,
+	is_dark bool NOT NULL,
 	CONSTRAINT game_event_pk PRIMARY KEY (type)
 );
 

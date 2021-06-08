@@ -30,7 +30,13 @@ import Avatar from "react-avatar";
 import Radio from "@material-ui/core/Radio";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
-import DialogContentText from "@material-ui/core/DialogContentText";
+import Tooltip from "@material-ui/core/Tooltip";
+import IconButton from "@material-ui/core/IconButton";
+import SvgIcon from '@material-ui/core/SvgIcon';
+import BlockIcon from '@material-ui/icons/Block';
+import CheckIcon from '@material-ui/icons/Check';
+import CloseIcon from '@material-ui/icons/Close';
+import CancelIcon from '@material-ui/icons/Cancel';
 import {
   fade,
   withStyles,
@@ -41,7 +47,7 @@ import { useDebounce, useDebounceCallback } from "@react-hook/debounce";
 
 import EnabedTemplateInfo from "./EnabledTemplateInfo";
 import { useHistory } from "react-router-dom";
-import { ReactSVG } from 'react-svg'
+import { ReactSVG } from "react-svg";
 const useStyles = makeStyles((theme) => ({
   margin: {
     //margin: theme.spacing(1),
@@ -87,7 +93,7 @@ const GET_PLAYER_INFO = gql`
         isCandidate
       }
     }
-   
+
     gameInfo(id: $id) {
       uuid
       isVoteFinish
@@ -99,7 +105,6 @@ const GET_PLAYER_INFO = gql`
         isCandidate
       }
     }
-    
   }
 `;
 
@@ -114,8 +119,6 @@ const UPDATE_PLAYER_NAME = gql`
     updatePlayerName(id: $id, name: $name)
   }
 `;
-
-
 
 const SUBMIT_CHIEF_CANDIDATE = gql`
   mutation submitChiefCandidate {
@@ -148,6 +151,14 @@ const GET_ENABLED_TEMPLATE = gql`
     }
   }
 `;
+
+function ChiefIcon(props) {
+  return (
+    <SvgIcon {...props}>
+      <path d="M14.5,12.59l0.9,3.88L12,14.42l-3.4,2.05l0.9-3.87l-3-2.59l3.96-0.34L12,6.02l1.54,3.64L17.5,10L14.5,12.59z M12,3.19 l7,3.11V11c0,4.52-2.98,8.69-7,9.93C7.98,19.69,5,15.52,5,11V6.3L12,3.19 M12,1L3,5v6c0,5.55,3.84,10.74,9,12c5.16-1.26,9-6.45,9-12 V5L12,1L12,1z" />
+    </SvgIcon>
+  );
+}
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -186,8 +197,8 @@ function PlayerTable(props) {
             <TableRow key={row.id}>
               <TableCell component="th" scope="row">
                 {row.id === 0 ? (
-                  <div style={{width:30}}>
-                  <ReactSVG src="infinity.svg" />
+                  <div style={{ width: 30 }}>
+                    <ReactSVG src="infinity.svg" />
                   </div>
                 ) : row.isDie ? (
                   <span aria-label="paw" style={{ fontSize: 30 }}>
@@ -253,9 +264,6 @@ function PlayerTable(props) {
   );
 }
 
-
-
-
 function VoteAction(props) {
   const [target, setTarget] = React.useState(-1);
 
@@ -304,11 +312,11 @@ function VoteAction(props) {
 }
 
 function CandidateChiefDialog(props) {
-
-
-  const [setIsVoter] = useMutation(SET_IS_VOTER, { onCompleted: () => {
-    props.onClose();
-  },})
+  const [setIsVoter] = useMutation(SET_IS_VOTER, {
+    onCompleted: () => {
+      props.onClose();
+    },
+  });
 
   const [submitChiefCandidate] = useMutation(SUBMIT_CHIEF_CANDIDATE, {
     onCompleted: () => {
@@ -339,25 +347,27 @@ function CandidateChiefDialog(props) {
                 submitChiefCandidate();
               }
             }}
-            color="primary"
+            
           >
-            確認
+            <CheckIcon style={{color:'green'}}/>
           </Button>
-          {!props.isCandidate && <Button
-            onClick={() => {
-              setIsVoter();
-            }}
-            style={{color:'DarkOrange'}}
-          >
-            不要!
-          </Button>}
+          {!props.isCandidate && (
+            <Button
+              onClick={() => {
+                setIsVoter();
+              }}
+              
+            >
+             <CloseIcon style={{color:'red'}}/>
+            </Button>
+          )}
           <Button
             onClick={() => {
               props.onClose();
             }}
-            color="secondary"
+            
           >
-            取消
+            <CancelIcon/>
           </Button>
         </DialogActions>
       </DialogContent>
@@ -369,10 +379,8 @@ function PlayerControl(props) {
   const classes = useStyles();
   const history = useHistory();
 
-  const [
-    playerInfo,
-    { loading, error, data, called: playerCalled },
-  ] = useLazyQuery(GET_PLAYER_INFO, { fetchPolicy: "network-only" });
+  const [playerInfo, { loading, error, data, called: playerCalled }] =
+    useLazyQuery(GET_PLAYER_INFO, { fetchPolicy: "network-only" });
 
   const [openChiefCandidate, setOpenChiefCandidate] = React.useState(false);
   const [value, setValue] = useDebounce(props.name, 500);
@@ -469,31 +477,29 @@ function PlayerControl(props) {
                 />
               </Dialog>
               {data.gameInfo.chiefVoteState.isCandidate === true ? (
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={() => {
-                    setOpenChiefCandidate(true);
-                  }}
-                  disabled={data.gameInfo.chiefVoteState.isDropout}
-                >
-                  退水
-                </Button>
+               <Tooltip title="退水" placement="top">
+               <IconButton
+                 disabled={data.gameInfo.chiefVoteState.isDropout}
+                 aria-label="delete"
+                 onClick={() => {
+                   setOpenChiefCandidate(true);
+                 }}
+               >
+                 <BlockIcon fontSize="large"/>
+               </IconButton>
+             </Tooltip>
               ) : (
-                <Button
-                  
-                  variant="outlined"
-                  color="primary"
-                  onClick={() => {
-                    setOpenChiefCandidate(true);
-                  }}
-                  disabled={data.gameInfo.chiefVoteState.isCandidate !== null}
-                  style={{ border: '2px solid' , fontWeight:800}}
-                >
-                  
-                  上警
-                  
-                </Button>
+                <Tooltip title="競選警長" placement="top">
+                  <IconButton
+                    disabled={data.gameInfo.chiefVoteState.isCandidate !== null}
+                    aria-label="delete"
+                    onClick={() => {
+                      setOpenChiefCandidate(true);
+                    }}
+                  >
+                    <ChiefIcon fontSize="large"/>
+                  </IconButton>
+                </Tooltip>
               )}
             </>
           ) : null}
@@ -501,6 +507,8 @@ function PlayerControl(props) {
       )}
       <Box display="flex">
         <TextField
+          autoComplete="off"
+          color="secondary"
           id="standard-basic"
           label="姓名"
           variant="outlined"
@@ -559,8 +567,8 @@ export default function Player(props) {
       <Paper elevation={3}>
         <Tabs
           value={value}
-          indicatorColor="primary"
-          textColor="primary"
+          indicatorColor="secondary"
+          textColor="secondary"
           onChange={handleChange}
           aria-label="disabled tabs example"
           variant="fullWidth"
