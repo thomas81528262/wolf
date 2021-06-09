@@ -145,7 +145,7 @@ const resolvers = {
         isEventFinish,
         repeatTimes,
         isBusy: isEventBusy,
-        isDark: isEventDark
+        isDark: isEventDark,
       } = await WolfModel.getIsEventInfo({ id });
       const {
         chiefVoteState,
@@ -160,7 +160,7 @@ const resolvers = {
       return {
         isVoteFinish: isVoteFinish || !isEventBusy,
         chiefId,
-        isDark:isEventDark,
+        isDark: isEventDark,
         voteWeightedId,
         hasChief,
         chiefVoteState,
@@ -193,13 +193,15 @@ const resolvers = {
 
       const { playerId } = context.session;
 
-      const { isEventFinish, name: eventName, isBusy } =
-        await WolfModel.getIsEventInfo();
+      const {
+        isEventFinish,
+        name: eventName,
+        isBusy,
+        repeatTimes,
+      } = await WolfModel.getIsEventInfo();
       const { players: playersData } = await WolfModel.getPlayerList();
 
       const voteHistory = await WolfModel.getVoteHistory();
-
-     
 
       //const isChiefCandidateConfirmed = WolfModel.isChiefCandidateConfirmed();
 
@@ -208,6 +210,7 @@ const resolvers = {
       // const chiefVoteHistory = await
 
       let isChiefCandidateConfirmed = true;
+      let hasChief = false;
 
       playersData.forEach((player) => {
         if (player.id === 0) {
@@ -218,6 +221,10 @@ const resolvers = {
         if (isChiefCandidate === null) {
           isChiefCandidateConfirmed = false;
         }
+
+        if (player.isChief) {
+          hasChief = true;
+        }
       });
 
       playersData.forEach((player) => {
@@ -226,7 +233,7 @@ const resolvers = {
         const chiefVote = [];
 
         voteHistory.forEach((d) => {
-          if (d.id === player.id && d.name ==="CHIEF_VOTE") {
+          if (d.id === player.id && d.name === "CHIEF_VOTE") {
             chiefVote.push(d.target);
           }
         });
@@ -234,36 +241,28 @@ const resolvers = {
         const vote = [];
 
         voteHistory.forEach((d) => {
-          if (d.id === player.id && d.name ==="EXILE_VOTE") {
+          if (d.id === player.id && d.name === "EXILE_VOTE") {
             vote.push(d.target);
           }
         });
 
-        //const tmp = WolfModel.getVoteStatus({ id: idx });
-
-        /*
-        const playerStatus = WolfModel.getPlayerStatus({
-          id: idx,
-          isChiefCandidateConfirmed,
-          playerId: context.session.playerId,
-        });
-        */
-        //
-        /*
-         */
-        /*
-        player.ischiefcandidate as "isChiefCandidate", 
-        player.ischiefdropout as "isChiefDropout",
-        player.isdie as "isDie"
-        */
-        const isValidCandidate =
-          (player.voteTarget === "T" && eventName === "CHIEF_VOTE") ||
-          (player.isDie === false && eventName === "EXILE_VOTE");
         let chiefVoteState = { isCandidate: null, isDropout: null };
         const { isChiefCandidate, isChiefDropout } = player;
+
+        let isValidCandidate =
+          (player.voteTarget === "T" && !hasChief && repeatTimes > 0) ||
+          (isChiefCandidate && !isChiefDropout && repeatTimes === 0 && !hasChief) || (
+            player.isDie === false && hasChief
+          );
+
+          if (player.id === 0) {
+            isValidCandidate = false;
+          }
+
         if (playerId === 0) {
           roleName = player.roleName;
           pass = player.pass;
+          
         }
 
         if (playerId === 0 || isChiefCandidateConfirmed) {

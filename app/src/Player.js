@@ -209,7 +209,7 @@ function PlayerTable(props) {
                     {row.id}
                   </span>
                 )}
-                {row.id === props.chiefId && row.id !== 0 && (
+                {row.isChief && row.id !== 0 && (
                   <span aria-label="paw" style={{ fontSize: 30 }}>
                     🌟
                   </span>

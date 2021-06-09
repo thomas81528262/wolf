@@ -331,9 +331,13 @@ class WolfModel {
     let isBusy = false;
     let name = null;
     let isDark = false;
-    const voteEvent = await Db.getVoteEvent();
     let repeatTimes = 0;
+    const voteEvent = await Db.getVoteEvent();
+    
     if (voteEvent.length > 0) {
+
+
+
       if (voteEvent[0].name === null) {
         isEventFinish = true;
         isDark = voteEvent[0].isDark;
@@ -342,11 +346,12 @@ class WolfModel {
         isBusy = voteEvent[0].isBusy;
         name = voteEvent[0].name;
         isDark = voteEvent[0].isDark;
+        repeatTimes = voteEvent[0].repeatTimes;
       }
     }
    
 
-    return {isEventFinish , repeatTimes,   isBusy, name, isDark};
+    return {isEventFinish , repeatTimes,   isBusy, name, isDark, repeatTimes};
   }
 
   static async getVoteHistory() {
