@@ -73,6 +73,7 @@ const GET_ROLES = gql`
       isEmpty
       isDie
       isVoteFinish
+      isValidCandidate
       votedNumber
       isChief
       chiefVoteState {
@@ -260,17 +261,7 @@ function VoteAction(props) {
           }, 目標必須多於一人, 投票人數也必須多於一人`}
         </DialogContentText>
         {props.players
-          .filter((p) => {
-            if (props.hasVoteTarget) {
-              return p.isTarget;
-            } else if (!props.hasChief) {
-              return (
-                p.chiefVoteState.isCandidate && !p.chiefVoteState.isDropout
-              );
-            }
-
-            return !p.isDie && p.id !== 0;
-          })
+          .filter((p) => p.isValidCandidate)
           .map((player) => (
             <div key={player.id}>
               <Radio

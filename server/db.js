@@ -401,7 +401,14 @@ ON CONFLICT (author, name)
             `
             );
           } else if (eventName === "CHIEF_VOTE") {
-            await client.query(`update public.player set  "votetarget"=null where "votetarget" <> 'T'`);
+
+            await client.query(`update public.player set  "votetarget"=null`);
+
+            for (let i = 0; i < targetList.length; i+=1) {
+              await client.query(`update public.player set  "votetarget"='T' where id=$1`,[targetList[i]]);
+            }
+
+            
             await client.query(
               `
               UPDATE game_event
@@ -528,20 +535,33 @@ FROM public.game_event where name='CHIEF_VOTE';
         }
 
         let voteTarget = null;
+        if (repeatTimes > 0) {
+          if (isDie) {
+            voteTarget = "D";
+          } else if (player.voteTarget === "T") {
+            voteTarget = "T";
+          }
 
-        if (isDie) {
-          voteTarget = "D";
-        } else if (isChiefCandidate === true && isChiefDropout === true) {
-          if (repeatTimes === 0) {
-            voteTarget = "DO";
-          } else {
+
+        } else {
+
+          if (isDie) {
+            voteTarget = "D";
+          }  else if (isChiefCandidate === true && isChiefDropout === true) {
+            if (repeatTimes === 0) {
+              voteTarget = "DO";
+            } else {
+              voteTarget = null;
+            }
+          } else if (isChiefCandidate && isChiefDropout === false) {
+            voteTarget = "T";
+          } else if (isChiefCandidate === false) {
             voteTarget = null;
           }
-        } else if (isChiefCandidate && isChiefDropout === false) {
-          voteTarget = "T";
-        } else if (isChiefCandidate === false) {
-          voteTarget = null;
+
+
         }
+        
 
         await client.query(
           `update public.player set  "votetarget"=$1 where id =$2`,
