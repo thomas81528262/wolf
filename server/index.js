@@ -213,6 +213,10 @@ const resolvers = {
       let hasChief = false;
 
       playersData.forEach((player) => {
+        if (player.isChief) {
+          hasChief = true;
+        }
+
         if (player.id === 0) {
           return;
         }
@@ -220,10 +224,6 @@ const resolvers = {
         const { isChiefCandidate } = player;
         if (isChiefCandidate === null) {
           isChiefCandidateConfirmed = false;
-        }
-
-        if (player.isChief) {
-          hasChief = true;
         }
       });
 
@@ -520,6 +520,17 @@ const resolvers = {
       if (context.session.playerId !== 0) {
         throw new AuthenticationError("No Access!");
       }
+      var obj = {
+        table: []
+      };
+      console.log("Write game state");
+      obj.table.push({id: 1, square:2});
+      var json = JSON.stringify(obj);
+      var fs = require('fs');
+      fs.writeFile('log/game1.json', json, 'utf8', function(err) {
+        if (err) throw err;
+        console.log('complete writing');
+        });
       await WolfModel.removeAllPlayer({ store });
       return "pass";
     },
