@@ -213,6 +213,10 @@ const resolvers = {
       let hasChief = false;
 
       playersData.forEach((player) => {
+        if (player.isChief) {
+          hasChief = true;
+        }
+
         if (player.id === 0) {
           return;
         }
@@ -220,10 +224,6 @@ const resolvers = {
         const { isChiefCandidate } = player;
         if (isChiefCandidate === null) {
           isChiefCandidateConfirmed = false;
-        }
-
-        if (player.isChief) {
-          hasChief = true;
         }
       });
 
