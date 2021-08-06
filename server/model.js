@@ -566,11 +566,11 @@ class WolfModel {
   }
 
   static async resetChiefCandidate({ id }) {
-    await Db.updateCheifCandidate({ isCandidate: null, isDropout: false, id });
+    await Db.updateChiefCandidate({ isCandidate: null, isDropout: false, id });
   }
 
   static async updateChiefCandidate({ id, isLockSet }) {
-    await Db.updateIsCheifCandidate({ isCandidate: true, id });
+    await Db.updateIsChiefCandidate({ isCandidate: true, id });
 
     /*
     const p = this.player[id];
@@ -595,7 +595,7 @@ class WolfModel {
   }
 
   static async updateChiefVoterCandidate({ id, isLockSet }) {
-    await Db.updateIsCheifCandidate({ isCandidate: false, id });
+    await Db.updateIsChiefCandidate({ isCandidate: false, id });
 
     /*
     const p = this.player[id];
@@ -609,7 +609,7 @@ class WolfModel {
   }
 
   static async updateChiefCandidateDropOut({ id, isLockSet }) {
-    await Db.updateIsCheifCandidateDropout({ id, isDropout: true });
+    await Db.updateIsChiefCandidateDropout({ id, isDropout: true });
     /*
     const p = this.player[id];
     if (p) {

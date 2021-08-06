@@ -838,7 +838,7 @@ FROM public.game_event where name=$1;
     }
   }
 
-  static async updateCheifCandidate({ isCandidate, isDropout, id }) {
+  static async updateChiefCandidate({ isCandidate, isDropout, id }) {
     let pId = 1;
     const qValues = [];
     const values = [];
@@ -865,7 +865,7 @@ FROM public.game_event where name=$1;
   }
 
   //only update the column if the value is null
-  static async updateIsCheifCandidate({ isCandidate, id }) {
+  static async updateIsChiefCandidate({ isCandidate, id }) {
     let pId = 1;
     const qValues = [];
     const values = [];
@@ -889,7 +889,7 @@ FROM public.game_event where name=$1;
     await pool.query(text, values);
   }
 
-  static async updateIsCheifCandidateDropout({ id, isDropout }) {
+  static async updateIsChiefCandidateDropout({ id, isDropout }) {
     let pId = 1;
     const qValues = [];
     const values = [];
