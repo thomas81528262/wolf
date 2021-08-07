@@ -246,7 +246,7 @@ ON CONFLICT (author, name)
         `select name, repeat_times as "repeatTimes" from game_event where type='VOTE'`
       );
 
-      if (currentEvent.length === 0) {
+      if (currentEvent.rowCount === 0) {
         throw Error("No Vote Event!");
       }
 
@@ -288,7 +288,6 @@ ON CONFLICT (author, name)
         let targetId = parseInt(player.voteTarget);
 
         if (player.id === id) {
-
           targetId = parseInt(target);
 
           if (!isNaN(targetId) && targetId !== -1) {
@@ -389,7 +388,6 @@ ON CONFLICT (author, name)
             );
           }
           await client.query(`update public.player set  "votetarget"=null`);
-         
         } else {
           if (eventName === "EXILE_VOTE") {
             await client.query(`update public.player set  "votetarget"=null`);
@@ -401,14 +399,15 @@ ON CONFLICT (author, name)
             `
             );
           } else if (eventName === "CHIEF_VOTE") {
-
             await client.query(`update public.player set  "votetarget"=null`);
 
-            for (let i = 0; i < targetList.length; i+=1) {
-              await client.query(`update public.player set  "votetarget"='T' where id=$1`,[targetList[i]]);
+            for (let i = 0; i < targetList.length; i += 1) {
+              await client.query(
+                `update public.player set  "votetarget"='T' where id=$1`,
+                [targetList[i]]
+              );
             }
 
-            
             await client.query(
               `
               UPDATE game_event
@@ -497,7 +496,7 @@ FROM public.game_event where name='CHIEF_VOTE';
         
         `);
 
-      if (evnetResult.length === 0) {
+      if (evnetResult.rowCount === 0) {
         throw new Error("can not find event");
       }
 
@@ -520,7 +519,7 @@ FROM public.game_event where name='CHIEF_VOTE';
       order by id;
         `);
 
-      let hasNotValidCandidate = false;
+      let isValidVote = true;
 
       for (let i = 0; i < playersResult.rows.length; i += 1) {
         if (i === 0) {
@@ -531,7 +530,7 @@ FROM public.game_event where name='CHIEF_VOTE';
         const { isChiefCandidate, isChiefDropout, isDie } = player;
 
         if (isChiefCandidate === null && !isDie) {
-          hasNotValidCandidate = true;
+          isValidVote = false;
         }
 
         let voteTarget = null;
@@ -541,13 +540,10 @@ FROM public.game_event where name='CHIEF_VOTE';
           } else if (player.voteTarget === "T") {
             voteTarget = "T";
           }
-
-
         } else {
-
           if (isDie) {
             voteTarget = "D";
-          }  else if (isChiefCandidate === true && isChiefDropout === true) {
+          } else if (isChiefCandidate === true && isChiefDropout === true) {
             if (repeatTimes === 0) {
               voteTarget = "DO";
             } else {
@@ -558,10 +554,7 @@ FROM public.game_event where name='CHIEF_VOTE';
           } else if (isChiefCandidate === false) {
             voteTarget = null;
           }
-
-
         }
-        
 
         await client.query(
           `update public.player set  "votetarget"=$1 where id =$2`,
@@ -569,7 +562,7 @@ FROM public.game_event where name='CHIEF_VOTE';
         );
       }
 
-      if (hasNotValidCandidate) {
+      if (!isValidVote) {
         throw new Error("Not all player is ready!");
       }
 
@@ -804,7 +797,7 @@ FROM public.game_event where name=$1;
         `
       );
 
-      await client.query('delete from public.vote_history')
+      await client.query("delete from public.vote_history");
 
       await client.query("COMMIT");
     } catch (e) {
@@ -857,11 +850,34 @@ FROM public.game_event where name=$1;
 
     values.push(id);
 
-    const text = `update public.player set ${qValues.join(
-      ","
-    )}  where id=$${pId};`;
+    const client = await pool.connect();
 
-    await pool.query(text, values);
+    try {
+      await client.query("BEGIN");
+
+      const evnetResult = await client.query(
+        `
+      SELECT "type", repeat_times as "repeatTimes", "name", is_busy FROM public.game_event WHERE is_busy = true;
+        `
+      );
+
+      if (evnetResult.rowCount > 0) {
+        throw new Error("The Candidate is in the event!");
+      }
+
+      const text = `update public.player set ${qValues.join(
+        ","
+      )}  where id=$${pId};`;
+
+      await client.query(text, values);
+      await client.query("COMMIT");
+    } catch (e) {
+      console.log(e);
+      await client.query("ROLLBACK");
+      throw e;
+    } finally {
+      client.release();
+    }
   }
 
   //only update the column if the value is null
@@ -900,11 +916,34 @@ FROM public.game_event where name=$1;
 
     values.push(id);
 
-    const text = `update public.player set ${qValues.join(
-      ","
-    )}  where id=$${pId} and ischiefcandidate=true;`;
+    const client = await pool.connect();
 
-    await pool.query(text, values);
+    try {
+      await client.query("BEGIN");
+
+      const evnetResult = await client.query(
+        `
+      SELECT "type", repeat_times as "repeatTimes", "name", is_busy FROM public.game_event WHERE is_busy = true;
+        `
+      );
+
+      if (evnetResult.rowCount > 0) {
+        throw new Error("The Candidate is in the event!");
+      }
+
+      const text = `update public.player set ${qValues.join(
+        ","
+      )}  where id=$${pId} and ischiefcandidate=true;`;
+
+      await client.query(text, values);
+      await client.query("COMMIT");
+    } catch (e) {
+      console.log(e);
+      await client.query("ROLLBACK");
+      throw e;
+    } finally {
+      client.release();
+    }
   }
 
   static async updatePass({ id, pass }) {
