@@ -43,6 +43,7 @@ import DeleteIcon from "@material-ui/icons/Delete";
 import Tooltip from "@material-ui/core/Tooltip";
 import PersonAddDisabledIcon from "@material-ui/icons/PersonAddDisabled";
 import ContactMailIcon from "@material-ui/icons/ContactMail";
+import InfoIcon from '@material-ui/icons/Info';
 import UndoIcon from "@material-ui/icons/Undo";
 import PeopleAltIcon from "@material-ui/icons/PeopleAlt";
 import HowToVoteIcon from "@material-ui/icons/HowToVote";
@@ -92,6 +93,7 @@ const GET_ROLES = gql`
       isChiefCandidateConfirmed
       repeatTimes
       isEventBusy
+      gameEnded
     }
   }
 `;
@@ -136,6 +138,12 @@ const VOTE_START = gql`
 const VOTE_CHIEF_START = gql`
   mutation VoteChiefStart {
     voteChiefStart
+  }
+`;
+
+const SET_GAME_ENDED = gql`
+  mutation SetGameEnded {
+    setGameEnded
   }
 `;
 
@@ -320,9 +328,11 @@ function Game(props) {
   const [generatePlayer] = useMutation(GENERATE_TEMPLATE_PLAYER);
   const [removeAllPlayer] = useMutation(REMOVE_ALL_PLAYER);
   const [voteStart] = useMutation(VOTE_START);
+  const [endGame] = useMutation(SET_GAME_ENDED);
   //const [roleId, setRoleId] = React.useState(-1);
   //const [roleNumber, setRoleNumber] = React.useState(0);
   const [isOpen, setIsOpen] = React.useState(false);
+  const [gameEndedIsOpen, setGameEndedIsOpen] = React.useState(false);
   const [value, setValue] = useDebounce(props.name, 500);
   const [name, setName] = React.useState(props.name || "");
   const [updatePlayerName, { called }] = useMutation(UPDATE_PLAYER_NAME);
@@ -378,6 +388,40 @@ function Game(props) {
             hasChief={hasChief}
             hasVoteTarget={props.hasVoteTarget}
           />
+        </Dialog>
+        <Dialog
+          aria-labelledby="simple-dialog-title"
+          open={gameEndedIsOpen}
+          onClose={() => {
+            setGameEndedIsOpen(false);
+          }}
+        >
+          <DialogTitle id="form-dialog-title">
+            {`確認結束遊戲 並公布此局資訊？`}
+            <DialogActions>
+          {(
+            <Button
+              onClick={() => {
+                endGame();
+                setGameEndedIsOpen(false);
+              }}
+              color="primary"
+            >
+              確認
+            </Button>
+          )}
+          {(
+            <Button
+              onClick={() => {
+                setGameEndedIsOpen(false);
+              }}
+              color="secondary"
+            >
+              取消
+            </Button>
+          )}
+      </DialogActions>
+          </DialogTitle>
         </Dialog>
         <Box display="flex">
           <Tooltip title="產生角色" placement="top">
@@ -443,6 +487,19 @@ function Game(props) {
               }}
             >
               <UndoIcon fontSize="large" />
+            </IconButton>
+          </Tooltip>
+
+          <Tooltip title="覆盤公布資訊" placement="top">
+            <IconButton
+              disabled={gameInfo.gameEnded}
+              aria-label="delete"
+              onClick={() => {
+                setGameEndedIsOpen(true);
+                resetEvent();
+              }}
+            >
+              <InfoIcon fontSize="large" />
             </IconButton>
           </Tooltip>
           {/*<Button

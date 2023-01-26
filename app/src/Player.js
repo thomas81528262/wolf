@@ -152,6 +152,32 @@ const GET_ENABLED_TEMPLATE = gql`
   }
 `;
 
+const GET_GAME_REPORT_INFO = gql`
+  {
+    players {
+      id
+      name
+      roleName
+      isChief
+      isDie
+      vote
+      chiefVote
+    }
+    gameInfo {
+      gameEnded
+    }
+  }
+`;
+
+const CHECK_GAME_ENDED = gql`
+  {
+    gameInfo {
+      gameEnded
+    }
+  }
+`;
+
+
 function ChiefIcon(props) {
   return (
     <SvgIcon {...props}>
@@ -256,6 +282,79 @@ function PlayerTable(props) {
                   &#x25cf;
                 </span>
               </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+}
+
+function GameReportTable(props) {
+  console.log("Game Report Table:");
+  console.log(props.data);
+  return (
+    <TableContainer component={Paper}>
+      <Table className="GameReport" aria-label="simple table" size="small">
+        <TableHead>
+          <TableRow>
+            <TableCell>ID</TableCell>
+
+            <TableCell align="center">玩家</TableCell>
+            <TableCell align="center">角色</TableCell>
+            <TableCell align="center">警長</TableCell>
+            <TableCell align="center">放逐</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {props.data.map((row) => (
+            <TableRow key={row.id}>
+              <TableCell component="th" scope="row">
+                {row.id === 0 ? (
+                  <div style={{ width: 30 }}>
+                    <ReactSVG src="infinity.svg" />
+                  </div>
+                ) : row.isDie ? (
+                  <span aria-label="paw" style={{ fontSize: 30 }}>
+                    🐾
+                  </span>
+                ) : (
+                  <span aria-label="paw" style={{ fontSize: 30 }}>
+                    {row.id}
+                  </span>
+                )}
+                {row.isChief && row.id !== 0 && (
+                  <span aria-label="paw" style={{ fontSize: 30 }}>
+                    🌟
+                  </span>
+                )}
+                {row.chiefVoteState &&
+                  row.chiefVoteState.isCandidate === true &&
+                  row.chiefVoteState.isDropout === false && (
+                    <span
+                      span
+                      aria-label="paw"
+                      style={{ fontSize: 30, marginLeft: 5 }}
+                    >
+                      🗳️
+                    </span>
+                  )}
+                {row.chiefVoteState &&
+                  row.chiefVoteState.isCandidate === true &&
+                  row.chiefVoteState.isDropout === true && (
+                    <span
+                      span
+                      aria-label="paw"
+                      style={{ fontSize: 30, marginLeft: 5 }}
+                    >
+                      🚫
+                    </span>
+                  )}
+              </TableCell>
+              <TableCell align="center">{row.name}</TableCell>
+              <TableCell align="center">{row.roleName}</TableCell>
+              <TableCell align="right">{row.chiefVote.toString()}</TableCell>
+              <TableCell align="right">{row.vote.toString()}</TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -554,6 +653,37 @@ function TemplateInfo() {
   return <EnabedTemplateInfo data={data} />;
 }
 
+function GameDetailedInfoPanel() {
+  const gameEndedResult =
+  useQuery(CHECK_GAME_ENDED, { fetchPolicy: "network-only" });
+
+  const gameReportResult =
+  useQuery(GET_GAME_REPORT_INFO, { fetchPolicy: "network-only",
+  skip: gameEndedResult.loading || !gameEndedResult.data.gameInfo.gameEnded});
+
+  if (gameEndedResult.loading) {
+    return <div>Loading</div>;
+  }
+  
+  if (!gameEndedResult.data.gameInfo.gameEnded) {
+    return <>遊戲結束始發布</>;
+  } else {
+    return GameDetailedInfoInternalPanel(gameReportResult);
+  }
+}
+
+function GameDetailedInfoInternalPanel(props) {
+  const { loading, data} = props;
+  if (loading) {
+    return <div>Loading</div>;
+  }
+  return (
+    <>
+    <GameReportTable data={data.players} />
+    </>
+  );
+}
+
 export default function Player(props) {
   const { id, pass, name } = props;
   const [value, setValue] = React.useState(0);
@@ -575,6 +705,7 @@ export default function Player(props) {
         >
           <Tab label="玩家" />
           <Tab label="模式" />
+          <Tab label="覆盤完整資訊" />
         </Tabs>
         <TabPanel value={value} index={0}>
           <PlayerControl
@@ -586,6 +717,9 @@ export default function Player(props) {
         </TabPanel>
         <TabPanel value={value} index={1}>
           <TemplateInfo />
+        </TabPanel>
+        <TabPanel value={value} index={2}>
+          <GameDetailedInfoPanel />
         </TabPanel>
       </Paper>
     </Container>

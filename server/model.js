@@ -354,6 +354,16 @@ class WolfModel {
     return {isEventFinish , repeatTimes,   isBusy, name, isDark, repeatTimes};
   }
 
+  static async getIsGameEnded() {
+    const gameEndedEvent = await Db.getGameEndedEvent();
+    const gameEnded = gameEndedEvent !== null && gameEndedEvent.length > 0;
+    return {gameEnded};
+  }
+
+  static async setGameEnded() {
+    await Db.setGameEndedEvent();
+  }
+
   static async getVoteHistory() {
     const result = await Db.getVoteHistory();
     return result;

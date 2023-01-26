@@ -689,6 +689,27 @@ FROM public.game_event where name=$1;
     return result.rows;
   }
 
+  static async getGameEndedEvent() {
+    const text = `select
+        "type"
+      from
+        public.game_event where "type"='ENDED';`;
+
+    const result = await pool.query(text);
+
+    return result.rows;   
+  }
+
+  static async setGameEndedEvent() {
+    const text = `insert into
+        public.game_event
+        ("type",repeat_times, is_busy)
+        values
+        ('ENDED',0, false);`;
+
+    await pool.query(text);
+  }
+
   static async getPlayerInfo({ id, pass }) {
     try {
       const text = `SELECT 
@@ -794,6 +815,12 @@ FROM public.game_event where name=$1;
         repeat_times = 0
 
         WHERE "type"='VOTE';
+        `
+      );
+
+      await client.query(
+        `
+        DELETE from game_event WHERE "type"='ENDED';
         `
       );
 
@@ -921,13 +948,13 @@ FROM public.game_event where name=$1;
     try {
       await client.query("BEGIN");
 
-      const evnetResult = await client.query(
+      const eventResult = await client.query(
         `
       SELECT "type", repeat_times as "repeatTimes", "name", is_busy FROM public.game_event WHERE is_busy = true;
         `
       );
 
-      if (evnetResult.rowCount > 0) {
+      if (eventResult.rowCount > 0) {
         throw new Error("The Candidate is in the event!");
       }
 

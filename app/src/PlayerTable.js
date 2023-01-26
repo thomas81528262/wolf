@@ -338,7 +338,7 @@ export default function PlayerTable(props) {
             <TableCell align="left">玩家</TableCell>
             <TableCell align="right">角色</TableCell>
             <TableCell align="right">投票</TableCell>
-            <TableCell align="center">警長</TableCell>
+            <TableCell align="center">帥警長</TableCell>
             <TableCell align="center">放逐</TableCell>
             <TableCell align="right">上線</TableCell>
           </TableRow>

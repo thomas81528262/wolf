@@ -78,6 +78,7 @@ const typeDefs = gql`
     uuid: String
     repeatTimes: Int
     isEventBusy: Boolean
+    gameEnded: Boolean
   }
 
   input RoleOrder {
@@ -114,6 +115,7 @@ const typeDefs = gql`
     updateTemplateRole(name: String, roleId: Int, number: Int): String
     updateTemplateRolePriority(ids: [Int], name: String): String
     enableTemplate(name: String): String
+    setGameEnded: String
     voteStart(targets: [Int]): String
     voteChiefStart: String
     submitVote(target: Int): String
@@ -155,6 +157,7 @@ const resolvers = {
       } = await WolfModel.getPlayerStatus({
         id,
       });
+      const {gameEnded} = await WolfModel.getIsGameEnded();
       const { isDark, voteWeightedId, hasChief, hasVoteTarget, uuid } =
         WolfModel;
       return {
@@ -169,6 +172,7 @@ const resolvers = {
         isChiefCandidateConfirmed,
         repeatTimes,
         isEventBusy,
+        gameEnded,
       };
     },
 
@@ -412,6 +416,16 @@ const resolvers = {
       const { name } = args;
 
       await WolfModel.enableTemplate({ name });
+      return "pass";
+    },
+    setGameEnded: async (root, args, context) => {
+      console.log("ready to set game ended.")
+      if (context.session.playerId !== 0) {
+        throw new AuthenticationError("No Access!");
+      }
+
+      await WolfModel.setGameEnded();
+      console.log("set game ended.")
       return "pass";
     },
     updateTemplateRolePriority: async (root, args, context) => {
