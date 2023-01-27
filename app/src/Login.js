@@ -42,6 +42,9 @@ const useStyles = makeStyles((theme) => ({
     
    marginTop:5
   },
+  audience: {
+    marginTop:25
+  },
   container: {
     paddingTop: theme.spacing(4),
     paddingBottom: theme.spacing(4),
@@ -199,6 +202,17 @@ export default function Login() {
           }}
         >
           <Icon path={mdiPaw} />
+        </Button>
+        <Button
+          fullWidth
+          variant="text"
+          color="secondary"
+          className={classes.audience}
+          onClick={() => {
+            history.push("/audience");
+          }}
+        >
+          <a>觀戰模式</a>
         </Button>
         </div>
         </div>

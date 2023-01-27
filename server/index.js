@@ -31,6 +31,15 @@ const typeDefs = gql`
     isChief: Boolean
   }
 
+  type PlayerAudienceView {
+    name: String
+    id: Int
+    isDie: Boolean
+    isChief: Boolean
+    vote: [String]
+    chiefVote: [String]
+  }
+
   type Role {
     name: String
     id: Int
@@ -93,6 +102,7 @@ const typeDefs = gql`
     template(name: String): Template
     templates: [Template]
     players: [Player]
+    playersAudienceView: [PlayerAudienceView]
     roles: [Role]
     player(id: Int, pass: String): Player
     gameInfo(id: Int): GameInfo
@@ -284,6 +294,38 @@ const resolvers = {
           isVoteFinish,
           chiefVoteState,
           isValidCandidate,
+          chiefVote,
+          vote,
+        });
+      });
+
+      return result;
+    },
+    playersAudienceView: async (root, args) => {
+      const { players: playersData } = await WolfModel.getPlayerList();
+
+      const voteHistory = await WolfModel.getVoteHistory();
+
+      const result = [];
+
+      playersData.forEach((player) => {
+        const chiefVote = [];
+
+        voteHistory.forEach((d) => {
+          if (d.id === player.id && d.name === "CHIEF_VOTE") {
+            chiefVote.push(d.target);
+          }
+        });
+
+        const vote = [];
+
+        voteHistory.forEach((d) => {
+          if (d.id === player.id && d.name === "EXILE_VOTE") {
+            vote.push(d.target);
+          }
+        });
+        result.push({
+          ...player,
           chiefVote,
           vote,
         });

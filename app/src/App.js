@@ -53,6 +53,7 @@ import { useDebounce, useDebounceCallback } from "@react-hook/debounce";
 import God from "./God";
 import Admin from "./Admin";
 import Player from "./Player";
+import Audience from "./Audience";
 
 import LoginPage from "./Login";
 
@@ -493,6 +494,11 @@ function App() {
             <Route exact path="/game">
               <ApolloProvider client={client}>
                 <Game setDarkMode={setDarkMode} />
+              </ApolloProvider>
+            </Route>
+            <Route exact path="/audience">
+              <ApolloProvider client={client}>
+                <Audience  />
               </ApolloProvider>
             </Route>
           </Switch>
