@@ -41,41 +41,39 @@ const GET_ENABLED_TEMPLATE = gql`
 
 
 
-export default function EnabledTemplate(props) {
+export default function EnabledTemplate() {
+  const { loading, error, data } = useQuery(GET_ENABLED_TEMPLATE, {
+    fetchPolicy: "network-only",
+  });
 
-  /*
-    const { loading, error, data } = useQuery(GET_ENABLED_TEMPLATE, {
-      fetchPolicy: "network-only",
-    });
-  
-    if (loading) {
-      return <div>Loading</div>;
-    }
-  
-   */
-    const { name, description ,roles} = props.data.enabledTemplate;
-
-    
-    return (
-      <div>
-        <Typography variant="h2" gutterBottom>
-          {name}
-        </Typography>
-        <TextField
-          id="outlined-multiline-static"
-          multiline
-          rows={6}
-          fullWidth
-          value={description || ""}
-          variant="outlined"
-          label="規則"
-          disabled
-          
-        />
-       <BaseRoleTable data={roles}/>
-      </div>
-    );
+  if (loading) {
+    return <div>Loading</div>;
   }
+
+  
+  const { name, description ,roles} = data.enabledTemplate;
+
+  
+  return (
+    <div>
+      <Typography variant="h2" gutterBottom>
+        {name}
+      </Typography>
+      <TextField
+        id="outlined-multiline-static"
+        multiline
+        rows={6}
+        fullWidth
+        value={description || ""}
+        variant="outlined"
+        label="規則"
+        disabled
+        
+      />
+      <BaseRoleTable data={roles}/>
+    </div>
+  );
+}
 
 
 

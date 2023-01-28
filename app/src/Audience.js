@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { gql } from "apollo-boost";
-import { useLazyQuery} from "@apollo/client";
+import {useLazyQuery} from "@apollo/client";
 import Container from "@material-ui/core/Container";
 import Paper from "@material-ui/core/Paper";
 import Table from "@material-ui/core/Table";
@@ -9,7 +9,11 @@ import TableCell from "@material-ui/core/TableCell";
 import TableContainer from "@material-ui/core/TableContainer";
 import TableHead from "@material-ui/core/TableHead";
 import TableRow from "@material-ui/core/TableRow";
+import Tabs from "@material-ui/core/Tabs";
+import Tab from "@material-ui/core/Tab";
 import { ReactSVG } from "react-svg";
+import TabPanel from "./TabPanel";
+import EnabedTemplateInfo from "./EnabledTemplateInfo";
 
 const GET_GAME_INFO = gql`
   {
@@ -125,10 +129,34 @@ function GameInfoPanel() {
   return <GameInfoTable data={data.playersAudienceView} />; 
 }
 
+
 export default function Audience() {
+    const [value, setValue] = React.useState(0);
+
+    const handleChange = (event, newValue) => {
+      setValue(newValue);
+    };
     return (
         <Container maxWidth={"sm"}>
+        <Paper elevation={3}>
+          <Tabs
+            value={value}
+            indicatorColor="secondary"
+            textColor="secondary"
+            onChange={handleChange}
+            aria-label="disabled tabs example"
+            variant="fullWidth"
+          >
+            <Tab label="玩家" />
+            <Tab label="模式" />
+          </Tabs>
+          <TabPanel value={value} index={0}>
             <GameInfoPanel/>
-        </Container>
+          </TabPanel>
+          <TabPanel value={value} index={1}>
+            <EnabedTemplateInfo />
+          </TabPanel>
+        </Paper>
+      </Container>
     );
 }
