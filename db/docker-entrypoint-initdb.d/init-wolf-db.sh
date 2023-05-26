@@ -350,13 +350,13 @@ INSERT INTO public.template_role ("name", roleid, "number", darkpriority) VALUES
 INSERT INTO public.template_header ("name",description,isenabled) VALUES 
 ('102. 狼王守衛 雙邊守衛 (11人局)','',false);
 INSERT INTO public.template_role ("name", roleid, "number", darkpriority) VALUES 
-('003. 狼王守衛 雙邊守衛 (11人局)', 1, 1, 3)
-,('003. 狼王守衛 雙邊守衛 (11人局)', 2, 1, 2)
-,('003. 狼王守衛 雙邊守衛 (11人局)', 3, 1, 4)
-,('003. 狼王守衛 雙邊守衛 (11人局)', 5, 1, 0)
-,('003. 狼王守衛 雙邊守衛 (11人局)', 1001, 3, 1)
-,('003. 狼王守衛 雙邊守衛 (11人局)', 1002, 1, 1)
-,('003. 狼王守衛 雙邊守衛 (11人局)', 2001, 3, 99);
+('102. 狼王守衛 雙邊守衛 (11人局)', 1, 1, 3)
+,('102. 狼王守衛 雙邊守衛 (11人局)', 2, 1, 2)
+,('102. 狼王守衛 雙邊守衛 (11人局)', 3, 1, 4)
+,('102. 狼王守衛 雙邊守衛 (11人局)', 5, 1, 0)
+,('102. 狼王守衛 雙邊守衛 (11人局)', 1001, 3, 1)
+,('102. 狼王守衛 雙邊守衛 (11人局)', 1002, 1, 1)
+,('102. 狼王守衛 雙邊守衛 (11人局)', 2001, 3, 99);
 
 INSERT INTO public.template_header ("name",description,isenabled) VALUES 
 ('201. 預女獵 (10人局)','標準版型',false);
