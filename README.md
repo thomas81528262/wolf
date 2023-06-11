@@ -19,7 +19,7 @@ git clone git@github.com:thomas81528262/wolf.git
 ### prerequest installation
 
 1. nodejs (10.x and higher)
-2. postgresql db (docker or local)  
+2. postgresql db (local)  
     a. create local database called `postgres`  
     b. create local user called `postgres`  
     c. set password = `test`  
@@ -30,9 +30,13 @@ git clone git@github.com:thomas81528262/wolf.git
 
 ### run local db by docker-compose
 
+
 ```bash
-# make sure the db/data is exist, the db data will save in the folder
-$ mkdir db/data
+# ⚠️ only if you are running the dev-db first time or you want to clean the db
+$ npm run clean-dev-db
+```
+
+```bash
 #turn on the db and run under background
 $ docker-compose up -d
 #turn off the db
