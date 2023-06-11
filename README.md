@@ -16,10 +16,17 @@ SSH:
 git clone git@github.com:thomas81528262/wolf.git
 ```
 
-### prerequest installed
+### prerequest installation
 
 1. nodejs (10.x and higher)
-2. postgresql db (docker or local)
+2. postgresql db (docker or local)  
+    a. create local database called `postgres`  
+    b. create local user called `postgres`  
+    c. set password = `test`  
+    d. enforce password login with pg_hba.conf METHOD = `md5`  
+    e. set environment variable `EXPORT POSTGRES_USER=postgres`  
+    f. set environment variable `EXPORT POSTGRES_DB=postgres`  
+    g. load initial data into the db: `bash ./db/docker-entrypoint-initdb.d/init-wolf-db.sh`  
 
 ### run local db by docker-compose
 
