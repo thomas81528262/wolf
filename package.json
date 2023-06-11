@@ -2,7 +2,8 @@
   "name": "wolf-app",
   "version": "0.1.0",
   "scripts": {
-    "start": "cd server && npm install && node index.js"
+    "start": "cd server && npm install && node index.js",
+    "clean-dev-db":"docker-compose down && rm -rf db/data;"
   },
   "dependencies": {
     "async-mutex": "^0.2.3"
