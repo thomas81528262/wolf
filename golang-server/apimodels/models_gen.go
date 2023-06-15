@@ -3,7 +3,7 @@
 package apimodels
 
 type GetRolesInput struct {
-	ID []*string `json:"id"`
+	Ids []int `json:"ids"`
 }
 
 type GetRolesResponse struct {
@@ -11,6 +11,6 @@ type GetRolesResponse struct {
 }
 
 type Role struct {
-	ID   string `json:"id"`
+	ID   int    `json:"id"`
 	Name string `json:"name"`
 }

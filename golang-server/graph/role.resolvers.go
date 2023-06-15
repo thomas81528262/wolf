@@ -14,7 +14,7 @@ import (
 
 // GetRolesByID is the resolver for the getRolesById field.
 func (r *queryResolver) GetRolesByID(ctx context.Context, input apimodels.GetRolesInput) (*apimodels.GetRolesResponse, error) {
-	return service.GetRolesByID(ctx, input)
+	return service.GetRolesByID(ctx, r.db, input)
 }
 
 // Query returns graph.QueryResolver implementation.

@@ -1,14 +1,14 @@
 type Role {
-    id:   String!
+    id:   Int!
     name: String!
 }
 
 input GetRolesInput {
-    id: [String]!
+    ids: [Int!]!
 }
 
 type GetRolesResponse {
-    Roles: [Role]!
+    Roles: [Role!]!
 }
 
 extend type Query {

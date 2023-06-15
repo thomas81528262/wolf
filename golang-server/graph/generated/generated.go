@@ -201,16 +201,16 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 
 var sources = []*ast.Source{
 	{Name: "../schema/role.graphql", Input: `type Role {
-    id:   String!
+    id:   Int!
     name: String!
 }
 
 input GetRolesInput {
-    id: [String]!
+    ids: [Int!]!
 }
 
 type GetRolesResponse {
-    Roles: [Role]!
+    Roles: [Role!]!
 }
 
 extend type Query {
@@ -319,7 +319,7 @@ func (ec *executionContext) _GetRolesResponse_Roles(ctx context.Context, field g
 	}
 	res := resTmp.([]*apimodels.Role)
 	fc.Result = res
-	return ec.marshalNRole2ᚕᚖgithubᚗcomᚋthomas81528262ᚋwolfᚋgolangᚑserverᚋapimodelsᚐRole(ctx, field.Selections, res)
+	return ec.marshalNRole2ᚕᚖgithubᚗcomᚋthomas81528262ᚋwolfᚋgolangᚑserverᚋapimodelsᚐRoleᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_GetRolesResponse_Roles(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -555,9 +555,9 @@ func (ec *executionContext) _Role_id(ctx context.Context, field graphql.Collecte
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Role_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -567,7 +567,7 @@ func (ec *executionContext) fieldContext_Role_id(ctx context.Context, field grap
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2397,22 +2397,22 @@ func (ec *executionContext) unmarshalInputGetRolesInput(ctx context.Context, obj
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id"}
+	fieldsInOrder := [...]string{"ids"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "id":
+		case "ids":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			data, err := ec.unmarshalNString2ᚕᚖstring(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ids"))
+			data, err := ec.unmarshalNInt2ᚕintᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.ID = data
+			it.Ids = data
 		}
 	}
 
@@ -2942,7 +2942,54 @@ func (ec *executionContext) marshalNGetRolesResponse2ᚖgithubᚗcomᚋthomas815
 	return ec._GetRolesResponse(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNRole2ᚕᚖgithubᚗcomᚋthomas81528262ᚋwolfᚋgolangᚑserverᚋapimodelsᚐRole(ctx context.Context, sel ast.SelectionSet, v []*apimodels.Role) graphql.Marshaler {
+func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := graphql.MarshalInt(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNInt2ᚕintᚄ(ctx context.Context, v interface{}) ([]int, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]int, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNInt2int(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNInt2ᚕintᚄ(ctx context.Context, sel ast.SelectionSet, v []int) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNInt2int(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNRole2ᚕᚖgithubᚗcomᚋthomas81528262ᚋwolfᚋgolangᚑserverᚋapimodelsᚐRoleᚄ(ctx context.Context, sel ast.SelectionSet, v []*apimodels.Role) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -2966,7 +3013,7 @@ func (ec *executionContext) marshalNRole2ᚕᚖgithubᚗcomᚋthomas81528262ᚋw
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalORole2ᚖgithubᚗcomᚋthomas81528262ᚋwolfᚋgolangᚑserverᚋapimodelsᚐRole(ctx, sel, v[i])
+			ret[i] = ec.marshalNRole2ᚖgithubᚗcomᚋthomas81528262ᚋwolfᚋgolangᚑserverᚋapimodelsᚐRole(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -2977,7 +3024,23 @@ func (ec *executionContext) marshalNRole2ᚕᚖgithubᚗcomᚋthomas81528262ᚋw
 	}
 	wg.Wait()
 
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
 	return ret
+}
+
+func (ec *executionContext) marshalNRole2ᚖgithubᚗcomᚋthomas81528262ᚋwolfᚋgolangᚑserverᚋapimodelsᚐRole(ctx context.Context, sel ast.SelectionSet, v *apimodels.Role) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Role(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
@@ -2993,32 +3056,6 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) unmarshalNString2ᚕᚖstring(ctx context.Context, v interface{}) ([]*string, error) {
-	var vSlice []interface{}
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
-	var err error
-	res := make([]*string, len(vSlice))
-	for i := range vSlice {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalOString2ᚖstring(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
-func (ec *executionContext) marshalNString2ᚕᚖstring(ctx context.Context, sel ast.SelectionSet, v []*string) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	for i := range v {
-		ret[i] = ec.marshalOString2ᚖstring(ctx, sel, v[i])
-	}
-
-	return ret
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
@@ -3298,13 +3335,6 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	}
 	res := graphql.MarshalBoolean(*v)
 	return res
-}
-
-func (ec *executionContext) marshalORole2ᚖgithubᚗcomᚋthomas81528262ᚋwolfᚋgolangᚑserverᚋapimodelsᚐRole(ctx context.Context, sel ast.SelectionSet, v *apimodels.Role) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Role(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
