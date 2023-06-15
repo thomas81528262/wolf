@@ -17,7 +17,7 @@ ON CONFLICT (author, name)
    price = EXCLUDED.price;
   */
 
-  static async enableTemplate({ name }) {
+  static async enableTemplate({ name }:{name:string}) {
     const client = await pool.connect();
 
     try {
@@ -46,7 +46,7 @@ ON CONFLICT (author, name)
     }
   }
 
-  static async updateTemplateRolePriority({ ids, name }) {
+  static async updateTemplateRolePriority({ ids, name }:{ids:string[], name:string}) {
     const client = await pool.connect();
 
     try {
@@ -81,7 +81,11 @@ ON CONFLICT (author, name)
 
       return {};
     } catch (err) {
-      console.log(err.stack);
+      if (err instanceof Error) {
+        console.error(err.message);
+      } else {
+        console.log('Unexpected error', err);
+      }
       return {};
     }
   }
@@ -93,12 +97,16 @@ ON CONFLICT (author, name)
       const result = await pool.query(text);
       return result.rows;
     } catch (err) {
-      console.log(err.stack);
+      if (err instanceof Error) {
+        console.error(err.message);
+      } else {
+        console.log('Unexpected error', err);
+      }
       return [];
     }
   }
 
-  static async getTemplateDescription({ name }) {
+  static async getTemplateDescription({ name }:{name:string}) {
     try {
       const text =
         "SELECT name, description from public.template_header where name = $1";
@@ -111,24 +119,32 @@ ON CONFLICT (author, name)
 
       return null;
     } catch (err) {
-      console.log(err.stack);
+      if (err instanceof Error) {
+        console.error(err.message);
+      } else {
+        console.log('Unexpected error', err);
+      }
       return null;
     }
   }
 
-  static async getAllTemplateRole({ name }) {
+  static async getAllTemplateRole({ name }:{name:string}) {
     try {
       const text = `SELECT role.name as name,role.camp, roleid as id, template_role.number, role.functionname as "functionName" from public.template_role left join public.role on roleId=role.id where template_role.name=$1 order by darkpriority`;
       const values = [name];
       const result = await pool.query(text, values);
       return result.rows;
     } catch (err) {
-      console.log(err.stack);
+      if (err instanceof Error) {
+        console.error(err.message);
+      } else {
+        console.log('Unexpected error', err);
+      }
       return [];
     }
   }
 
-  static async upsertTemplateRole({ name, roleId, number }) {
+  static async upsertTemplateRole({ name, roleId, number }:{name:string, roleId:number, number:number}) {
     try {
       const text = `insert into public.template_role (name,roleid, number, darkpriority) values($1, $2, $3, 9999)
                     ON CONFLICT (name, roleid) DO UPDATE SET number = EXCLUDED.number;
@@ -137,12 +153,16 @@ ON CONFLICT (author, name)
       await pool.query(text, values);
       return "pass";
     } catch (err) {
-      console.log(err.stack);
+      if (err instanceof Error) {
+        console.error(err.message);
+      } else {
+        console.log('Unexpected error', err);
+      }
       return "pass";
     }
   }
 
-  static async insertTemplateHeader({ name }) {
+  static async insertTemplateHeader({ name }:{name:string}) {
     if (!name) {
       throw Error("The template name is Empty!!!");
     }
@@ -153,12 +173,16 @@ ON CONFLICT (author, name)
       await pool.query(text, values);
       return "pass";
     } catch (err) {
-      console.log(err.stack);
+      if (err instanceof Error) {
+        console.error(err.message);
+      } else {
+        console.log('Unexpected error', err);
+      }
       return "pass";
     }
   }
 
-  static async deleteTemplateHeader({ name }) {
+  static async deleteTemplateHeader({ name }:{name:string}) {
     /*
     if (!name) {
       throw Error("The template name is Empty!!!")
@@ -171,12 +195,16 @@ ON CONFLICT (author, name)
       await pool.query(text, values);
       return "pass";
     } catch (err) {
-      console.log(err.stack);
+      if (err instanceof Error) {
+        console.error(err.message);
+      } else {
+        console.log('Unexpected error', err);
+      }
       return "pass";
     }
   }
 
-  static async updateTemplateDescription({ name, description }) {
+  static async updateTemplateDescription({ name, description }:{name:string, description:string}) {
     try {
       //console.log(name, description);
       const text = `update public.template_header set description=$1 where name=$2`;
@@ -184,12 +212,16 @@ ON CONFLICT (author, name)
       await pool.query(text, values);
       return "pass";
     } catch (err) {
-      console.log(err.stack);
+      if (err instanceof Error) {
+        console.error(err.message);
+      } else {
+        console.log('Unexpected error', err);
+      }
       return "pass";
     }
   }
 
-  static async upsertTemplateHeader({ name, description }) {
+  static async upsertTemplateHeader({ name, description }:{name:string, description:string}) {
     try {
       const text = `insert into public.template_header (name,description) values($1, $2)
                     ON CONFLICT (name) DO UPDATE SET description = EXCLUDED.description;
@@ -198,7 +230,11 @@ ON CONFLICT (author, name)
       await pool.query(text, values);
       return "pass";
     } catch (err) {
-      console.log(err.stack);
+      if (err instanceof Error) {
+        console.error(err.message);
+      } else {
+        console.log('Unexpected error', err);
+      }
       return "pass";
     }
   }
@@ -236,7 +272,7 @@ ON CONFLICT (author, name)
     }
   }
 
-  static async endVoteEvent({ target, id }) {
+  static async endVoteEvent({ target, id }:{target:number, id:number}) {
     const client = await pool.connect();
 
     try {
@@ -288,7 +324,7 @@ ON CONFLICT (author, name)
         let targetId = parseInt(player.voteTarget);
 
         if (player.id === id) {
-          targetId = parseInt(target);
+          targetId = target;
 
           if (!isNaN(targetId) && targetId !== -1) {
             let isValidTarget = false;
@@ -346,7 +382,7 @@ ON CONFLICT (author, name)
 
         let maxNumberCount = 0;
         let targetId = -1;
-        let targetList = [];
+        let targetList:number[] = [];
         idCountMap.forEach((value, id) => {
           if (value === maxNumber) {
             maxNumberCount += 1;
@@ -710,7 +746,7 @@ FROM public.game_event where name=$1;
     await pool.query(text);
   }
 
-  static async getPlayerInfo({ id, pass }) {
+  static async getPlayerInfo({ id, pass }:{id:number, pass:string}) {
     try {
       const text = `SELECT 
           player.id, player."name", roleId, role.name as "roleName", player."isempty" as "isEmpty", player.adminPass as "adminPass"  
@@ -723,12 +759,16 @@ FROM public.game_event where name=$1;
 
       return result.rows;
     } catch (err) {
-      console.log(err.stack);
+      if (err instanceof Error) {
+        console.error(err.message);
+      } else {
+        console.log('Unexpected error', err);
+      }
       return [];
     }
   }
 
-  static async getPlayerIdInfo({ id }) {
+  static async getPlayerIdInfo({ id }:{id:number}) {
     try {
       const text =
         'SELECT player.id, player."name", roleId, role.name as "roleName", player."isempty" as "isEmpty"  FROM public.player left join public.role on roleId=role.id where player.id =$1;';
@@ -737,30 +777,38 @@ FROM public.game_event where name=$1;
 
       return result.rows;
     } catch (err) {
-      console.log(err.stack);
+      if (err instanceof Error) {
+        console.error(err.message);
+      } else {
+        console.log('Unexpected error', err);
+      }
       return [];
     }
   }
 
-  static async updatePlayerName({ id, name }) {
+  static async updatePlayerName({ id, name }:{id:number, name:string}) {
     try {
       const text = 'update public.player set  "name"=$1 where id=$2';
       const values = [name, id];
       const result = await pool.query(text, values);
       return { isValid: result.rowCount > 0 ? true : false };
     } catch (err) {
-      console.log(err.stack);
+      if (err instanceof Error) {
+        console.error(err.message);
+      } else {
+        console.log('Unexpected error', err);
+      }
       return { isValid: false };
     }
   }
 
-  static async togglePlayerDieStatus({ id }) {
+  static async togglePlayerDieStatus({ id }:{id:number}) {
     const text = 'update public.player set  "isdie"=not "isdie" where id=$1';
     const values = [id];
     await pool.query(text, values);
   }
 
-  static async setDarkDieStatus({ targets }) {
+  static async setDarkDieStatus({ targets }:{targets:number[]}) {
     const client = await pool.connect();
 
     try {
@@ -836,29 +884,37 @@ FROM public.game_event where name=$1;
     }
   }
 
-  static async updatePlayerRole({ id, roleId }) {
+  static async updatePlayerRole({ id, roleId }:{id:number, roleId:number}) {
     try {
       const text = 'update public.player set  "roleid"=$1 where id=$2';
       const values = [roleId, id];
       const result = await pool.query(text, values);
       return { isValid: result.rowCount > 0 ? true : false };
     } catch (err) {
-      console.log(err.stack);
+      if (err instanceof Error) {
+        console.error(err.message);
+      } else {
+        console.log('Unexpected error', err);
+      }
       return { isValid: false };
     }
   }
 
-  static async updateRoleNumber({ number, id }) {
+  static async updateRoleNumber({ number, id }:{number:number, id:number}) {
     try {
       const text = 'update public."role" set  "number"=$1 where id=$2';
       const values = [number, id];
       await pool.query(text, values);
     } catch (err) {
-      console.log(err.stack);
+      if (err instanceof Error) {
+        console.error(err.message);
+      } else {
+        console.log('Unexpected error', err);
+      }
     }
   }
 
-  static async updateChiefCandidate({ isCandidate, isDropout, id }) {
+  static async updateChiefCandidate({ isCandidate, isDropout, id }:{isCandidate:boolean, isDropout:boolean, id:number}) {
     let pId = 1;
     const qValues = [];
     const values = [];
@@ -908,7 +964,7 @@ FROM public.game_event where name=$1;
   }
 
   //only update the column if the value is null
-  static async updateIsChiefCandidate({ isCandidate, id }) {
+  static async updateIsChiefCandidate({ isCandidate, id }:{isCandidate:boolean, id:number}) {
     let pId = 1;
     const qValues = [];
     const values = [];
@@ -932,7 +988,7 @@ FROM public.game_event where name=$1;
     await pool.query(text, values);
   }
 
-  static async updateIsChiefCandidateDropout({ id, isDropout }) {
+  static async updateIsChiefCandidateDropout({ id, isDropout }:{id:number, isDropout:boolean}) {
     let pId = 1;
     const qValues = [];
     const values = [];
@@ -973,12 +1029,12 @@ FROM public.game_event where name=$1;
     }
   }
 
-  static async updatePass({ id, pass }) {
+  static async updatePass({ id, pass }:{id:number, pass:string}) {
     const text = 'update public.player set  "pass"=$1 where id=$2 ';
     const values = [pass, id];
     await pool.query(text, values);
   }
-  static async updatePlayerPass({ id, pass }) {
+  static async updatePlayerPass({ id, pass }:{id:number, pass:string}) {
     try {
       const text =
         'update public.player set  "pass"=$1, isempty=false, isJoin=true where id=$2 and isempty=true';
@@ -986,12 +1042,16 @@ FROM public.game_event where name=$1;
       const result = await pool.query(text, values);
       return { isValid: result.rowCount > 0 ? true : false };
     } catch (err) {
-      console.log(err.stack);
+      if (err instanceof Error) {
+        console.error(err.message);
+      } else {
+        console.log('Unexpected error', err);
+      }
       return { isValid: false };
     }
   }
 
-  static async updateIsChief({ id }) {
+  static async updateIsChief({ id }:{id:number}) {
     const client = await pool.connect();
 
     try {
@@ -1017,7 +1077,7 @@ FROM public.game_event where name=$1;
     }
   }
 
-  static async updateIsDie({ id }) {
+  static async updateIsDie({ id }:{id:number}) {
     const client = await pool.connect();
 
     try {
@@ -1043,11 +1103,15 @@ FROM public.game_event where name=$1;
       const text = "delete from public.player where id > 0";
       await pool.query(text);
     } catch (err) {
-      console.log(err.stack);
+      if (err instanceof Error) {
+        console.error(err.message);
+      } else {
+        console.log('Unexpected error', err);
+      }
     }
   }
 
-  static async addPlayer({ id }) {
+  static async addPlayer({ id }:{id:number}) {
     const client = await pool.connect();
 
     try {
@@ -1102,30 +1166,16 @@ order by player.id;
       const result = await pool.query(text);
       return result.rows;
     } catch (err) {
-      console.log(err.stack);
+      if (err instanceof Error) {
+        console.error(err.message);
+      } else {
+        console.log('Unexpected error', err);
+      }
       return [];
     }
   }
 
-  static async updatePlayerName({ id, name }) {
-    try {
-      const text = 'update public.player set  "name"=$1 where id=$2';
-      const values = [name, id];
-      await pool.query(text, values);
-    } catch (err) {
-      console.log(err.stack);
-    }
-  }
 
-  static async updatePlayerRole({ id, roleId }) {
-    try {
-      const text = 'update public.player set  "roleid"=$1 where id=$2';
-      const values = [roleId, id];
-      await pool.query(text, values);
-    } catch (err) {
-      console.log(err.stack);
-    }
-  }
 }
 
 module.exports = Db;
