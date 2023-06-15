@@ -1,0 +1,20 @@
+output   = "models"
+wipe     = true
+no-tests = true
+add-enum-types = true
+
+[psql]
+  dbname  = "postgres"
+  host    = "localhost"
+  port    = 5432
+  user    = "postgres"
+  pass    = "test"
+  sslmode = "disable"
+
+[mysql]
+  dbname  = "wolf"
+  host    = "localhost"
+  port    = 3306
+  user    = "wolf"
+  pass    = "wolf"
+  sslmode = "false"
