@@ -24,7 +24,9 @@ CREATE TABLE "role" (
 	id int4 NULL,
 	"number" int4 NULL,
 	functionname varchar NULL,
-	camp varchar NULL
+	camp varchar NULL,
+
+	CONSTRAINT role_pk PRIMARY KEY (name)
 );
 
 CREATE TABLE game_event (
