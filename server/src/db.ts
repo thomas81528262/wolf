@@ -1,4 +1,6 @@
-const { Pool, Client } = require("pg");
+import { QueryResult } from 'pg';
+import { Pool } from 'pg';
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl:
@@ -9,14 +11,10 @@ const pool = new Pool({
         },
 });
 
-class Db {
-  /*
-  INSERT INTO test_table (author, name, price) VALUES ('George Orwell', '1984', 400);
-ON CONFLICT (author, name)
-  DO UPDATE SET
-   price = EXCLUDED.price;
-  */
+export interface TemplateRole {name:string; camp:string; id:number; number:number; functionName:string };
 
+export default class Db {
+ 
   static async enableTemplate({ name }:{name:string}) {
     const client = await pool.connect();
 
@@ -46,7 +44,7 @@ ON CONFLICT (author, name)
     }
   }
 
-  static async updateTemplateRolePriority({ ids, name }:{ids:string[], name:string}) {
+  static async updateTemplateRolePriority({ ids, name }:{ids:number[], name:string}) {
     const client = await pool.connect();
 
     try {
@@ -132,7 +130,7 @@ ON CONFLICT (author, name)
     try {
       const text = `SELECT role.name as name,role.camp, roleid as id, template_role.number, role.functionname as "functionName" from public.template_role left join public.role on roleId=role.id where template_role.name=$1 order by darkpriority`;
       const values = [name];
-      const result = await pool.query(text, values);
+      const result:QueryResult<TemplateRole> = await pool.query(text, values);
       return result.rows;
     } catch (err) {
       if (err instanceof Error) {
@@ -658,7 +656,7 @@ FROM public.game_event where name=$1;
         [eventName]
       );
 
-      if (evnetResult.length === 0) {
+      if (evnetResult.rows.length === 0) {
         throw new Error("can not find event");
       }
 
@@ -719,8 +717,8 @@ FROM public.game_event where name=$1;
         is_dark as "isDark"
       from
         public.game_event where "type"='VOTE';`;
-
-    const result = await pool.query(text);
+       // 
+    const result:QueryResult<{type:string; repeatTimes:number; name:string; isBusy:boolean; isDark:boolean}> = await pool.query(text);
 
     return result.rows;
   }
@@ -914,7 +912,7 @@ FROM public.game_event where name=$1;
     }
   }
 
-  static async updateChiefCandidate({ isCandidate, isDropout, id }:{isCandidate:boolean, isDropout:boolean, id:number}) {
+  static async updateChiefCandidate({ isCandidate, isDropout, id }:{isCandidate:boolean|null, isDropout:boolean, id:number}) {
     let pId = 1;
     const qValues = [];
     const values = [];
@@ -1178,4 +1176,4 @@ order by player.id;
 
 }
 
-module.exports = Db;
+
