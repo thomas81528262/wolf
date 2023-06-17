@@ -23,7 +23,7 @@ const getIniPlayer = ()=>({isJoin: null,
   isChiefDropout:null,
   voteTarget:null,chiefVoteState:{isCandidate:null, isDropedOut:null, type:null}});
 
-class WolfModel {
+export default class WolfModel {
   static voteList = [];
   static voteHistory:number[][] = [];
   static chiefVoteHistory = [];
@@ -579,4 +579,4 @@ class WolfModel {
   }
 }
 
-module.exports = WolfModel;
+
