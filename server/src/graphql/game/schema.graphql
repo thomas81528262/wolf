@@ -1,0 +1,125 @@
+  type Player {
+    pass: String
+    name: String
+    id: Int
+    roleName: String
+    isEmpty: Boolean
+    isKill: Boolean
+    isDie: Boolean
+    revealedRole: String
+    vote: [String]
+    chiefVote: [String]
+    isValidCandidate: Boolean
+    isVoteFinish: Boolean
+    votedNumber: Float
+    chiefVoteState: ChiefVoteState
+    isTarget: Boolean
+    isChief: Boolean
+  }
+
+  type PlayerAudienceView {
+    name: String
+    id: Int
+    isDie: Boolean
+    isChief: Boolean
+    vote: [String]
+    chiefVote: [String]
+  }
+
+  type Role {
+    name: String
+    id: Int
+    number: Int
+    description: String
+  }
+
+  type Template {
+    name: String
+    description: String
+    roles: [Role]
+    isEnabled: Boolean
+  }
+
+  type PlayerStatus {
+    isValid: Boolean
+    name: String
+    id: Int
+  }
+
+  enum ActRoleType {
+    WITCH_KILL
+    WITCH_SAVE
+    WOLF
+    PROPHET
+    HUNTER
+    GUARD
+  }
+
+  type ChiefVoteState {
+    isCandidate: Boolean
+    isDropout: Boolean
+    type: String
+  }
+
+  type GameInfo {
+    isVoteFinish: Boolean
+    chiefId: Int
+    isDark: Boolean
+    voteWeightedId: Int
+    hasChief: Boolean
+    chiefVoteState: ChiefVoteState
+    hasVoteTarget: Boolean
+    isChiefCandidateConfirmed: Boolean
+    uuid: String
+    repeatTimes: Int
+    isEventBusy: Boolean
+    gameEnded: Boolean
+  }
+
+  input RoleOrder {
+    id: [Int]
+  }
+
+  
+  type Query {
+    enabledTemplate: Template
+    template(name: String!): Template
+    templates: [Template]
+    players: [Player]
+    playersAudienceView: [PlayerAudienceView]
+    roles: [Role]
+    player(id: Int, pass: String): Player
+    gameInfo(id: Int!): GameInfo
+    login: PlayerStatus
+  }
+  type Mutation {
+    resetEvent: String
+    updatePass(id: Int!, pass: String!): String
+    updateRoleNumber(id: Int, number: Int): String
+    updatePlayerPass(id: Int!, pass: String!): PlayerStatus
+    updatePlayerName(id: Int!, name: String!): String
+    generatePlayer: String
+    generateRole: String
+    removeAllPlayer: String
+    addNewTemplate(name: String!): String
+    deleteTemplate(name: String!): String
+    generateTemplatePlayer: String
+    generateTemplateRole(isCovertWolfToHuman: Boolean!): String
+    updateTemplateDescription(name: String!, description: String!): String
+    updateTemplateRole(name: String!, roleId: Int!, number: Int!): String
+    updateTemplateRolePriority(ids: [Int!]!, name: String!): String
+    enableTemplate(name: String!): String
+    setGameEnded: String
+    voteStart(targets: [Int!]!): String
+    voteChiefStart: String
+    submitVote(target: Int!): String
+    setDieStatus(id: Int!): String
+    setDarkDieStatus(targets: [Int!]!): String
+    setChiefId(id: Int!): String
+    setVoteWeightedId(id: Int!): String
+    setIsVoter: String
+    setIsChiefCandidate: String
+    setIsChiefDropOut: String
+    resetChiefCaniddate(id: Int!): String
+    logoff: String
+  }

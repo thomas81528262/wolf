@@ -1,0 +1,19 @@
+generates:
+  # Specify where our generated types should live.
+  ./src/graphql/game/__generated__/resolvers-types.ts:
+    schema: "src/graphql/game/schema.graphql"
+    plugins:
+      - "typescript"
+      - "typescript-resolvers"
+    config:
+      useIndexSignature: true
+  ./src/graphql/auth/__generated__/resolvers-types.ts:
+    schema: "src/graphql/auth/schema.graphql"
+    plugins:
+      - "typescript"
+      - "typescript-resolvers"
+    config:
+      useIndexSignature: true
+
+      
+      

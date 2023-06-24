@@ -1,0 +1,62 @@
+type Player {
+  name: String
+  id: Int
+  roleName: String
+  isEmpty: Boolean
+  isKill: Boolean
+  isDie: Boolean
+  revealedRole: String
+  vote: [String]
+  chiefVote: [String]
+  isValidCandidate: Boolean
+  isVoteFinish: Boolean
+  votedNumber: Float
+}
+type Role {
+  name: String
+  id: Int
+  number: Int
+  description: String
+}
+type Template {
+  name: String
+  description: String
+  roles: [Role]
+  isEnabled: Boolean
+}
+type PlayerStatus {
+  isValid: Boolean
+  id: Int
+}
+enum ActRoleType {
+  WITCH_KILL
+  WITCH_SAVE
+  WOLF
+  PROPHET
+  HUNTER
+  GUARD
+}
+type DarkInfo {
+  isStart: Boolean
+  remainTime: Int
+  targetList: [Player]
+  actRoleType: ActRoleType
+  darkDay: Int
+}
+type GameInfo {
+  isVoteFinish: Boolean
+  chiefId: Int
+}
+input RoleOrder {
+  id: [Int]
+}
+# The "Query" type is special: it lists all of the available queries that
+# clients can execute, along with the return type for each. In this
+# case, the "books" query returns an array of zero or more Books (defined above).
+type Query {
+  players(id: Int): [Player]
+  login:PlayerStatus
+}
+type Mutation {
+  updatePlayerPass(id: Int!, pass: String!): PlayerStatus
+}

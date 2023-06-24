@@ -12,6 +12,7 @@ const pool = new Pool({
 });
 
 export interface TemplateRole {name:string; camp:string; id:number; number:number; functionName:string };
+export interface VoteHistory {id:number; name:string; history_id:number; target:string|null}
 
 export default class Db {
  
@@ -238,12 +239,15 @@ export default class Db {
   }
 
   static async getVoteHistory() {
-    const result = await pool.query(`
+    
+    const result = await pool.query<VoteHistory>(`
     
     SELECT id, "name", history_id, target
     FROM public.vote_history  order by history_id;
     
     `);
+
+    
     return result.rows;
   }
 

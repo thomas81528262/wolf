@@ -1,4 +1,4 @@
-type Player {
+  type Player {
     pass: String
     name: String
     id: Int
@@ -83,43 +83,43 @@ type Player {
   
   type Query {
     enabledTemplate: Template
-    template(name: String): Template
+    template(name: String!): Template
     templates: [Template]
     players: [Player]
     playersAudienceView: [PlayerAudienceView]
     roles: [Role]
     player(id: Int, pass: String): Player
-    gameInfo(id: Int): GameInfo
+    gameInfo(id: Int!): GameInfo
     login: PlayerStatus
   }
   type Mutation {
     resetEvent: String
-    updatePass(id: Int, pass: String): String
+    updatePass(id: Int!, pass: String!): String
     updateRoleNumber(id: Int, number: Int): String
-    updatePlayerPass(id: Int, pass: String): PlayerStatus
-    updatePlayerName(id: Int, name: String): String
+    updatePlayerPass(id: Int!, pass: String!): PlayerStatus
+    updatePlayerName(id: Int!, name: String!): String
     generatePlayer: String
     generateRole: String
     removeAllPlayer: String
-    addNewTemplate(name: String): String
-    deleteTemplate(name: String): String
+    addNewTemplate(name: String!): String
+    deleteTemplate(name: String!): String
     generateTemplatePlayer: String
-    generateTemplateRole(isCovertWolfToHuman: Boolean): String
-    updateTemplateDescription(name: String, description: String): String
-    updateTemplateRole(name: String, roleId: Int, number: Int): String
-    updateTemplateRolePriority(ids: [Int], name: String): String
-    enableTemplate(name: String): String
+    generateTemplateRole(isCovertWolfToHuman: Boolean!): String
+    updateTemplateDescription(name: String!, description: String!): String
+    updateTemplateRole(name: String!, roleId: Int!, number: Int!): String
+    updateTemplateRolePriority(ids: [Int!]!, name: String!): String
+    enableTemplate(name: String!): String
     setGameEnded: String
-    voteStart(targets: [Int]): String
+    voteStart(targets: [Int!]!): String
     voteChiefStart: String
-    submitVote(target: Int): String
-    setDieStatus(id: Int): String
-    setDarkDieStatus(targets: [Int]): String
-    setChiefId(id: Int): String
-    setVoteWeightedId(id: Int): String
+    submitVote(target: Int!): String
+    setDieStatus(id: Int!): String
+    setDarkDieStatus(targets: [Int!]!): String
+    setChiefId(id: Int!): String
+    setVoteWeightedId(id: Int!): String
     setIsVoter: String
     setIsChiefCandidate: String
     setIsChiefDropOut: String
-    resetChiefCaniddate(id: Int): String
+    resetChiefCaniddate(id: Int!): String
     logoff: String
   }
