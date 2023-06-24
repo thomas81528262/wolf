@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model game_event {
+  type         String   @id(map: "game_event_pk") @db.VarChar
+  repeat_times Int
+  name         String?  @db.VarChar
+  is_busy      Boolean
+  is_dark      Boolean?
+}
+
+model player {
+  id               Int      @id(map: "player_pk")
+  name             String?  @unique(map: "player_un") @db.VarChar
+  roleid           Int?
+  pass             String?  @db.VarChar
+  adminpass        String?  @db.VarChar
+  isempty          Boolean?
+  ischiefcandidate Boolean?
+  ischiefdropout   Boolean?
+  isdie            Boolean?
+  votetarget       String?  @db.VarChar
+  ischief          Boolean?
+  isjoin           Boolean?
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model role {
+  name         String? @db.VarChar
+  id           Int?
+  number       Int?
+  functionname String? @db.VarChar
+  camp         String? @db.VarChar
+
+  @@ignore
+}
+
+model template_header {
+  name          String          @id(map: "template_header_pk") @db.VarChar
+  description   String?         @db.VarChar
+  isenabled     Boolean?
+  template_role template_role[]
+}
+
+model template_role {
+  roleid          Int
+  number          Int
+  name            String          @db.VarChar
+  darkpriority    Int?
+  template_header template_header @relation(fields: [name], references: [name], onDelete: Cascade, onUpdate: NoAction, map: "template_role_fk")
+
+  @@id([roleid, name], map: "template_role_pk")
+}
+
+model vote_history {
+  id         Int
+  name       String  @db.VarChar
+  history_id Int     @id @default(autoincrement())
+  target     String? @db.VarChar
+}
