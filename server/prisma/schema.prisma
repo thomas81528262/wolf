@@ -33,12 +33,11 @@ model player {
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model role {
   name         String? @db.VarChar
-  id           Int?
+  id           Int @unique
   number       Int?
   functionname String? @db.VarChar
   camp         String? @db.VarChar
-
-  @@ignore
+  template_role template_role[]
 }
 
 model template_header {
@@ -49,13 +48,14 @@ model template_header {
 }
 
 model template_role {
-  roleid          Int
+  roleId          Int  @map("roleid")
   number          Int
   name            String          @db.VarChar
   darkpriority    Int?
+  role role @relation(fields: [roleId], references: [id])
   template_header template_header @relation(fields: [name], references: [name], onDelete: Cascade, onUpdate: NoAction, map: "template_role_fk")
-
-  @@id([roleid, name], map: "template_role_pk")
+  
+  @@id([roleId, name], map: "template_role_pk")
 }
 
 model vote_history {
