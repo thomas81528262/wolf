@@ -3,16 +3,21 @@
 import { Maybe, Player, PlayerAudienceView, ResolverTypeWrapper, Resolvers } from './__generated__/resolvers-types';
 import { readFileSync } from 'fs';
 import { GraphQLError } from 'graphql';
-import WolfModel from "../../model";
+import WolfModel, { Session } from "../../model";
 import {store} from "../../store";
 import path from 'path';
 
+interface GameContext {
+    model:WolfModel;
+    session:Session;
+}
+
+
 const typeDefs = readFileSync(path.resolve(__dirname, "./schema.graphql"), { encoding: 'utf-8' });
-const resolvers:Resolvers = {
+const resolvers:Resolvers<GameContext> = {
     Query: {
       login: (root, args, context) => {
         const { playerId, isValid } = context.session;
-  
         return { id: playerId, isValid };
       },
       gameInfo: async (root, args, context) => {
@@ -327,7 +332,7 @@ const resolvers:Resolvers = {
       },
   
       logoff: (root, args, context) => {
-        context.session.destroy();
+        context.session.destroy(()=>{ console.info("destroy session.")});
         return "pass";
       },
       setVoteWeightedId: (root, args, context) => {

@@ -1,8 +1,17 @@
 import Db, { TemplateRole } from "./db";
 import shuffle  from "shuffle-array";
 import { withTimeout, Mutex } from "async-mutex";
-const mutexWithTimeout = withTimeout(new Mutex(), 1000, new Error("timeout"));
 import { v1 as uuidv1 } from "uuid";
+import session from 'express-session';
+
+const mutexWithTimeout = withTimeout(new Mutex(), 1000, new Error("timeout"));
+
+
+export interface Session extends session.Session {
+  isAdmin:boolean;
+  playerId:number;
+  isValid: boolean;
+}
 
 interface Player {
     isJoin:boolean | null;
@@ -372,7 +381,7 @@ export default class WolfModel {
     await Db.updatePass({ id, pass });
   }
 
-  static async updatePlayerPass({ id, pass, session }:{id:number, pass:string, session:any}) {
+  static async updatePlayerPass({ id, pass, session }:{id:number, pass:string, session:Session}) {
     const info = await this.getPlayerInfo({ id, pass });
 
     //if db already have the data, set the session
