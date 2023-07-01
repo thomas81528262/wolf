@@ -1,0 +1,13 @@
+name: build
+run-name: build 🚀
+on: [push]
+jobs:
+  Build-Actions:
+    runs-on: node:20-slim
+    steps:
+    - uses: actions/checkout@v3
+    - run: npm install
+      working-directory: ./server
+    - run: npm run build
+      working-directory: ./server
+      
