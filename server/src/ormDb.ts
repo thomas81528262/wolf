@@ -49,10 +49,10 @@ export default class Db {
         }
     }
 
-    async getTemplateRole({select, where}:{select:Prisma.template_roleSelectScalar, where:Prisma.template_roleWhereInput }){
+    async getTemplateRole({select, where}:{select:Prisma.template_roleSelect, where:Prisma.template_roleWhereInput }){
 
       try {
-        const result = await this.#client.template_role.findMany({select:{role:{select:{name:true}},...select}, where});
+        const result = await this.#client.template_role.findMany({select, where});
         return result;
       } catch (err) {
         if (err instanceof Error) {
@@ -66,6 +66,28 @@ export default class Db {
 
     }
 
+    async deleteTemplate({where}:{where:Prisma.template_headerWhereUniqueInput}) {
+      await this.#client.template_header.delete({where});
+    }
+
+    async upsertTemplate({where, update, create}:{create:Prisma.template_headerCreateInput,where:Prisma.template_headerWhereUniqueInput, update:Prisma.template_headerUpdateInput}) {
+      await this.#client.template_header.upsert({where, update, create})
+    }
+
+    async createPlayers({num}:{num:number}) {
+      await this.#client.$transaction(async (tx)=>{
+        //id 0 is god
+        tx.player.create({data:{id:0}})
+        for(let i = 0; i < num; i+=1) {
+
+          tx.player.create({data:{
+            id:i +1,  
+            isDie:false
+          }})
+        }
+      });
+    }
+
     async $disconnect() {
         await this.#client.$disconnect();
     }
@@ -74,9 +96,10 @@ export default class Db {
 const db = new Db();
 
 async function main() {
+  
   await db.enableTemplate({name:'019. 混沌之魔審判官靈鹿'})
-  const result = await db.getTemplate({select:{name:true, description:true}, where:{name:'013. 血月獵魔人'}});
-  const re = await db.getTemplateRole({select:{ number:true, roleId:true}, where:{name:'013. 血月獵魔人'}})
+  const result = await db.getTemplate({select:{name:true, description:true}, where:{}});
+  const re = await db.getTemplateRole({select:{ number:true, roleId:true, role:{select:{name:true}}}, where:{name:'013. 血月獵魔人'}})
   console.log(result, re);
 }
 

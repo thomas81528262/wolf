@@ -24,10 +24,10 @@ model player {
   isempty          Boolean?
   ischiefcandidate Boolean?
   ischiefdropout   Boolean?
-  isdie            Boolean?
+  isDie            Boolean? @map("isdie")
   votetarget       String?  @db.VarChar
-  ischief          Boolean?
-  isjoin           Boolean?
+  ischief          Boolean?  
+  isJoin           Boolean? @map("isjoin")
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
